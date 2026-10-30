@@ -32,6 +32,7 @@ function getServiceMap() {
       event_categories: require('./eventCategory.service'),
       website_clients: require('./websiteClient.service'),
       event_menus: require('./eventMenu.service'),
+      home_screen_templates: require('./homeScreenTemplate.service'),
       event_responsibilities: require('./eventResponsibility.service'),
 
       // Subscription Plans

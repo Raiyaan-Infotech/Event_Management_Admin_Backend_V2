@@ -112,6 +112,9 @@ db.TemplateCategory = require('./TemplateCategory')(sequelize, Sequelize);
 // Uploaded border / frame artwork, classified by TemplateCategory.
 db.FrameStyle = require('./FrameStyle')(sequelize, Sequelize);
 
+// Mobile app home screen designs per event category (Template → Home Screen Templates).
+db.HomeScreenTemplate = require('./HomeScreenTemplate')(sequelize, Sequelize);
+
 // Uploaded ornament images placed INSIDE a template — corners, dividers, tops.
 // A frame surrounds the whole invitation; a decoration is one part of it.
 db.Decoration = require('./Decoration')(sequelize, Sequelize);
@@ -411,6 +414,11 @@ db.FrameStyle.belongsTo(db.TemplateCategory, { foreignKey: 'template_category_id
 db.TemplateCategory.hasMany(db.FrameStyle, { foreignKey: 'template_category_id', as: 'frameStyles' });
 db.FrameStyle.belongsTo(db.User, { foreignKey: 'created_by', as: 'creator' });
 db.FrameStyle.belongsTo(db.User, { foreignKey: 'updated_by', as: 'updater' });
+
+db.HomeScreenTemplate.belongsTo(db.EventCategory, { foreignKey: 'event_category_id', as: 'eventCategory' });
+db.HomeScreenTemplate.belongsTo(db.TemplateCategory, { foreignKey: 'template_category_id', as: 'style' });
+db.HomeScreenTemplate.belongsTo(db.User, { foreignKey: 'created_by', as: 'creator' });
+db.HomeScreenTemplate.belongsTo(db.User, { foreignKey: 'updated_by', as: 'updater' });
 
 db.Decoration.belongsTo(db.User, { foreignKey: 'created_by', as: 'creator' });
 db.Decoration.belongsTo(db.User, { foreignKey: 'updated_by', as: 'updater' });

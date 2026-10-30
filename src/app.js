@@ -122,6 +122,7 @@ app.use('/api/v1/event-templates', require('./routes/eventTemplate.routes'));
 app.use('/api/v1/template-categories', require('./routes/templateCategory.routes'));
 // Uploaded border / frame artwork, classified by a template category.
 app.use('/api/v1/frame-styles', require('./routes/frameStyle.routes'));
+app.use('/api/v1/home-screen-templates', require('./routes/homeScreenTemplate.routes'));
 // Ornament images placed inside a template — corners, dividers, tops.
 app.use('/api/v1/decorations', require('./routes/decoration.routes'));
 // Fonts the admin adds for templates (upload or link); `/:id/file` is public.

@@ -17285,3 +17285,35 @@ Open: how "private event" is decided (privacy defaults to 'private' on every eve
   columns and adds only the missing ones (safe after a partial run). LOCAL applied. initial_setup.sql + model.
 - **PRODUCTION ORDER:** `node src/database/tools/apply-client-personal-address.js --prod` (dry run) ->
   `--prod --apply` -> push backend -> app build. `dart analyze lib`: 0 errors / 0 warnings.
+
+## Admin: "Templates" -> "Invitation" + new "Template" -> Home Screen Templates (Jamal, 2026-10-30)
+- **Sidebar:** old invitation group renamed "Invitation" (child "All Invitations", list heading "Invitation
+  Templates", breadcrumb "Invitation"); routes unchanged (/admin/templates/...). New group "Template" ->
+  "Home Screen Templates" (/admin/home-screen-templates, permission home_screen_templates.view).
+- **Design** per Jamal's "Add New Home Screen Template" mockup, admin theme colours (not the mockup's rose):
+  1 Name*, 2 Description* (300), 3 Event Category*, 4 Template Style* (= template_categories, Royal/Floral...),
+  5 Home Screen Image* (PNG/JPG <= 2MB, 9:16, media folder home-screen-templates), 6 Colour palette: count 2-5,
+  roles primary/secondary/accent/background/text, colour picker + hex, "Extract colors from uploaded image"
+  (browser canvas; only for a newly picked file - the bucket has no CORS), 7 Notes (200). Live phone preview
+  (image + title/date/countdown/8 menu tiles in the template's colours; < > = sample events). List: stats,
+  category/status filters, search, swatches, toggle, edit, delete.
+- **Backend:** table `home_screen_templates` (FKs event_categories / template_categories SET NULL),
+  `migrations/sql/20261030-home-screen-templates.sql`, tool `tools/apply-home-screen-templates.js`,
+  initial_setup.sql; model HomeScreenTemplate (+ eventCategory / style / creator / updater);
+  `/api/v1/home-screen-templates` GET / stats / :id, POST, PUT, PATCH :id/status, DELETE (approval-aware,
+  registered in both approval maps). Permissions via guest-option-permissions.seeder.js (mirrors event_categories
+  grants). LOCAL: table + module 122 / perms 407-410 applied; service test 10/10 (create, colour normalising,
+  4 refusals, count change trims colours, toggle, filter/search, stats, delete), row cleaned up.
+- **Not yet:** the mobile app does not read these templates (no app endpoint / picker yet).
+- **PRODUCTION ORDER:** `node src/database/tools/apply-home-screen-templates.js --prod --apply` ->
+  `node src/database/seeders/guest-option-permissions.seeder.js --prod` -> push backend -> push admin frontend.
+
+## V2 gets its own databases: event_v2 (Jamal, 2026-10-30)
+- LOCAL `event_v2` = full copy of local `event_` (mysqldump); V2 `.env` DB_NAME=event_v2.
+- LIVE `event_v2` = full copy of live `event_`, created on the SAME Aiven server; V2 `.env.production`
+  DB_NAME=event_v2. Verified: 179 tables, 390,279 rows identical to live event_.
+- Home Screen Templates table + permissions exist ONLY in event_v2 (local + live); removed from local V1 `event_`
+  (live V1 never had them). Service test on V2 code + local event_v2: 10/10.
+- ⚠ V2 Admin Backend / Admin Frontend git remotes still point at the ORIGINAL GitHub repos — do NOT push V2
+  until it has its own repos. V2 has no node_modules (scripts were run with NODE_PATH=<V1 backend>/node_modules).
+- Render for V2 not set up yet (Jamal deploys later): its env needs DB_NAME=event_v2.

@@ -79,6 +79,14 @@ const MODULES = [
         description: 'Manage the Contact Person responsibilities per event category',
         label: 'Responsibilities',
     },
+    // Template → Home Screen Templates (2026-10-30): mobile app home screen
+    // designs per event category. Same admins as the event taxonomy.
+    {
+        slug: 'home_screen_templates',
+        name: 'Home Screen Templates',
+        description: 'Manage the mobile app home screen templates',
+        label: 'Home Screen Templates',
+    },
 ];
 
 const ACTIONS = [
