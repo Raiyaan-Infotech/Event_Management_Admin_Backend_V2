@@ -270,6 +270,94 @@ progress panel is NOT reproduced — the details column takes that width.
 
 ---
 
+## 7f. Create Event wizard = the mobile app's steps, no invitation (2026-10-31)
+
+Jamal: the portal's Create Event must follow the mobile app's form; the invitation design is OUT of Create
+Event (it returns later as its own module).
+
+Steps now (`event-wizard.tsx`, constants S_TYPE..S_CREATED): **1 Event Type** (category + home template picker),
+**2 Basic Details** (title, Groom/Bride or hosts, tagline, short description, Event Status Public/Private cards
+with the participant-count note, event photo), **3 Date & Time** (time zone, start/end date + time),
+**4 Venue** (name, address, landmark, map link, lat/lng, venue image), **5 Menus**, **6 Settings** (Guest
+Registration switches shown disabled "Soon" — the app does not save them either), **7 Organizer Settings**
+(hosted by, contact number, email, footer note), **8 Review** (summary per section with Edit links; Create /
+Save here), **9 Event Created** (summary, QR, Download QR, share tiles).
+
+- Removed from the form: Design & Theme, Preview Invitation, the ceremony fields, the Event Status (draft /
+  cancelled) select and the Unlisted privacy option. Their values are still sent as loaded, so editing an old
+  event does not wipe them; new events still get the plan's first invitation template as `theme_id` silently.
+- Event Created no longer shows / downloads the invitation card, so `invitation_image` is not re-rendered on
+  save (the app falls back to its drawn card) — until the invitation module returns.
+- Validation per step: Type -> category; Basic -> title + photo; Date -> 4 date/time fields; Organizer -> phone /
+  email format. Portal type-check passes; not yet seen in a browser.
+
+---
+
+## 7g. Edit Event hub + Guests / RSVP / Agenda per event (Client Portal, 2026-10-31)
+
+**Edit Event = the app's hub.** `/dashboard/events/:id/edit` (`events/[id]/_components/edit-event-hub.tsx`):
+Splash Screen, Invitation Card, Basic Details, Event QR (dialog), Date & Time, Venue, Agenda, Family,
+Participants, RSVP, Photo Gallery, Wed Wishes (Soon), Live Streaming (Soon), Social Links (Soon), Contact Person,
+Organizer Settings (web extra), Event App Menu. Form rows open `?section=basic|date|venue|menus|organizer|invitation`
+-> the wizard in SECTION MODE (no stepper, Cancel / Save, save = the same full update, back to the hub).
+**Invitation Card** = the old Design & Theme + Preview pages (restored from git) as pages 1-2 of that section.
+`?section=all` = the full Create Event steps (drafts: "Continue Create Event" banner; My Events "Continue setup" and
+Duplicate go there). Module rows open the event page with `?tab=` (event-detail reads it). Portal has no Wishes /
+Live Streaming / Social Links modules yet -> "Soon".
+
+**Guests per event (as the app):** event picker on Guests; tabs + tiles All / Not Invited / Invited / Pending /
+Confirmed / Declined with counts (`/client/guests?event_id=&status=`, `/client/guests/stats?event_id=` -> `statuses`);
+Status column; bulk **Mark as Invited** (`action: invite`); Add Guest and Import carry `?event=` and send `event_id`.
+No backend change (the 2026-10-28 event-based guest API).
+
+**RSVPs per event:** no "All Events"; always one event (`?event=` or the first); Clear filters keeps the event.
+
+**Agenda:** new sidebar page `/dashboard/agenda` — event picker + the same AgendaPanel as the Schedule tab.
+
+Portal type-check passes; none of this seen in a browser yet.
+
+---
+
+## 7h. Venue map in Create / Edit Event (2026-10-31)
+
+`components/common/venue-map-picker.tsx` on the Venue step: Google map, click / drag the pin, Use My Current Location,
+Remove Pin, search box (Places API New, optional). Fills venue_lat / venue_lng; name, address and map link only when
+empty. Key = the mobile app's Google Maps key via `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (set in the portal's local
+.env.local; documented in .env.example; must be added on Vercel).
+
+**Blocker found (tested in headless Chromium):** that key's Google project does NOT have the Maps JavaScript API
+enabled -> `ApiNotActivatedMapError` ("This page didn't load Google Maps correctly"). Places API (New) is blocked
+by the key's API restrictions; Geocoding not enabled. The key has no app restriction (server calls are refused only
+for "not activated"). To make the map work: enable Maps JavaScript API (+ Places API (New) for search) in Google
+Cloud and allow them in the key's API restrictions — or use a separate web key with an HTTP-referrer restriction.
+Until then the Venue step still takes typed latitude / longitude.
+
+---
+
+## 7i. Splash Screen off the web; Invitation Card pages like the app (2026-10-31)
+
+- **Splash Screen removed from the Client Portal:** sidebar entry, Edit Event hub row, the `/dashboard/splash-screens`
+  pages and `hooks/use-splash-screens.ts` deleted. It stays in the mobile app; the backend API is untouched.
+- **Edit Event → Invitation Card** now follows the app's Design pages: 1 Choose a Template Category (style tiles with
+  counts) -> 2 Choose a Template (All / Color / Image / Gradient / Custom tabs, grid, Change Category) -> 3 Your Image
+  (custom templates only; skipped otherwise, both directions; required picture checked here) -> Preview (components +
+  live card, Save). **Card Settings** (primary / secondary colour, QR style) opens from a button on the Preview and
+  returns with Done / Back to Preview. Page constants S_DESIGN, S_TEMPLATES, S_CUSTOM_IMG, S_CARD_SETTINGS, S_PREVIEW.
+- Portal type-check passes; not yet seen in a browser.
+
+---
+
+## 7j. Create Event order + fit view (2026-10-31)
+
+Steps now: 1 Event Type, 2 Basic Details, 3 Date & Time, 4 Venue, **5 Mobile Splash Screen (EMPTY placeholder —
+Jamal: "just an empty screen"; nothing saved)**, 6 Menus, 7 **Organizer Details** (renamed from Organizer
+Settings), 8 Review, 9 Event Created. **Settings step removed.** Fit view: Basic / Date / Venue / Organizer use
+the full card width in two columns (Venue: map left, fields right); the stepper no longer forces a 680px minimum.
+Edit hub: "Mobile Splash Screen" row shows Soon; "Organizer Details" renamed. The venue pin also fills venue name /
+address / landmark like the app (Google geocoder, OpenStreetMap fallback).
+
+---
+
 ## 8. Open items
 
 1. **LIVE DATABASE IS MISSING 4 COLUMNS — client sign-in fails until fixed.** `website_clients` on live
