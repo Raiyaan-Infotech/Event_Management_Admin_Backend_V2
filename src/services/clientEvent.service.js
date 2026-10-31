@@ -1281,6 +1281,27 @@ const getDashboardStats = async (clientId) => {
         }
     }
 
+    // Guests = participants of the client's events — the same count each event
+    // row shows as "N Guests (M Confirmed)" — in ONE grouped query.
+    let guests = { total: 0, yes: 0, pending: 0, no: 0 };
+    if (events.length) {
+        const [g] = await sequelize.query(
+            `SELECT COUNT(*) AS total,
+                    SUM(response_type = 'yes') AS yes,
+                    SUM(response_type IN ('none', 'maybe')) AS pending,
+                    SUM(response_type = 'no') AS no
+               FROM event_participants
+              WHERE deleted_at IS NULL AND event_id IN (:ids)`,
+            { replacements: { ids: events.map((e) => e.id) }, type: Sequelize.QueryTypes.SELECT },
+        );
+        guests = {
+            total: Number(g?.total) || 0,
+            yes: Number(g?.yes) || 0,
+            pending: Number(g?.pending) || 0,
+            no: Number(g?.no) || 0,
+        };
+    }
+
     return {
         total_events: counts.total,
         // Everything a guest could see. Live, upcoming and completed alike are
@@ -1292,17 +1313,13 @@ const getDashboardStats = async (clientId) => {
         draft_events: counts.draft,
         cancelled_events: counts.cancelled,
         upcoming_next_30_days: upcomingSoon,
-        // No guest module exists. Reported honestly rather than omitted, so the
-        // tiles the design calls for can render and say which kind of zero this
-        // is — `guests_available: false` is what the UI reads to label them.
-        total_guests: 0,
-        rsvps_received: 0,
-        rsvp_going: 0,
-        rsvp_pending: 0,
-        rsvp_declined: 0,
-        // The list/dashboard tiles still read the event tables only; the
-        // guest-backed figures live on /events/analytics.
-        guests_available: false,
+        // Participants across the client's events (V2, 2026-10-31).
+        total_guests: guests.total,
+        rsvps_received: guests.yes + guests.no,
+        rsvp_going: guests.yes,
+        rsvp_pending: guests.pending,
+        rsvp_declined: guests.no,
+        guests_available: true,
     };
 };
 

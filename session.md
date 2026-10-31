@@ -247,6 +247,29 @@ Jamal: home screen templates need their OWN category master, not the invitation 
 
 ---
 
+## 7e. My Events redesign (Client Portal, 2026-10-31)
+
+Jamal's My Events mockup: full-width stat tiles (no right rail any more), tabs with counts (All / Upcoming /
+Live / Completed / Drafts from `/client/events/stats`), "Sort by" (Latest = created_desc), search + "All Events"
+category select, and one card per event: invitation art, name + status badge, date, venue,
+"N Guests (M Confirmed)", category + privacy chips, **Pre-Event Setup** ring "X of 10" + bar + "View Setup
+Details" popover, and View Event / Edit Event / Duplicate / Share / Delete. The mockup's empty box after the
+progress panel is NOT reproduced — the details column takes that width.
+
+- **Setup progress is derived** from the event row (no table): category, name+date+time, venue, home template,
+  app menus, invitation design, cover image, contact person, guests added, published. `SETUP_STEPS` in
+  `events/page.tsx`.
+- **Duplicate:** no backend endpoint — `useDuplicateEvent` reads the event and creates a copy through the normal
+  create (status draft, name + " (Copy)"), then opens its edit page. Plan limits and validation apply.
+- **Share:** the event QR dialog ("Share Event").
+- Backend `getDashboardStats`: `total_guests`, `rsvp_going/pending/declined`, `rsvps_received` (yes + no) now
+  counted from `event_participants` (one grouped query); `guests_available: true`. Local check matches a direct
+  count (client 23: 121 guests, 42 yes). The Dashboard's RSVP tile caption now reads "N accepted".
+- Removed from My Events: the Quick Actions / Upcoming / Event Performance rail and the privacy filter (not in
+  the design). Portal type-check passes; not yet seen in a browser.
+
+---
+
 ## 8. Open items
 
 1. **LIVE DATABASE IS MISSING 4 COLUMNS — client sign-in fails until fixed.** `website_clients` on live
