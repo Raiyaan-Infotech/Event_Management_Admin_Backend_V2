@@ -8,6 +8,7 @@ const {
     EventCategory,
     EventMenu,
     EventTemplate,
+    HomeScreenTemplate,
     FrameStyle,
     Decoration,
 } = require('../models');
@@ -62,6 +63,7 @@ const WRITABLE_FIELDS = [
     'privacy', 'status',
     'menu_ids', 'disabled_app_menu_ids',
     'theme_id', 'primary_color', 'secondary_color',
+    'home_screen_template_id',
     'cover_image', 'custom_image',
     'components', 'component_order',
     'qr_style',
@@ -386,6 +388,24 @@ const normalise = async (clientId, body, { partial = false } = {}) => {
         // mean a new theme needs a backend deploy.
         if (value && !SLUG.test(value)) throw ApiError.badRequest('Invalid theme.');
         data.theme_id = value;
+    }
+
+    // Step 1 — the mobile app home screen design. Must be a real, active
+    // template; NULL / '' clears it.
+    if (has('home_screen_template_id')) {
+        const raw = picked.home_screen_template_id;
+        if (raw === null || raw === undefined || raw === '') {
+            data.home_screen_template_id = null;
+        } else {
+            const id = Number(raw);
+            if (!Number.isInteger(id) || id <= 0) throw ApiError.badRequest('Invalid home screen template.');
+            const template = await HomeScreenTemplate.findOne({
+                where: { id, is_active: 1 },
+                attributes: ['id'],
+            });
+            if (!template) throw ApiError.badRequest('That home screen template is no longer available.');
+            data.home_screen_template_id = id;
+        }
     }
 
     if (has('primary_color')) {

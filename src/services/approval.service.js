@@ -33,6 +33,7 @@ function getServiceMap() {
       website_clients: require('./websiteClient.service'),
       event_menus: require('./eventMenu.service'),
       home_screen_templates: require('./homeScreenTemplate.service'),
+      home_screen_categories: require('./homeScreenCategory.service'),
       event_responsibilities: require('./eventResponsibility.service'),
 
       // Subscription Plans

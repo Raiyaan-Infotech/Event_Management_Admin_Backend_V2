@@ -185,6 +185,68 @@ Jamal dropped both from V2. Client sign-in now lives in the **Client Portal itse
 
 ---
 
+## 7c. Create Event → Step 1 home template picker (2026-10-31)
+
+Client Portal wizard, Step 1 "Event Basics": after the Event Category, **"Choose <Category> Mobile App
+Home Template"** — style chips, template cards (phone preview, name, description, colour dots,
+Preview / Select, check + "Selected"), and a **Mobile Home Preview** side panel. Optional; choosable later.
+
+- **Style chips are dynamic:** the backend builds them from the **Template Categories master table**
+  (`template_categories`, admin Invitation → Template Categories) — only styles that active templates of
+  that event category use, in the master table's sort order. No style list in the frontend.
+- Backend: `GET /client/home-screen-templates?event_category_id=` (`homeScreenTemplate.service.listForClient`,
+  `controllers/clientHomeScreenTemplate.controller.js`) — active templates only.
+- Saved on the event: new column **`events.home_screen_template_id`** (FK home_screen_templates, SET NULL).
+  Migration `migrations/sql/20261031-event-home-screen-template.sql`, applied by
+  `tools/apply-home-screen-templates.js` (now does both steps). Event model, `initial_setup.sql`,
+  `clientEvent.service` WRITABLE_FIELDS + check (must exist and be active; '' / null clears).
+- A selection that is not in the category's list (category changed, template switched off) is cleared.
+- **Sample data:** `seeders/home-screen-templates.seeder.js` — 5 Wedding templates, one per style
+  (Classic Romance, Royal Celebration, Modern Elegance, Traditional Charm, Graceful Ivory) with generated
+  placeholder SVG artwork (no text; names/countdown/menus are drawn over it), uploaded via media.service.
+  Skips a style that does not exist and a name that already exists. Dry run by default, `--apply` to write.
+- Portal: `components/common/home-screen-preview.tsx` (same drawing as the admin preview),
+  `hooks/use-home-screen-templates.ts`, `events/_components/home-template-picker.tsx`.
+- LOCAL `event_v2`: column added, 5 samples seeded; listing test OK (5 templates, chips Classic, Royal,
+  Minimal, Elegant, Traditional; switched-off template hidden; other category -> none). Portal type-check passes.
+  Not yet seen in a browser.
+- Not built (mockup extras): "Popular" badge, Preview All, Compare Templates. The mobile app does not read the
+  chosen template yet.
+- **PRODUCTION ORDER (live event_v2):** `apply-client-personal-address.js --prod --apply` (item 1 below) ->
+  `tools/apply-home-screen-templates.js --prod --apply` -> `seeders/home-screen-templates.seeder.js --prod --apply`
+  -> push backend -> push client portal.
+
+---
+
+## 7d. Home Screen Categories — own master table (2026-10-31)
+
+Jamal: home screen templates need their OWN category master, not the invitation Template Categories.
+
+- Admin: **Template → Home Screen Categories** (`/admin/home-screen-templates/categories`) — same screen as
+  Invitation → Template Categories (inline add/edit, name + slug, active switch, display order, drag reorder,
+  search, delete), count column = templates. Hook `use-home-screen-categories.ts`. Permission
+  `home_screen_categories.*` (guest-option-permissions.seeder.js). Breadcrumb "Home Screen Categories".
+- Backend: table `home_screen_categories` (`migrations/sql/20261031-home-screen-categories.sql`), model
+  `HomeScreenCategory`, `homeScreenCategory.service/controller/routes`, `/api/v1/home-screen-categories`,
+  registered in both approval maps. Soft delete keeps templates (they show without a style).
+- `home_screen_templates.template_category_id` (-> template_categories) is REPLACED by
+  **`home_screen_category_id`** (-> home_screen_categories, FK `fk_home_tpl_category`, SET NULL).
+  `tools/apply-home-screen-templates.js` step 3 does it: copies each style in use across BY NAME, re-points the
+  rows, drops the old FK/index/column. `initial_setup.sql` has the final shape.
+- The Home Screen Template form's "Template Style" dropdown and the portal's Step 1 style chips now read this
+  table. The sample seeder creates the 5 default styles (Classic, Royal, Minimal, Elegant, Traditional) when missing.
+- LOCAL `event_v2`: applied; 5 styles copied, templates re-pointed; test 7/7 (list counts, chips follow the master's
+  order, a new category appears as a chip once used, bad id refused, delete keeps the template). Both frontends type-check.
+
+**PRODUCTION ORDER (live event_v2), replaces the one in 7c:**
+1. `node src/database/tools/apply-client-personal-address.js --prod --apply`  (fixes client sign-in, item 1 below)
+2. `node src/database/tools/apply-home-screen-templates.js --prod --apply`  (categories table, column switch, events column)
+3. `node src/database/seeders/guest-option-permissions.seeder.js --prod`  (home_screen_categories permissions)
+4. `node src/database/seeders/home-screen-templates.seeder.js --prod --apply`  (5 styles + 5 sample templates)
+5. push backend, then admin frontend and client portal.
+
+---
+
 ## 8. Open items
 
 1. **LIVE DATABASE IS MISSING 4 COLUMNS — client sign-in fails until fixed.** `website_clients` on live

@@ -8,8 +8,8 @@ const { DataTypes } = require('sequelize');
  * the rest of the home screen with (countdown, menu tiles, background):
  *   [{ key: 'primary', label: 'Primary', hex: '#F76AA5' }, ...]
  * `color_count` (2–5) entries, keys in the fixed order of COLOR_ROLES in the
- * service. `template_category_id` is the "Template Style" (Royal, Floral...),
- * the same design families the invitation templates use.
+ * service. `home_screen_category_id` is the "Template Style" (Classic, Royal...),
+ * from its own master table `home_screen_categories` (Template → Home Screen Categories).
  */
 module.exports = (sequelize) => {
     const HomeScreenTemplate = sequelize.define('HomeScreenTemplate', {
@@ -17,7 +17,7 @@ module.exports = (sequelize) => {
         name: { type: DataTypes.STRING(150), allowNull: false },
         description: { type: DataTypes.STRING(300), allowNull: true },
         event_category_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
-        template_category_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+        home_screen_category_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
         image_url: { type: DataTypes.STRING(500), allowNull: true },
         image_name: { type: DataTypes.STRING(255), allowNull: true },
         image_size: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },

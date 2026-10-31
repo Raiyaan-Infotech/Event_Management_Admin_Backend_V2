@@ -87,6 +87,13 @@ const MODULES = [
         description: 'Manage the mobile app home screen templates',
         label: 'Home Screen Templates',
     },
+    // Template → Home Screen Categories (2026-10-31): the style master for them.
+    {
+        slug: 'home_screen_categories',
+        name: 'Home Screen Categories',
+        description: 'Manage the styles of the mobile app home screen templates',
+        label: 'Home Screen Categories',
+    },
 ];
 
 const ACTIONS = [

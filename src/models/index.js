@@ -114,6 +114,8 @@ db.FrameStyle = require('./FrameStyle')(sequelize, Sequelize);
 
 // Mobile app home screen designs per event category (Template → Home Screen Templates).
 db.HomeScreenTemplate = require('./HomeScreenTemplate')(sequelize, Sequelize);
+// Style master for home screen templates (Template → Home Screen Categories).
+db.HomeScreenCategory = require('./HomeScreenCategory')(sequelize, Sequelize);
 
 // Uploaded ornament images placed INSIDE a template — corners, dividers, tops.
 // A frame surrounds the whole invitation; a decoration is one part of it.
@@ -416,7 +418,8 @@ db.FrameStyle.belongsTo(db.User, { foreignKey: 'created_by', as: 'creator' });
 db.FrameStyle.belongsTo(db.User, { foreignKey: 'updated_by', as: 'updater' });
 
 db.HomeScreenTemplate.belongsTo(db.EventCategory, { foreignKey: 'event_category_id', as: 'eventCategory' });
-db.HomeScreenTemplate.belongsTo(db.TemplateCategory, { foreignKey: 'template_category_id', as: 'style' });
+db.HomeScreenTemplate.belongsTo(db.HomeScreenCategory, { foreignKey: 'home_screen_category_id', as: 'style' });
+db.HomeScreenCategory.hasMany(db.HomeScreenTemplate, { foreignKey: 'home_screen_category_id', as: 'templates' });
 db.HomeScreenTemplate.belongsTo(db.User, { foreignKey: 'created_by', as: 'creator' });
 db.HomeScreenTemplate.belongsTo(db.User, { foreignKey: 'updated_by', as: 'updater' });
 

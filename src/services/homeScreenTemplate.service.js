@@ -1,4 +1,4 @@
-const { Sequelize, User, HomeScreenTemplate, EventCategory, TemplateCategory, sequelize } = require('../models');
+const { Sequelize, User, HomeScreenTemplate, EventCategory, HomeScreenCategory, sequelize } = require('../models');
 const baseService = require('./base.service');
 const ApiError = require('../utils/apiError');
 
@@ -10,7 +10,7 @@ const MODULE_SLUG = 'home_screen_templates';
  * category (admin → Template → Home Screen Templates, 2026-10-30).
  *
  * The row is: a name + description, the event category it is for, a Template
- * Style (a template_categories row: Royal, Floral...), the uploaded 9:16 image,
+ * Style (a home_screen_categories row: Classic, Royal...), the uploaded 9:16 image,
  * and a 2–5 colour palette in a fixed role order.
  */
 
@@ -26,14 +26,14 @@ const MIN_COLORS = 2;
 const MAX_COLORS = 5;
 
 const WRITABLE_FIELDS = [
-    'name', 'description', 'event_category_id', 'template_category_id',
+    'name', 'description', 'event_category_id', 'home_screen_category_id',
     'image_url', 'image_name', 'image_size', 'color_count', 'colors',
     'notes', 'is_active', 'sort_order',
 ];
 
 const INCLUDE = [
     { model: EventCategory, as: 'eventCategory', attributes: ['id', 'name', 'icon'], required: false },
-    { model: TemplateCategory, as: 'style', attributes: ['id', 'name', 'slug'], required: false },
+    { model: HomeScreenCategory, as: 'style', attributes: ['id', 'name', 'slug'], required: false },
 ];
 const AUDIT_INCLUDE = [
     { model: User, as: 'creator', attributes: ['id', 'full_name'], required: false },
@@ -94,7 +94,7 @@ const pickWritable = (data = {}) => {
         if (p[key] !== undefined) p[key] = String(p[key] ?? '').trim().slice(0, max) || null;
     }
     if (p.event_category_id !== undefined) p.event_category_id = toId(p.event_category_id);
-    if (p.template_category_id !== undefined) p.template_category_id = toId(p.template_category_id);
+    if (p.home_screen_category_id !== undefined) p.home_screen_category_id = toId(p.home_screen_category_id);
     if (p.image_size !== undefined) {
         const n = parseInt(p.image_size, 10);
         p.image_size = Number.isNaN(n) || n < 0 ? null : n;
@@ -119,8 +119,8 @@ const assertRefs = async (p) => {
         const c = await EventCategory.findByPk(p.event_category_id, { attributes: ['id'] });
         if (!c) throw ApiError.badRequest('Selected event category does not exist.');
     }
-    if (p.template_category_id) {
-        const c = await TemplateCategory.findByPk(p.template_category_id, { attributes: ['id'] });
+    if (p.home_screen_category_id) {
+        const c = await HomeScreenCategory.findByPk(p.home_screen_category_id, { attributes: ['id'] });
         if (!c) throw ApiError.badRequest('Selected template style does not exist.');
     }
 };
@@ -131,7 +131,7 @@ const assertComplete = (row) => {
     if (!row.name) missing.push('Template Name');
     if (!row.description) missing.push('Description');
     if (!row.event_category_id) missing.push('Event Category');
-    if (!row.template_category_id) missing.push('Template Style');
+    if (!row.home_screen_category_id) missing.push('Template Style');
     if (!row.image_url) missing.push('Home Screen Image');
     if (missing.length) throw ApiError.badRequest(`Please fill all mandatory fields: ${missing.join(', ')}.`);
 };
@@ -150,8 +150,8 @@ const getAll = async (query = {}, companyId = undefined) => {
     const where = {};
     const eventCategoryId = toId(query.event_category_id);
     if (eventCategoryId) where.event_category_id = eventCategoryId;
-    const styleId = toId(query.template_category_id);
-    if (styleId) where.template_category_id = styleId;
+    const styleId = toId(query.home_screen_category_id);
+    if (styleId) where.home_screen_category_id = styleId;
     if (query.status === 'active') where.is_active = 1;
     else if (query.status === 'inactive') where.is_active = 0;
 
@@ -230,6 +230,46 @@ const updateStatus = async (id, isActive, userId = null, companyId = undefined) 
     return getById(id, companyId);
 };
 
+/**
+ * For the Client Portal's Create Event wizard (Step 1).
+ *
+ * Only ACTIVE templates, optionally for one event category. The style chips
+ * are NOT a fixed list: `styles` is built from the Template Categories the
+ * returned templates actually use (in that category's own sort order), so a new
+ * style added in the admin appears in the portal with no code change, and a
+ * style with no template for this category is never shown as an empty chip.
+ */
+const listForClient = async ({ eventCategoryId } = {}) => {
+    const where = { is_active: 1 };
+    const categoryId = toId(eventCategoryId);
+    if (categoryId) where.event_category_id = categoryId;
+
+    const rows = await HomeScreenTemplate.findAll({
+        where,
+        attributes: [
+            'id', 'name', 'description', 'event_category_id', 'home_screen_category_id',
+            'image_url', 'color_count', 'colors', 'sort_order', 'created_at',
+        ],
+        include: [
+            { model: EventCategory, as: 'eventCategory', attributes: ['id', 'name'], required: false },
+            { model: HomeScreenCategory, as: 'style', attributes: ['id', 'name', 'slug', 'sort_order'], required: false },
+        ],
+        order: [['sort_order', 'ASC'], ['created_at', 'ASC']],
+    });
+
+    const templates = rows.map(shape);
+
+    const styleMap = new Map();
+    for (const t of templates) {
+        if (t.style && !styleMap.has(t.style.id)) styleMap.set(t.style.id, t.style);
+    }
+    const styles = [...styleMap.values()]
+        .sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0) || String(a.name).localeCompare(String(b.name)))
+        .map(({ id, name, slug }) => ({ id, name, slug }));
+
+    return { templates, styles };
+};
+
 const deleteById = async (id, userId = null, companyId = undefined) =>
     baseService.remove(HomeScreenTemplate, MODEL_NAME, id, userId, companyId);
 
@@ -241,6 +281,7 @@ module.exports = {
     update,
     updateStatus,
     deleteById,
+    listForClient,
     // Alias used by approval.service.js executeApprovedAction
     remove: deleteById,
     COLOR_ROLES,

@@ -199,6 +199,8 @@ router.put(
 );
 router.delete('/me/cover', controller.removeMyCover);
 router.get('/event-options', controller.eventOptions);
+// Create Event wizard Step 1: mobile app home screen designs + their style chips.
+router.get('/home-screen-templates', require('../controllers/clientHomeScreenTemplate.controller').list);
 router.put('/favourite-templates', controller.setFavouriteTemplates);
 // Home → Quick Actions: the plan's menus the organizer picked, in their order.
 router.get('/quick-actions', controller.getQuickActions);

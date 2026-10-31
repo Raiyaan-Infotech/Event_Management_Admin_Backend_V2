@@ -112,6 +112,9 @@ module.exports = (sequelize) => {
 
             // ── Step 4 — design ─────────────────────────────────────────────
             theme_id: { type: DataTypes.STRING(64), allowNull: true },
+            // Mobile app home screen design (home_screen_templates), picked in
+            // the portal wizard's Step 1. NULL = none picked.
+            home_screen_template_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
             primary_color: { type: DataTypes.STRING(9), allowNull: true },
             secondary_color: { type: DataTypes.STRING(9), allowNull: true },
 
