@@ -426,11 +426,18 @@ address / landmark like the app (Google geocoder, OpenStreetMap fallback).
   rotate left/right + zoom (rotation-aware export; new `shape` prop, avatars stay round). Shapes as in the
   app: event photo **1:1** (was 16:9), organizer 1:1, venue 16:9.
 - **Landmark → "City"** (same column `venue_landmark`); the map pin now fills the town/city.
-- **Venue photo from the place:** after a pin, `GET /client/venue-photo?lat&lng&name` (new,
-  `services/venuePhoto.service.js`) — Google Places (New) text search → first photo → stored in our media →
-  fills Venue Image only if empty. ⚠ Tested 2026-11-02: the key's project returns NO `photos` for any place
-  (even big hotels), so it answers `url: null` until Places photos are enabled for that Google project.
-  Backend change → needs a V2 backend push.
+- **Venue photo — REMOVED (Jamal, 2026-11-02).** The auto photo needed Google Places photos, which need a
+  billing account (card) on the key's Google project — not available. Removed: the Venue Image field and the
+  auto-fetch in the wizard, `GET /client/venue-photo`, `services/venuePhoto.service.js`. The `venue_image`
+  column stays (old events keep their photo; the wizard still re-sends the loaded value on edit). Same removal in
+  the V1 app's Create Event (Venue Image section). Backend change → needs a V2 backend push.
+- **Guests module: spacing tightened** (all guest pages: page gaps, card padding, 20px title, table rows).
+- **Add Guest = the app's form** (`guests/_components/guest-form.tsx`): Full Name * (kept whole as first_name),
+  Mobile Number * (country code + per-country check), Group * ("Create a group first" when none), Email (Optional),
+  Note (Optional), "x / y guests used" line, hint "More details … with Edit Guest". Toasts: "Please fill all
+  mandatory fields." → mobile check → "Please enter a valid email address.". Edit Guest keeps the full form
+  (First Name *, Phone *, rest optional) like the app's Edit. The list's group filter is pre-chosen (?group=).
+  Portal only, no backend change.
 - **Music ≤ 1 minute** (checked in the browser before upload) and < 5 MB.
 - **"Always included"** text removed from Default menus.
 - **Phone = the app's rules everywhere** (`lib/phone.ts` + `components/common/phone-input.tsx`, libphonenumber-js
@@ -438,6 +445,10 @@ address / landmark like the app (Google geocoder, OpenStreetMap fallback).
   Used in: wizard Contact Number, Guest form, Settings → Profile, Family member, Event Settings contact.
   Event contact numbers stay one string "+91 98…" (as stored before).
 - Type-check passes; not seen in a browser; nothing committed.
+- **Fit view, round 2 (laptop ~1366 px):** smaller header + stepper; Basic = 3 columns on xl (text | hosts +
+  status | 230px photo, size note folded into the hint); Venue = map | 2-column fields; Organizer = 2×2 fields |
+  220px photo; Splash = Background, then Invitation Menu | Animation + Music; menu rows py-2; Review 3 per row;
+  dashboard layout padding pt-4/pb-4 (all pages).
 
 ## 8. Open items
 
