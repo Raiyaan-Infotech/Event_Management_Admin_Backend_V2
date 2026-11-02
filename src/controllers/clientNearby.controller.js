@@ -1,6 +1,7 @@
 const service = require('../services/clientNearby.service');
 const { asyncHandler } = require('../utils/helpers');
 const ApiResponse = require('../utils/apiResponse');
+const venuePhotoService = require('../services/venuePhoto.service');
 
 /** Near By (2026-10-24) — see clientNearby.service. */
 
@@ -20,4 +21,10 @@ const list = asyncHandler(async (req, res) => {
     return ApiResponse.success(res, result, 'Nearby places loaded.');
 });
 
-module.exports = { getSettings, updateSettings, list };
+/** A real photo of the venue at the pin, stored in our media; url null when none. */
+const venuePhoto = asyncHandler(async (req, res) => {
+    const result = await venuePhotoService.venuePhoto(req.websiteClient.company_id, req.query);
+    return ApiResponse.success(res, result, result.url ? 'Venue photo found.' : 'No photo for this place.');
+});
+
+module.exports = { getSettings, updateSettings, list, venuePhoto };

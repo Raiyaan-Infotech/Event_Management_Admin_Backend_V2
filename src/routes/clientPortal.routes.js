@@ -994,6 +994,8 @@ router.delete('/wishes/:wishId/block', wishController.unblock);
 router.get('/events/:id/nearby-settings', nearbyController.getSettings);
 router.put('/events/:id/nearby-settings', nearbyController.updateSettings);
 router.get('/events/:id/nearby', nearbyController.list);
+// Venue photo for Create / Edit Event: the pinned place's own photo (Google Places).
+router.get('/venue-photo', nearbyController.venuePhoto);
 
 // The app's read: the ACTIVE splash for one event, or null. Declared BEFORE
 // `/splash-screens/:id` — the same ordering trap as `/events/stats`, since

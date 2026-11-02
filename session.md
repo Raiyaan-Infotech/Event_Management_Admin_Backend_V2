@@ -185,6 +185,23 @@ Jamal dropped both from V2. Client sign-in now lives in the **Client Portal itse
 
 ---
 
+## 7b-2. 2026-11-02: Website Builder + Public Website RESTORED (reverses 7b)
+
+The two Vercel projects had been deleted (`DEPLOYMENT_NOT_FOUND`); the local folders were gone too.
+
+- Local folders re-cloned from the V2 repos (they already held V1's latest code: builder `8c9c56a`,
+  public site `0f5dfcb`). Each has `.env.local` (localhost) and `.env.production.local` (the live values) —
+  both gitignored.
+- Vercel projects recreated in `jamal2426s-projects` with the SAME names, so the addresses in section 2
+  are back; both connected to their V2 GitHub repo (push to `main` = deploy). Framework set to
+  **Next.js** by hand — a project made with `vercel project add` has none and the build fails with
+  "No Output Directory named public".
+- Production variables as in section 5 (builder's `NEXT_PUBLIC_VENDOR_PORTAL_URL` = client portal stand-in).
+  ⚠ `printf | vercel env add` saved them EMPTY; use `vercel env add K production --value V`.
+- Verified live: builder `/login` 200 and its code calls the V2 backend; public site renders the V2
+  company site (hero "Make Every Moment Memorable…"); backend CORS allows both (204).
+  The "This site isn't available" text in the page source is the bundled not-found view, not shown.
+
 ## 7c. Create Event → Step 1 home template picker (2026-10-31)
 
 Client Portal wizard, Step 1 "Event Basics": after the Event Category, **"Choose <Category> Mobile App
@@ -356,18 +373,77 @@ the full card width in two columns (Venue: map left, fields right); the stepper 
 Edit hub: "Mobile Splash Screen" row shows Soon; "Organizer Details" renamed. The venue pin also fills venue name /
 address / landmark like the app (Google geocoder, OpenStreetMap fallback).
 
+## 7k. Live check + Create Event screenshots (2026-10-31)
+
+- Pushed (no Co-Authored-By): portal `5a0aa72`, backend `aed9eef`. Pushes go out under the GitHub login
+  saved in Windows Credential Manager (`Jamal2426`), so no sign-in window appears.
+- Live V2 portal (`eventmanagementclientv2.vercel.app`) checked in a headless browser: `/login` Mobile OTP
+  sign-in works end to end (so the 4 missing `website_clients` columns are now on live `event_v2`).
+- Screenshots of every Create Event page are in `D:\Jamal\Eveninvit_2\screenshots\create-event\`
+  (01 Event Type ... 08 Review, 10 Edit Event hub, 11-14 Invitation Card: category, template, preview,
+  card settings). Taken through Edit Event -> all steps on Ismail's event #34 without saving, because
+  Ismail's Basic plan is at its limit (2 events allowed, 6 created) and `/events/create` shows
+  "Event limit reached". Step 9 "Event Created" needs a real create on an account under its limit.
+
 ---
+
+## 7l. Create / Edit Event — Jamal's review fixes (2026-11-02, portal only, no backend change)
+
+- Title "New Event" / "Edit Event"; header **New Event** button hidden on `/events/create` and `/events/:id/edit`.
+- Step description now sits under the active step in the stepper (no "Step N" block in the card).
+- **Exit** asks on new AND edit: Save as Draft (new / draft events; toast "Draft saved successfully.") or
+  **Save Changes** when editing a live event (never unpublishes it), Exit, Keep Editing.
+- Step 1: home templates in a slider with left / right arrows.
+- Step 2: order Title, Tagline, Short Description, Groom/Bride, Event Status; photo in its own column + size note.
+  ALL mandatory now (tagline, description, first host; second host for wedding-type).
+- Step 3: red "* The event date cannot be changed after it is created."; a saved time zone not in the list
+  (e.g. the app's long India name) is now offered, so the box no longer shows empty.
+- Step 4: "Step 1 (Search on Map)" / "Step 2 (Want to Edit)"; own search box + Search button (Google geocoder,
+  OpenStreetMap fallback — the Places autocomplete was dropped, Places is blocked for the key); taller map;
+  "(Optional)" labels removed.
+- **Step 5 Splash Screen built** (`_components/splash-step.tsx`, `hooks/use-event-splash.ts`): background
+  Image / Gradient (linear|radial, 5 directions, start/end) / Color (presets), invitation parts with switches,
+  animation Fade / Zoom / Slide / Particle, music (MP3 ≤ 5 MB, play), live phone preview. Saved to the existing
+  `/client/splash-screens` row of the event AFTER the event save, only if touched or already existing.
+  Web-only values live in `background_config` (gradient_*, animation, music_*). ⚠ The mobile app does not yet
+  play animation / music or draw the web gradient/image — it renders its splash from the invitation design.
+  Edit hub row "Splash Screen" now opens `?section=splash`.
+- Step 6 "App Menus": panel descriptions (Additional = switchable, Default = can't be disabled).
+- Step 7: **Organizer Photo** (required, square crop) → `events.organizer_image` (already accepted by the API).
+- Review: cards in step order — Event Type, Basic, Date & Time, Venue, Splash, App Menus, Organizer.
+- **Mandatory fields = the mobile app's rules** (Jamal): Basic = title, tagline, description, photo, and
+  Groom + Bride on wedding-type only (other types' hosts optional — to be decided later); Date = all four, end
+  not before start; Venue = map pin + name, address, landmark, map link (http/https); Organizer = hosted by,
+  number, email, footer note (+ organizer photo, from the web design — the app has it optional).
+- Type-check passes; not yet seen in a browser; not committed.
+
+## 7m. Create / Edit Event — round 2 (2026-11-02)
+
+- **Fit view:** tighter card padding, gaps and inputs (h-10); map 340px (400 on xl); smaller splash preview.
+- **Time zones from the API:** the wizard uses `/client/event-options` → `timezones` (the app's list);
+  default = "(GMT +05:30) India Standard Time (Mumbai, Kolkata, New Delhi, Colombo)".
+- **Crop like the app:** `image-crop-dialog.tsx` now has a primary title bar, dark crop area with grid,
+  rotate left/right + zoom (rotation-aware export; new `shape` prop, avatars stay round). Shapes as in the
+  app: event photo **1:1** (was 16:9), organizer 1:1, venue 16:9.
+- **Landmark → "City"** (same column `venue_landmark`); the map pin now fills the town/city.
+- **Venue photo from the place:** after a pin, `GET /client/venue-photo?lat&lng&name` (new,
+  `services/venuePhoto.service.js`) — Google Places (New) text search → first photo → stored in our media →
+  fills Venue Image only if empty. ⚠ Tested 2026-11-02: the key's project returns NO `photos` for any place
+  (even big hotels), so it answers `url: null` until Places photos are enabled for that Google project.
+  Backend change → needs a V2 backend push.
+- **Music ≤ 1 minute** (checked in the browser before upload) and < 5 MB.
+- **"Always included"** text removed from Default menus.
+- **Phone = the app's rules everywhere** (`lib/phone.ts` + `components/common/phone-input.tsx`, libphonenumber-js
+  added): all countries (India first, searchable), per-country digit limit, mobile-number check, trunk 0 dropped.
+  Used in: wizard Contact Number, Guest form, Settings → Profile, Family member, Event Settings contact.
+  Event contact numbers stay one string "+91 98…" (as stored before).
+- Type-check passes; not seen in a browser; nothing committed.
 
 ## 8. Open items
 
-1. **LIVE DATABASE IS MISSING 4 COLUMNS — client sign-in fails until fixed.** `website_clients` on live
-   `event_v2` lacks `profile_visibility`, `visible_fields`, `social_links`, `cover_image_url` (the 29 Oct
-   profile work; its production script was never run). Every client lookup (OTP request, email login) returns
-   "Some values could not be saved". Fix (adds 4 empty columns, no data touched), from this folder:
-   `NODE_PATH=D:/Jamal/Event_Management_Admin_Backend/node_modules node src/database/tools/apply-client-personal-address.js --prod --apply`
-   then confirm with `schema-audit.js`. Dry run and audit were checked 2026-10-31. **V1's live DB has the same gap**
-   (V1 backend still answers normally because its deployed code is older) — run the same script in the V1 folder
-   before V1's next deploy.
+1. ~~Live `event_v2` missing 4 `website_clients` columns~~ — fixed (OTP login works on live, 2026-10-31).
+   **V1's live DB still has the gap** — run `apply-client-personal-address.js --prod --apply` in the V1
+   folder before V1's next deploy.
 2. **Mobile app → V2 backend.** `AppConfig` still defaults to the V1 Render address
    (`event-management-admin-backend.onrender.com`). Switch it to the V2 backend, then build.
 3. **OTP delivery for V2.** `OTP_ACCEPT_ANY=true` means anyone who knows a registered mobile
@@ -377,7 +453,12 @@ address / landmark like the app (Google geocoder, OpenStreetMap fallback).
    with the V2 settings above.
 6. **Google redirect URI** for the V2 backend (if V2 keeps Google login).
 7. **Home Screen Templates → mobile app** wiring.
-8. V2 folders have **no `node_modules`**. To run scripts there before `npm install`:
+8. **Re-run the fixed Home Screen seeder on live** (first run skipped every template):
+   `NODE_PATH=D:/Jamal/Event_Management_Admin_Backend/node_modules node src/database/seeders/home-screen-templates.seeder.js --prod --apply`
+9. **Venue map key:** set `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` on Vercel (V2 portal) to the new web key
+   "Web Maps (Client Portal)" (Maps JavaScript API; Places API (New) + Geocoding API optional) and
+   replace the app key in local `.env.local`.
+10. V2 folders have **no `node_modules`**. To run scripts there before `npm install`:
    `NODE_PATH=D:/Jamal/Event_Management_Admin_Backend/node_modules`. V2's backend also uses
    port 5001, same as V1 — stop V1 before running V2 locally.
 
