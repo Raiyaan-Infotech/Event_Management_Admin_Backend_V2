@@ -186,6 +186,7 @@ db.GuestNote = require('./GuestNote')(sequelize, Sequelize);
 db.GuestTag = require('./GuestTag')(sequelize, Sequelize);
 db.GuestReminder = require('./GuestReminder')(sequelize, Sequelize);
 db.EventParticipantResponseLog = require('./EventParticipantResponseLog')(sequelize, Sequelize);
+db.EventParticipantWaitlist = require('./EventParticipantWaitlist')(sequelize, Sequelize);
 db.EventMessage = require('./EventMessage')(sequelize, Sequelize);
 db.EventMessageCampaign = require('./EventMessageCampaign')(sequelize, Sequelize);
 // The organizer's notifications from the mobile app — their own tables, not

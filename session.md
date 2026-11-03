@@ -438,6 +438,35 @@ address / landmark like the app (Google geocoder, OpenStreetMap fallback).
   mandatory fields." → mobile check → "Please enter a valid email address.". Edit Guest keeps the full form
   (First Name *, Phone *, rest optional) like the app's Edit. The list's group filter is pre-chosen (?group=).
   Portal only, no backend change.
+- **RSVP Edit = the app's Edit Response** (`rsvps/[id]/edit/rsvp-edit.tsx`): Response Status * (Attending / Not
+  Attending / Maybe), Number of Guests 1-50 (hidden for Not Attending; sent as 1), Special Requests, Participant Name
+  (read-only), Phone Number * (country code + check; sent as dial_code + mobile — the server already accepts it and
+  refuses a number another participant has), Internal Note. Meal preference + Reset removed (the app has neither).
+  Toasts: "Please select an RSVP response." / "Please enter a valid mobile number.". RSVP list/detail: 20px titles,
+  doubled page padding removed.
+- **NEW web Participants module** (`/dashboard/participants`, sidebar entry gated by plan menu slug `participants`):
+  event picker, "x / y participants" plan line, tabs All / Active (has_joined) / Pending with counts, search, rows
+  (photo, name, phone, relation • side, members, status), ⋮ View Details (→ /dashboard/rsvps/:id) / Edit / Change Photo
+  (crop 1:1) / Remove. Add Participant → Add from Guest (this event's guests, "Added" when already a participant) or
+  Add Manually. Form = the app's (`participants/_components/participant-form.tsx`): Photo, Title *, First Name *,
+  Last Name, DOB, Email, Phone *; RSVP: Number of Guests (Add only), Food Preference, Groom/Bride Side *, Relation *;
+  Company; Add More Details (address + location pickers, Table Number, Notes, Special Requirements). Toast "Please
+  complete all required fields.". Hooks: `hooks/use-event-participants.ts` (existing /client/participants API, no
+  backend change). NOT built (not saved on the server in the app either): Block, Show in Participant List.
+- **Guests / RSVPs / Participants moved INSIDE the event** (Jamal, 2026-11-02): event view tabs = … Family, Guests,
+  RSVPs, Participants, Settings …; each opens its own page `/dashboard/events/:id/{guests,rsvps,participants}` with
+  `EventMiniCard` (thumbnail, status, name, date/time, venue, Back to event). Guests page = Jamal's screenshot: title +
+  Add Guest + Manage Group, event card, 5 tiles in one row, All Groups / search / Filters / **Import** / Export, status
+  tabs, table full width (right rail removed). List code moved to `guests/_components/guests-view.tsx`,
+  `rsvps/_components/rsvps-view.tsx`, `participants/_components/participants-view.tsx` (event fixed; event pickers gone).
+  Old `/dashboard/{guests,rsvps,participants}` forward to the event page (`?event=`) or My Events. Sidebar entries
+  removed; plan gate kept via `EVENT_SECTIONS` in lib/navigation.ts (sectionForPath + event tabs hidden when the plan
+  lacks guests / rsvp / participants). Save / Cancel / Back on guest, participant, RSVP and import pages return to the
+  event page. Also: Edit Venue map now moves to the saved pin when the event loads; RSVP filters on one row;
+  breadcrumb "RSVPs". Portal only.
+- **Event view tab "Schedule" renamed "Agenda"** (value `agenda`; old `?tab=schedule` links still open it; Edit Event hub
+  Agenda card → `?tab=agenda`). Data note: event 34 agenda rows are dated 2026-10-25/26 while the event is now
+  2026-11-25/26 (event dates moved after the agenda was made) — old rows sit outside the event; new ones are refused.
 - **Music ≤ 1 minute** (checked in the browser before upload) and < 5 MB.
 - **"Always included"** text removed from Default menus.
 - **Phone = the app's rules everywhere** (`lib/phone.ts` + `components/common/phone-input.tsx`, libphonenumber-js
@@ -449,6 +478,35 @@ address / landmark like the app (Google geocoder, OpenStreetMap fallback).
   status | 230px photo, size note folded into the hint); Venue = map | 2-column fields; Organizer = 2×2 fields |
   220px photo; Splash = Background, then Invitation Menu | Animation + Music; menu rows py-2; Review 3 per row;
   dashboard layout padding pt-4/pb-4 (all pages).
+
+## 7n. Venue search finds the place NEAR you (Jamal, 2026-11-03, portal only, no backend change)
+
+- Bug: searching "JK Mahal" pinned the one in Chennai, not the one nearby. The search sent only the text (Google
+  geocoder / OpenStreetMap, no location) → the best-known match won; the map also opens on Chennai.
+- `venue-map-picker.tsx`: every search is biased to the person's location (asked once on the first search;
+  quietly read on load when already allowed; also set by Use My Current Location), else to the map's centre.
+  Order: Google Places (New) text search (50 km bias, gives the venue name) → Google geocoder (bounds) →
+  OpenStreetMap (viewbox around you first, then anywhere). Without Places it also searches "<text>, <your town>"
+  (town read from your location) — OSM only knows the Chennai JK Mahal, so the bare name alone can't find a
+  nearby one. Results sorted nearest first; several → a pick list
+  with name, address, distance; one → pinned straight away. With location already allowed and no pin, the map
+  opens on you instead of Chennai.
+- Type-check + lint pass; not seen in a browser; nothing committed.
+
+## 7o. Review step + breadcrumb + V2 APK (Jamal, 2026-11-03)
+
+- **Review → Event Type:** "Home Template" shows the template's name, and the card draws the chosen home
+  template (`HomeScreenPreview` sm: image, colours, names, date, the menus that are on).
+- **Review → App Menus:** under "Menus on N", every menu that is on, numbered, in the app's order (2 columns).
+- **Breadcrumb:** an event id in the path (`/events/36/…`, `/messages/notification-templates/36`) shows the
+  event's NAME (`useClientEvent`, same cached query as the pages); the id shows only until it loads.
+- **V2 app → V2 backend** (open item 2 done): `AppConfig` default + `.env.prod` =
+  `https://event-management-admin-backend-v2.onrender.com/api/v1`.
+- **V2 APK:** release arm64 → `Documents\EventInvite_Mobile_Build\V2\20261103_Event_Invite_V2.apk` (51.2 MB, V2 backend).
+- **Every participant is also a guest** (same change as V1, files copied): `clientGuest.ensureEventGuest` used by
+  `guestRegistration.join` + `clientParticipant.createParticipant` — the event's guest with that mobile is linked
+  (host's name kept), else one is created under the name given. Max Guests full → join / Add Participant REFUSED
+  (Jamal's choice). No DB change; old participants not back-filled. Needs a V2 backend push.
 
 ## 8. Open items
 
@@ -481,3 +539,15 @@ address / landmark like the app (Google geocoder, OpenStreetMap fallback).
 - Production order for any migration: run the tool with `--prod --apply` **before** pushing the backend.
 - Don't start dev servers or delete `.next` while they run.
 - Don't change `EVENT_QR_SECRET`.
+
+## 7p. Guest limit full → waiting list (Jamal, 2026-11-03) - DB CHANGE
+- Same as V1 session.md "Guest limit full → WAITING LIST": QR joiner waits on `event_participant_waitlist`,
+  host gets in-app + push "N participants are waiting … please upgrade your plan", a 5-minute job lets them in
+  oldest first when there is room; app shows `WaitingListScreen`. Organizer Add Participant still refused when full.
+- ORDER: `node src/database/tools/apply-participant-waitlist.js --prod --apply` (V2 DB) BEFORE pushing the V2 backend.
+
+## Guest status: only RSVP Yes = Confirmed (Jamal, 2026-11-03) - backend only, no DB change
+- `clientGuest.statusSql` for a guest who JOINED: RSVP Yes (or accepted) -> Confirmed; No -> Declined; Maybe or
+  not answered yet -> Pending (was: anything but No/Maybe -> Confirmed). Event with RSVP OFF (join writes
+  rsvp_status invited + no answer, nobody is asked) -> joined = Confirmed. Not joined: Added / Invited / Pending
+  unchanged. Guest list + stats queries run locally. Push backend (V1 + V2).

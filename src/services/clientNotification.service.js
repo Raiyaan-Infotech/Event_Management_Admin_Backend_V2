@@ -52,6 +52,8 @@ const TYPE_CATEGORY = {
     guest_added: 'guest',
     guest_imported: 'guest',
     welcome_invitation: 'guest',
+    // QR joiners waiting because the guest limit is full (participantWaitlist).
+    participants_waiting: 'guest',
     // Reminders
     event_reminder: 'reminder',
     draft_reminder: 'reminder',

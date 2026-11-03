@@ -65,8 +65,12 @@ const joinedCount = Sequelize.literal(
  * ── STATUS OF AN EVENT GUEST (Jamal, 2026-10-28) ──────────────────────────
  * Worked out on read, never stored, so it is always current:
  *   joined that event (a participant matched by guest_id or the last 10
- *   digits of the mobile):  answered No -> declined, Maybe -> pending,
- *                            otherwise -> confirmed
+ *   digits of the mobile):  RSVP Yes -> confirmed, No -> declined,
+ *                            Maybe / not answered yet -> pending
+ *                            (event with RSVP off: joined -> confirmed — join
+ *                            writes rsvp_status 'invited' + no answer there,
+ *                            and nobody is asked, so joining is the yes)
+ *   (Jamal, 2026-11-03: only an RSVP Yes is Confirmed; was "joined = confirmed")
  *   not joined:              not invited -> added, invited < 24h ago -> invited,
  *                            invited 24h+ ago -> pending
  * A guest with no event (older rows) has no status (NULL).
@@ -75,8 +79,9 @@ const joinedCount = Sequelize.literal(
 const GUEST_STATUSES = ['added', 'invited', 'pending', 'confirmed', 'declined'];
 const statusSql = (a) => `(CASE WHEN ${a}.event_id IS NULL THEN NULL ELSE COALESCE(
     (SELECT CASE WHEN p.response_type = 'no' OR p.rsvp_status = 'declined' THEN 'declined'
-                 WHEN p.response_type = 'maybe' OR p.rsvp_status = 'pending' THEN 'pending'
-                 ELSE 'confirmed' END
+                 WHEN p.response_type = 'yes' OR p.rsvp_status = 'accepted' THEN 'confirmed'
+                 WHEN p.response_type = 'none' AND p.rsvp_status = 'invited' THEN 'confirmed'
+                 ELSE 'pending' END
        FROM event_participants p
       WHERE p.event_id = ${a}.event_id AND p.deleted_at IS NULL
         AND (p.guest_id = ${a}.id
@@ -473,8 +478,56 @@ const guestForMobile = async (hostId, mobile, transaction, eventId = null) => {
     return findByMobile(hostId, mobile, { transaction });
 };
 
+/**
+ * The guest of THIS event with this mobile — created when there is none
+ * (Jamal, 2026-11-03): someone who joins by the event QR, or a participant the
+ * organizer adds, is also put in the Guests module, under the name they gave.
+ * An existing guest is reused as it is (never renamed — the host's name stays).
+ *
+ * Max Guests applies: when the plan's guest limit is full this THROWS, so the
+ * join / Add Participant is refused (Jamal's choice). Run it inside the
+ * caller's transaction so the participant is not saved without its guest.
+ */
+const ensureEventGuest = async (hostId, eventId, person, { transaction, companyId = null, message } = {}) => {
+    const found = await findByMobile(hostId, person.mobile, { transaction, eventId });
+    if (found) return found;
+
+    await assertGuestCapacity(hostId, 1, { transaction, message });
+
+    const group = await GuestGroup.findOne({
+        where: { website_client_id: hostId, is_default: 1 },
+        attributes: ['id'],
+        transaction,
+    });
+    const digits = String(person.mobile || '').replace(/\D/g, '');
+    const name = String(person.name || '').trim() || digits;
+    return Guest.create({
+        website_client_id: hostId,
+        company_id: companyId,
+        event_id: eventId,
+        group_id: group?.id ?? null,
+        name: name.slice(0, 200),
+        first_name: String(person.first_name || name).slice(0, 100),
+        last_name: person.last_name ? String(person.last_name).slice(0, 100) : null,
+        title: person.title ? String(person.title).slice(0, 30) : null,
+        gender: ['male', 'female', 'other'].includes(person.gender) ? person.gender : null,
+        email: person.email ? String(person.email).trim().toLowerCase().slice(0, 255) : null,
+        dial_code: person.dial_code || '+91',
+        mobile: digits.length > 10 ? digits.slice(-10) : digits,
+        relationship: person.relationship ? String(person.relationship).slice(0, 60) : null,
+        relationship_option_id: person.relationship_option_id || null,
+        photo: person.photo ? String(person.photo).slice(0, 500) : null,
+        source: 'manual',
+    }, { transaction });
+};
+
+/** This event's guest with this mobile (last 10 digits), or null. */
+const eventGuestFor = (hostId, mobile, eventId) => findByMobile(hostId, mobile, { eventId });
+
 module.exports = {
     WRITABLE_FIELDS,
+    ensureEventGuest,
+    eventGuestFor,
     GUEST_STATUSES,
     getGuestFormOptions,
     listGuests,

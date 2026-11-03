@@ -28,6 +28,7 @@ const notificationTrigger = require('./notificationTrigger.service');
 // Participants (event_participants) and the host's phone book (guests) — §581.
 const participantService = require('./clientParticipant.service');
 const guestService = require('./clientGuest.service');
+const waitlist = require('./participantWaitlist.service');
 const rsvpSettings = require('./clientRsvpSettings.service');
 const participantSettings = require('./clientParticipantSettings.service');
 const rsvpService = require('./clientRsvp.service');
@@ -490,8 +491,10 @@ const RESPONSE_TO_STATUS = {
  * `submitMyRsvp`. Only the host can clear it (portal: RSVP -> reset), after
  * which the guest may answer again.
  */
-const join = async (client, payload = {}) => {
-    const event = await eventFromToken(payload.token);
+const join = async (client, payload = {}, { event: givenEvent = null } = {}) => {
+    // `givenEvent`: the waiting list replaying a join (its QR may have been
+    // reissued since, so it is stored by id, not by token).
+    const event = givenEvent ?? await eventFromToken(payload.token);
 
     const clientDigits = digitsOnly(client.mobile);
     const candidates = [...new Set([clientDigits, clientDigits.slice(-10)])].filter(Boolean);
@@ -505,6 +508,17 @@ const join = async (client, payload = {}) => {
     // true only when this account had already joined — a re-scan.
     const alreadyJoined = Boolean(existing)
         && Number(existing.participant_client_id) === Number(client.id);
+
+    // Guest limit full and this person would need a NEW guest: they wait
+    // instead (Jamal, 2026-11-03) — see participantWaitlist.service. Someone
+    // already a guest of this event, or a re-scan, goes straight in.
+    if (!alreadyJoined && !existing?.guest_id) {
+        const isGuest = await guestService.eventGuestFor(event.website_client_id, clientDigits, event.id);
+        if (!isGuest && await waitlist.guestsFull(event.website_client_id)) {
+            const position = await waitlist.enqueue(event, client, payload);
+            return { event: publicEvent(event), guest: null, created: false, waiting: true, position };
+        }
+    }
 
     // An event that is not collecting RSVPs stores NO answer, whatever the body
     // says — an older app build, or a hand-made request, must not write an RSVP
@@ -572,10 +586,31 @@ const join = async (client, payload = {}) => {
         });
     }
 
+    // Everyone who joins is also a guest of this event (Jamal, 2026-11-03):
+    // the guest with this mobile is linked, or one is made under the name they
+    // gave. Max Guests applies — when it is full the join is refused.
+    const fullMessage = 'Sorry, this event cannot take more guests. Please contact the host.';
+    const asGuest = {
+        ...fields,
+        name: fields.name || existing?.name || client.name,
+        mobile: clientDigits,
+        dial_code: client.dial_code || '+91',
+    };
+
     let guest;
     if (existing) {
-        await existing.update(fields); // invite_source untouched — see the header
-        guest = existing;
+        // A row the host added before guests were made automatically has no
+        // guest: give it one on its first join (a re-scan never blocks).
+        guest = await sequelize.transaction(async (transaction) => {
+            if (!existing.guest_id && !alreadyJoined) {
+                const g = await guestService.ensureEventGuest(event.website_client_id, event.id, asGuest, {
+                    transaction, companyId: event.company_id ?? null, message: fullMessage,
+                });
+                fields.guest_id = g.id;
+            }
+            await existing.update(fields, { transaction }); // invite_source untouched — see the header
+            return existing;
+        });
     } else {
         // A scanner is a PARTICIPANT, not a phone-book guest (§572), so Max
         // Guests does not apply. Max RSVP per event = max participants (§578) —
@@ -586,16 +621,17 @@ const join = async (client, payload = {}) => {
                 transaction,
                 message: 'Sorry, this event is full and cannot take more participants. Please contact the host.',
             });
+            const eventGuest = await guestService.ensureEventGuest(event.website_client_id, event.id, asGuest, {
+                transaction, companyId: event.company_id ?? null, message: fullMessage,
+            });
             return EventParticipant.create({
                 ...fields,
                 event_id: event.id,
                 // The HOST, denormalised from the event — not the participant.
                 website_client_id: event.website_client_id,
-                // The host's phone-book guest with this mobile, if any — so
-                // the host sees this person's events on their profile (§581).
-                // The guest of THIS event first (2026-10-28), which turns that
-                // guest's status to Confirmed / Declined.
-                guest_id: (await guestService.guestForMobile(event.website_client_id, clientDigits, transaction, event.id))?.id ?? null,
+                // This event's guest with this mobile (made above when there
+                // was none) — turns that guest's status to Confirmed / Declined.
+                guest_id: eventGuest.id,
                 company_id: event.company_id ?? DEFAULT_COMPANY_ID,
                 dial_code: client.dial_code || '+91',
                 mobile: clientDigits.length > 10 ? clientDigits.slice(-10) : clientDigits,
@@ -637,6 +673,9 @@ const join = async (client, payload = {}) => {
             logger.error?.('[guestRegistration.join] Welcome invitation trigger error:', err.message);
         });
     }
+
+    // In — no longer waiting (a no-op when they never were).
+    await waitlist.dequeue(event.id, client.id);
 
     return { event: publicEvent(event), guest, created: !existing };
 };

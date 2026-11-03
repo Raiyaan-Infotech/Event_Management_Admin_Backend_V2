@@ -59,6 +59,16 @@ const join = asyncHandler(async (req, res) => {
     if (!client) throw ApiError.unauthorized('Please verify your mobile number first.');
 
     const result = await service.join(client, req.body);
+    if (result.waiting) {
+        // Guest limit full: on the waiting list, not joined (see participantWaitlist).
+        logger.logRequest(req, `Client ${client.id} waiting (#${result.position}) for event ${result.event.id}`);
+        return ApiResponse.success(
+            res,
+            result,
+            'You are on the waiting list. You will be added as soon as there is room.',
+            202,
+        );
+    }
     logger.logRequest(
         req,
         `Client ${client.id} ${result.created ? 'joined' : 'updated their entry for'} event ${result.event.id}`,

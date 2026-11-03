@@ -51,6 +51,8 @@ async function startServer() {
     require('./services/campaignScheduler.service').start();
     // The mobile app's scheduled notifications (event_notifications).
     require('./services/eventNotificationScheduler.service').start();
+    // QR joiners waiting for guest-limit room: let them in once there is room.
+    require('./services/participantWaitlist.service').start();
 
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

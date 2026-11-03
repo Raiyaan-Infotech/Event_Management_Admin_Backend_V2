@@ -269,7 +269,13 @@ const createParticipant = async (clientId, companyId, body = {}) => {
         const clash = await clashOnEvent(event.id, person.mobile, { transaction });
         if (clash) throw ApiError.conflict(`${clash.name} is already a participant of this event.`);
 
-        const guest = await guests.guestForMobile(clientId, person.mobile, transaction, event.id);
+        // Also a guest of this event (Jamal, 2026-11-03): the guest with this
+        // mobile, or a new one under this name. Max Guests full → refused.
+        const guest = await guests.ensureEventGuest(clientId, event.id, person, {
+            transaction,
+            companyId: companyId ?? event.company_id ?? null,
+            message: 'Your plan\'s guest limit is reached, so this participant cannot be added. Please upgrade your plan.',
+        });
         if (!person.title && guest?.title) person.title = guest.title;
 
         const digits = String(person.mobile || '').replace(/\D/g, '');
