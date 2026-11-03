@@ -677,7 +677,8 @@ router.post(
  */
 const shortUpload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: Math.max(galleryService.MAX_SHORT_BYTES, galleryService.MAX_MUSIC_BYTES), files: 3 },
+    // The clip may be larger when it is sent to be TRIMMED (web portal); the service caps the cut clip.
+    limits: { fileSize: Math.max(galleryService.MAX_SHORT_SOURCE_BYTES, galleryService.MAX_MUSIC_BYTES), files: 3 },
     fileFilter: (req, file, cb) => {
         const ok = file.fieldname === 'file'
             ? galleryService.VIDEO_MIMES.includes(file.mimetype)
@@ -707,7 +708,7 @@ router.post(
                 return res.status(400).json({
                     success: false,
                     message: err.code === 'LIMIT_FILE_SIZE'
-                        ? `That file is larger than ${Math.round(galleryService.MAX_SHORT_BYTES / (1024 * 1024))}MB.`
+                        ? `That file is larger than ${Math.round(galleryService.MAX_SHORT_SOURCE_BYTES / (1024 * 1024))}MB.`
                         : err.message || 'That short could not be uploaded.',
                 });
             }

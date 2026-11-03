@@ -4,7 +4,7 @@ const {
 const { Op } = Sequelize;
 const ApiError = require('../utils/apiError');
 const mediaService = require('./media.service');
-const { processVideo, videoPoster, videoInfo, addMusic } = require('../utils/videoProcess');
+const { processVideo, videoPoster, videoInfo, addMusic, trimVideo } = require('../utils/videoProcess');
 const subscriptionPlanService = require('./subscriptionPlan.service');
 const notificationTrigger = require('./notificationTrigger.service');
 
@@ -28,6 +28,8 @@ const MAX_VIDEO_BYTES = 5 * 1024 * 1024;
 /** Shorts (2026-10-23): a vertical clip of up to a minute and 10 MB. */
 const MAX_SHORT_BYTES = 10 * 1024 * 1024;
 const MAX_SHORT_SECONDS = 60;
+/** The largest video the web portal may send to be TRIMMED into a short (the cut must still fit MAX_SHORT_BYTES). */
+const MAX_SHORT_SOURCE_BYTES = 50 * 1024 * 1024;
 /** A short's background music, before it is fitted to the clip. */
 const MAX_MUSIC_BYTES = 10 * 1024 * 1024;
 
@@ -688,6 +690,28 @@ const uploadItem = async (clientId, eventId, file, body = {}, short = null) => {
     // A real Short (its own caps and rules), not a video sent with details.
     const isShortItem = Boolean(short) && !short.asVideo;
 
+    // Trim (web portal, 2026-11-03): `trim_start` / `trim_end` in seconds. The
+    // app cuts the clip on the phone; a browser cannot, so the SOURCE may be
+    // longer / larger (up to MAX_SHORT_SOURCE_BYTES) and is cut here first —
+    // every check below then sees the cut clip.
+    if (short && body.trim_end !== undefined && body.trim_end !== '') {
+        const from = Math.max(0, Number(body.trim_start) || 0);
+        const to = Number(body.trim_end);
+        if (!(to > from)) throw ApiError.badRequest('The end of the trim must be after its start.');
+        if (isShortItem && to - from > MAX_SHORT_SECONDS + 0.5) {
+            throw ApiError.badRequest('A short can be up to 1 minute. Please choose a shorter part.');
+        }
+        try {
+            const cut = await trimVideo(file.buffer, from, to);
+            file = {
+                ...file, buffer: cut.buffer, size: cut.buffer.length, mimetype: cut.mimetype,
+                originalname: `${(file.originalname || 'short').replace(/\.[^.]+$/, '')}.mp4`,
+            };
+        } catch (e) {
+            throw ApiError.badRequest(`This video could not be trimmed. ${e.message}`);
+        }
+    }
+
     const type = isImage ? 'image' : 'video';
     const size = Number(file.size || file.buffer.length || 0);
 
@@ -1022,6 +1046,7 @@ module.exports = {
     MAX_IMAGE_BYTES,
     MAX_VIDEO_BYTES,
     MAX_SHORT_BYTES,
+    MAX_SHORT_SOURCE_BYTES,
     MAX_MUSIC_BYTES,
     IMAGE_MIMES,
     VIDEO_MIMES,

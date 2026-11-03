@@ -289,4 +289,35 @@ const selfCheck = () => {
 };
 ensureBinary().then(selfCheck);
 
-module.exports = { processVideo, videoPoster, videoDuration, videoInfo, addMusic };
+/**
+ * Keep only [start, end] seconds of a video (Upload Short's trim, 2026-11-03 —
+ * the web portal cannot cut a file in the browser as the app does on the
+ * phone, so the server cuts it). Re-encoded to H.264 / AAC MP4 so the cut is
+ * exact and every phone plays it. THROWS on failure: a short that was meant to
+ * be cut must never be stored whole.
+ */
+const trimVideo = async (buffer, start, end) => {
+    if (!ffmpegPath) throw new Error('Video trimming is not available on this server.');
+    const from = Math.max(0, Number(start) || 0);
+    const length = Number(end) - from;
+    if (!(length > 0)) throw new Error('The end of the trim must be after its start.');
+    const [inFile, outFile] = tempPaths('trim', 'mp4');
+    try {
+        fs.writeFileSync(inFile, buffer);
+        await run([
+            '-y', '-ss', String(from), '-i', inFile, '-t', String(length),
+            '-map', '0:v:0', '-map', '0:a:0?',
+            '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-pix_fmt', 'yuv420p', '-profile:v', 'main',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-movflags', '+faststart',
+            outFile,
+        ]);
+        const out = fs.readFileSync(outFile);
+        if (!out.length) throw new Error('The trimmed video came out empty.');
+        return { buffer: out, mimetype: 'video/mp4' };
+    } finally {
+        cleanup(inFile, outFile);
+    }
+};
+
+module.exports = { processVideo, videoPoster, videoDuration, videoInfo, addMusic, trimVideo };

@@ -551,3 +551,90 @@ address / landmark like the app (Google geocoder, OpenStreetMap fallback).
   not answered yet -> Pending (was: anything but No/Maybe -> Confirmed). Event with RSVP OFF (join writes
   rsvp_status invited + no answer, nobody is asked) -> joined = Confirmed. Not joined: Added / Invited / Pending
   unchanged. Guest list + stats queries run locally. Push backend (V1 + V2).
+- **Waiting list table APPLIED (2026-11-03):** V1 local + V1 live (event_) + V2 live (event_v2). Local end-to-end test passed (full -> waiting #1 + host notice; re-join keeps place; room -> job admits, participant + guest made, Welcome sent; test rows removed). Next: push backend.
+- **Event list: Duplicate → Add Guest (Jamal, 2026-11-03):** each event card's Duplicate button is now **Add Guest** → `/dashboard/guests/add?event=<id>` (Add Guest for that event, guest-limit gate as usual). Portal only.
+- **Event Details hero compact (Jamal, 2026-11-03):** landscape invitation 230×130 on the left; status badge + #EVT code on one line, name 20px, fact chips (date/time, venue + CITY, category) one line each with full text on hover (was a square 206×200 tile and three tall boxes with the full address). Portal only.
+
+## 7q. V2 app = its own Android app (Jamal, 2026-11-03)
+- applicationId com.eventinvite.app -> **com.eventinvite.app.v2** (namespace / Kotlin package unchanged), launcher
+  name **Event Invite V2** -> installs NEXT TO V1. FileProvider authority already ${applicationId}-based.
+- google-services.json: a 2nd client for com.eventinvite.app.v2 COPIED from V1's (same Firebase app id) so the build
+  passes. TODO: register com.eventinvite.app.v2 in Firebase (project eventinvite-61656) + add release SHA-1, put the
+  new google-services.json here and update lib/firebase_options.dart android appId — until then V2 push may fail.
+  iOS bundle id unchanged.
+- Portal Edit Event hub: still NO page for **Wed Wishes, Live Streaming, Social Links** (app has them).
+
+## 7r. Wed Wishes, Live Streaming, Social Links in the portal — like V1 app (Jamal, 2026-11-03) - portal only
+- New tabs on the event page (+ Edit Event hub cards now link to them): **Wed Wishes** (`wishes-panel.tsx`),
+  **Live Streaming** (`live-panel.tsx`), **Social Links** (`social-links-panel.tsx`); hooks `use-event-engagement.ts`.
+  Same endpoints as the app (/client/events/:id/wishes, wish-settings, wish-filter, /client/wishes/:id[/block];
+  live-stream-types[/reorder], live-streams[/cover], /client/live-streams/:id; social-links[/reorder|/icon]).
+- Wed Wishes: tiles Total / Visible / Hidden / Blocked participants / Flagged (click = filter), All/Visible/Hidden,
+  search, cards (avatar, audience, Organizer Post, Hidden/Blocked/Flagged pills, text, image/video, likes), ⋮ Hide /
+  Hide all from participant / Show / Mark as Reviewed / Message participant / Block-Unblock / Edit / Delete, New Post
+  (name, Wish To, message, photo/video), Settings (6 switches + Content Filter words, auto-hide, notify).
+- Live Streaming: Show in Event App, tiles Total / Live Enabled / Disabled, search + category filter, streams grouped
+  by category (cover, platform badge, date, time, Watch, enable switch, edit, delete), Add Category dialog (add,
+  rename, delete with stream count, move up/down), Add/Edit Live Stream (cover upload 2MB, category, platform, title,
+  link, date within event, time, description, enabled).
+- Social Links: Show in Event App, presets Instagram/Facebook/X/YouTube (Not added yet / remove link) + custom links
+  (icon upload 1MB), per-link show switch, move up/down, add/edit (Open in External App, Show in Event App).
+- tsc + eslint clean; backend list responses checked (fields match). Not yet clicked through in a browser.
+- V2 APK with new package: Documents\EventInvite_Mobile_Build\V2\20261103_Event_Invite_V2_pkg.apk (51.2 MB).
+
+## 7s. Portal Agenda rebuilt to match the V1 app exactly (Jamal, 2026-11-03: "like the other modules, nothing special")
+- `agenda-panel.tsx` rewritten (used by the event's Agenda tab AND the sidebar Agenda page): + Add, pills All + one per
+  event day (d MMM), numbered cards (primary circle, title, "date, time", edit, delete). REMOVED the "Show in Event App"
+  switch (the app removed it 2026-10-13) and the extra Date & Time box on the Agenda tab.
+- Card tap -> Agenda Details (date, time, location, description, Gallery images; Edit / Delete; Actions: Duplicate
+  Agenda, Move to Another Day = Day 1..n, multi-day keeps its length).
+- Add / Edit ("Add" / "Edit"): Agenda Title * 100, Description 200, Date = an event day (Start/End Date only when
+  editing a multi-day item), Start / End Time, "Ends after midnight", Location (Main Hall), Agenda Image up to 10
+  (2MB, /agenda/media). Same checks + "Session Time Overlap" / "Possible Duplicate Session" (Create Anyway / Change
+  Time / Cancel). Add ends on "Agenda Added Successfully!" (Add Another / Back to Agenda List).
+- Hooks: useDuplicateAgendaItem, uploadAgendaImage; useSaveAgendaItem takes `done` toast. tsc + eslint clean.
+
+## 7t. Portal modules made the SAME as the V1 app (Jamal, 2026-11-03) - portal only, no backend change
+Jamal: "just like the app, nothing special". Module by module:
+- **Live Streaming**: removed the extra "Show in Event App" switch. Added Live Stream Details (cover + LIVE, title,
+  category, platform, date, time, link + copy, description, Watch Live, Edit / Share / Disable-Enable) and Share Live
+  Stream (QR code, Copy Link, WhatsApp, Email, Share QR Code = PNG download). Categories list shows each cover.
+- **Social Links**: removed the "Show in Event App" switch and the per-row Show switch (the app has it only in the form);
+  a hidden link is marked "Hidden". Added Social Link Details (URL + copy, description, Display Order, Open in External
+  App, Show in App, Created On, Last Updated, Edit / Delete).
+- **Family**: removed "Show in Event App"; Family Settings moved behind the ⚙ icon; header "Manage family members for
+  your event"; ⋮ = Edit / Change Photo (straight to the picker) / Delete; order by DRAGGING a card (arrows removed);
+  Family Details (Relation, Side, Phone, Email, Date of Birth, Added On, Notes, Edit / Delete); "Family Member Added /
+  Updated Successfully!" (Add Another / Back to Family List).
+- **Gallery** (rebuilt): Gallery Categories (search, list / cards switch, cover + name + item count, ⋮ Edit / Delete,
+  none on Gallery; Add Category: Name *, Description, Cover Image, Display Order; result page) → a category's media
+  (back, name + count, grid / list; tap = View Full Screen, Edit Media [Show in Event App; video Title, Description,
+  Change Cover], Move to Another Category, Reorder Media [drag + Save Order], Select, Download, Remove from Gallery;
+  select mode: Cancel · N items selected · Select All · Remove). Upload Media (several, Crop for photos = frame starts
+  around the whole photo, "Modified" mark, plan counts checked first, one by one) and Upload Short (≤ 1 min / 10 MB
+  checked in the browser, Remove Audio, background music file + start second, cover, album, Title *, Description →
+  POST /gallery/shorts; "Upload Successful": View Gallery / Upload More). REMOVED the "Plan limits" card and captions.
+  Not possible in a browser without a backend change: TRIMMING a longer video to 1 minute (the app cuts it on the phone).
+- **RSVP Settings**: removed "Enable RSVP" (always on, sent as true); added "Allow Food Preference"; switches renamed and
+  ordered as the app (Allow Number of Guests, Allow Food Preference, Allow to Specify the Relationship, Allow Special
+  Requests); Response Options + Response Deadline kept (the app has them); Save + Preview (the guest form as set).
+- **Participants Settings**: Attendance Status removed (server forces it off); Mobile and Email added.
+- **Contact Person** (was "Organizer Contact"): Full Name *, Designation / Role *, Mobile *, WhatsApp (+ Same as
+  mobile number), Email *, Address / Base Location, Preferred Contact Time * (from / to), Languages (12, as the app),
+  About * (300). Sent as the app does (designation, whatsapp, time_from, time_to, languages, about).
+- Hooks: types updated (allow_food_preference, participant mobile/email, contact fields, gallery item title /
+  description / is_short, category sort_order/position); new useReplaceGalleryCover, useUploadShort; family save
+  takes a partial body + `done` toast.
+- tsc clean; eslint: no new warnings (6 old ones in event-detail.tsx). Not yet clicked through in a browser.
+
+## Upload Short TRIM (web) + full browser test (Jamal, 2026-11-03)
+- Backend (V1 + V2, same files): `utils/videoProcess.trimVideo(buffer, start, end)` (ffmpeg, re-encode H.264/AAC MP4,
+  throws on failure); `clientGallery.uploadItem` cuts a short first when `trim_start`/`trim_end` are sent (≤ 60 s kept),
+  then every check sees the cut clip; shorts upload limit raised to MAX_SHORT_SOURCE_BYTES = 50 MB (the cut must still
+  fit 10 MB). Local test: 90 s portrait → 30 s in ~2 s, still portrait. No DB change. Needs a backend push.
+- V2 portal Upload Short: trim bar (two handles, ≤ 1 min, preview loops the kept part), landscape refused (server rule),
+  sources up to 50 MB; `useUploadShort` sends trim_start / trim_end. Needs a portal push.
+- Full live browser test of the V2 portal (test client #53 qa.portal@eventinvite-test.com, Basic): every module form
+  filled → saved, real uploads (photos + crop, short with music), wishes content filter, Create Event 9 steps. All pass,
+  0 page errors; saved values checked via the API. Screenshots: Documents\EventInvite_Portal_Test\2026-11-03.
+  Tool: V2 backend src/database/tools/create-test-client.js.
