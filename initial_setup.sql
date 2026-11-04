@@ -1981,6 +1981,8 @@ CREATE TABLE IF NOT EXISTS `event_gallery_categories` (
   `sort_order` int NOT NULL DEFAULT '0',
   `company_id` int unsigned DEFAULT NULL,
   `is_default` tinyint(1) DEFAULT NULL COMMENT '1 = the built-in Gallery category; NULL for every other',
+  `folder_type` enum('images','videos','shorts','mixed') NOT NULL DEFAULT 'mixed' COMMENT 'what the folder holds',
+  `notes` varchar(500) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,

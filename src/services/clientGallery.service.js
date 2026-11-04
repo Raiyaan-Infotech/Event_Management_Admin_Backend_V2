@@ -360,10 +360,11 @@ const listCategories = async (clientId, eventId, { visibleOnly = false, defaultR
                 ['sort_order', 'ASC'], ['id', 'ASC'],
             ],
         }),
+        // Per folder AND kind (Gallery web design: "432 Images · 18 Videos · 7 Shorts").
         EventGalleryItem.findAll({
             where: { event_id: eventId, ...visible },
-            attributes: ['category_id', [Sequelize.fn('COUNT', Sequelize.col('id')), 'n']],
-            group: ['category_id'],
+            attributes: ['category_id', 'type', 'is_short', [Sequelize.fn('COUNT', Sequelize.col('id')), 'n']],
+            group: ['category_id', 'type', 'is_short'],
             raw: true,
         }),
         // A category with no cover of its own shows its first photo — the same
@@ -375,14 +376,27 @@ const listCategories = async (clientId, eventId, { visibleOnly = false, defaultR
             raw: true,
         }),
     ]);
-    const byId = new Map(counts.map((c) => [c.category_id, Number(c.n)]));
+    const byId = new Map();
+    const kinds = new Map();
+    for (const c of counts) {
+        const n = Number(c.n);
+        byId.set(c.category_id, (byId.get(c.category_id) || 0) + n);
+        const k = kinds.get(c.category_id) || { images: 0, videos: 0, shorts: 0 };
+        if (c.type === 'image') k.images += n;
+        else if (Number(c.is_short) === 1) k.shorts += n;
+        else k.videos += n;
+        kinds.set(c.category_id, k);
+    }
     const firstPhoto = new Map();
     for (const p of photos) {
         // The small copy when there is one — a cover is a thumbnail.
         if (!firstPhoto.has(p.category_id)) firstPhoto.set(p.category_id, p.thumbnail_url || p.url);
     }
 
-    return rows.map((r) => presentCategory(r, byId.get(r.id) || 0, firstPhoto.get(r.id)));
+    return rows.map((r) => ({
+        ...presentCategory(r, byId.get(r.id) || 0, firstPhoto.get(r.id)),
+        counts: kinds.get(r.id) || { images: 0, videos: 0, shorts: 0 },
+    }));
 };
 
 /**
@@ -407,7 +421,20 @@ const presentCategory = (r, itemCount = 0, firstPhotoUrl = null) => ({
     /** The built-in Gallery: cannot be renamed or deleted. */
     is_default: r.is_default === true || r.is_default === 1,
     item_count: itemCount,
+    folder_type: r.folder_type || 'mixed',
+    notes: r.notes || null,
 });
+
+const FOLDER_TYPES = ['images', 'videos', 'shorts', 'mixed'];
+const folderTypeOf = (raw) => {
+    const t = String(raw || 'mixed').toLowerCase();
+    if (!FOLDER_TYPES.includes(t)) throw ApiError.badRequest('Please choose a valid folder type.');
+    return t;
+};
+/** Whether a folder of `type` takes this kind of file. */
+const folderTakes = (type, kind) => (type === 'mixed' || !type
+    || (type === 'images' && kind === 'image') || (type === 'videos' && kind === 'video') || (type === 'shorts' && kind === 'short'));
+const KIND_WORD = { images: 'images', videos: 'videos', shorts: 'shorts' };
 
 /**
  * Put one category at a 1-based position and renumber the event's categories
@@ -459,6 +486,8 @@ const createCategory = async (clientId, eventId, body = {}) => {
         description: cleanText(body.description, 200),
         cover_image: cleanText(body.cover_image, 500),
         icon: typeof body.icon === 'string' ? body.icon.slice(0, 100) : null,
+        folder_type: folderTypeOf(body.folder_type),
+        notes: cleanText(body.notes, 500),
         sort_order: Number.isFinite(Number(last)) ? Number(last) + 1 : 0,
         company_id: event.company_id ?? null,
     });
@@ -499,6 +528,8 @@ const updateCategory = async (clientId, categoryId, body = {}) => {
         row.name = name;
     }
     if (body.description !== undefined) row.description = cleanText(body.description, 200);
+    if (body.folder_type !== undefined && !isDefault) row.folder_type = folderTypeOf(body.folder_type);
+    if (body.notes !== undefined) row.notes = cleanText(body.notes, 500);
     // A replaced or removed cover's old file is deleted once the row is saved.
     let oldCover = null;
     if (body.cover_image !== undefined) {
@@ -689,6 +720,17 @@ const uploadItem = async (clientId, eventId, file, body = {}, short = null) => {
     if (short && !isVideo) throw ApiError.badRequest('Please choose an MP4, WebM or MOV video.');
     // A real Short (its own caps and rules), not a video sent with details.
     const isShortItem = Boolean(short) && !short.asVideo;
+
+    // The folder's type (2026-11-04): an Images folder takes images only, etc.
+    if (body.category_id) {
+        const folder = await EventGalleryCategory.findOne({
+            where: { id: Number(body.category_id) || 0, event_id: event.id }, attributes: ['name', 'folder_type'],
+        });
+        const kind = isImage ? 'image' : isShortItem ? 'short' : 'video';
+        if (folder && !folderTakes(folder.folder_type, kind)) {
+            throw ApiError.badRequest(`"${folder.name}" is a ${KIND_WORD[folder.folder_type]} folder — choose another folder for this file.`);
+        }
+    }
 
     // Trim (web portal, 2026-11-03): `trim_start` / `trim_end` in seconds. The
     // app cuts the clip on the phone; a browser cannot, so the SOURCE may be
@@ -923,6 +965,74 @@ const uploadItem = async (clientId, eventId, file, body = {}, short = null) => {
  * Host only — `website_client_id` is the owner, so a participant cannot delete
  * somebody else's photos.
  */
+/**
+ * The stored file + thumbnail of a row about to be deleted — unless another row
+ * (a Copy to Folder copy) still uses the same file.
+ */
+const dropItemFiles = async (item) => {
+    const shared = await EventGalleryItem.count({ where: { url: item.url, id: { [Op.ne]: item.id } } });
+    if (shared) return;
+    await dropFile(item.url, item.company_id);
+    // Its own thumbnail / poster (older photo rows have none, or the same URL).
+    if (item.thumbnail_url && item.thumbnail_url !== item.url) {
+        await dropFile(item.thumbnail_url, item.company_id);
+    }
+};
+
+/**
+ * Bulk Actions on selected media (Gallery web design, 2026-11-04):
+ *   move   → into `category_id` (files of a kind the folder does not take are skipped)
+ *   copy   → a new row per file in `category_id`, same stored file; counts against
+ *            the plan's photo / video limits like an upload
+ *   delete → each row (a file shared with a copy stays until its last row goes)
+ */
+const bulk = async (clientId, eventId, body = {}) => {
+    const event = await resolveEvent(clientId, eventId);
+    const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(Number).filter(Boolean))];
+    if (!ids.length) throw ApiError.badRequest('Select at least one file.');
+    if (ids.length > 500) throw ApiError.badRequest('Select 500 files or fewer at a time.');
+    const action = String(body.action || '');
+    const items = await EventGalleryItem.findAll({ where: { id: { [Op.in]: ids }, event_id: event.id } });
+    if (!items.length) throw ApiError.notFound('Those files were not found.');
+
+    if (action === 'delete') {
+        for (const it of items) { await dropItemFiles(it); await it.destroy({ force: true }); }
+        return { action, affected: items.length, skipped: 0, usage: await getUsage(clientId, event.id) };
+    }
+    if (action !== 'move' && action !== 'copy') throw ApiError.badRequest('Unknown bulk action.');
+
+    const folder = await EventGalleryCategory.findOne({ where: { id: Number(body.category_id) || 0, event_id: event.id } });
+    if (!folder) throw ApiError.badRequest('Please choose the destination folder.');
+    const kindOf = (it) => (it.type === 'image' ? 'image' : it.is_short ? 'short' : 'video');
+    const fits = items.filter((it) => folderTakes(folder.folder_type, kindOf(it)));
+    const skipped = items.length - fits.length;
+
+    if (action === 'move') {
+        const moving = fits.filter((it) => it.category_id !== folder.id).map((it) => it.id);
+        if (moving.length) await EventGalleryItem.update({ category_id: folder.id }, { where: { id: { [Op.in]: moving } } });
+        return { action, affected: moving.length, skipped, usage: await getUsage(clientId, event.id) };
+    }
+
+    // copy — within the plan's limits, as an upload would be.
+    const usage = await getUsage(clientId, event.id);
+    const addPhotos = fits.filter((it) => it.type === 'image').length;
+    const addVideos = fits.length - addPhotos;
+    if (usage.photos.limit !== null && usage.photos.used + addPhotos > usage.photos.limit) {
+        throw ApiError.badRequest(`Copying would go over your plan's ${usage.photos.limit} photos.`);
+    }
+    if (usage.videos.limit !== null && usage.videos.used + addVideos > usage.videos.limit) {
+        throw ApiError.badRequest(`Copying would go over your plan's ${usage.videos.limit} videos.`);
+    }
+    const last = await EventGalleryItem.max('sort_order', { where: { event_id: event.id } });
+    let order = Number.isFinite(Number(last)) ? Number(last) + 1 : 0;
+    const rows = fits.map((it) => {
+        const { id, created_at, updated_at, createdAt, updatedAt, ...rest } = it.toJSON();
+        return { ...rest, category_id: folder.id, sort_order: order++, uploaded_by: clientId };
+    });
+    if (rows.length) await EventGalleryItem.bulkCreate(rows);
+    return { action, affected: rows.length, skipped, usage: await getUsage(clientId, event.id) };
+};
+
 const removeItem = async (clientId, itemId) => {
     const item = await EventGalleryItem.findOne({
         where: { id: Number(itemId) || 0, website_client_id: clientId },
@@ -930,11 +1040,7 @@ const removeItem = async (clientId, itemId) => {
     if (!item) throw ApiError.notFound('That gallery item was not found.');
 
     const eventId = item.event_id;
-    await dropFile(item.url, item.company_id);
-    // Its own thumbnail / poster (older photo rows have none, or the same URL).
-    if (item.thumbnail_url && item.thumbnail_url !== item.url) {
-        await dropFile(item.thumbnail_url, item.company_id);
-    }
+    await dropItemFiles(item);
     await item.destroy({ force: true });
 
     return { removed: true, usage: await getUsage(clientId, eventId) };
@@ -1063,6 +1169,7 @@ module.exports = {
     uploadCategoryCover,
     removeCategory,
     uploadItem,
+    bulk,
     /** Upload Shorts: multer `fields` → the clip, its music and its cover. */
     // `kind: 'video'` = Upload Video through the same pages (video limits).
     uploadShort: (clientId, eventId, files = {}, body = {}) => uploadItem(

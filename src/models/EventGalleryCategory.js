@@ -25,6 +25,9 @@ module.exports = (sequelize) => {
          * many ordinary categories but only one default.
          */
         is_default: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: null },
+        /** Gallery web design (2026-11-04): what the folder holds — uploads of another kind are refused. */
+        folder_type: { type: DataTypes.ENUM('images', 'videos', 'shorts', 'mixed'), allowNull: false, defaultValue: 'mixed' },
+        notes: { type: DataTypes.STRING(500), allowNull: true },
     }, {
         tableName: 'event_gallery_categories',
         timestamps: true,

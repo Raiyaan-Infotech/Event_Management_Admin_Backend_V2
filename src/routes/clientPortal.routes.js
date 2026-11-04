@@ -719,6 +719,7 @@ router.post(
     galleryController.uploadShort,
 );
 router.put('/events/:id/gallery/reorder', galleryController.reorder);
+router.post('/events/:id/gallery/bulk', galleryController.bulk);
 router.put('/gallery/:itemId', galleryController.update);
 // A video's / short's cover, changed after upload (image ≤ the photo cap).
 router.post(

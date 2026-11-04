@@ -73,7 +73,14 @@ const reorder = asyncHandler(async (req, res) => {
     return ApiResponse.success(res, result, 'Gallery order saved.');
 });
 
+/** Bulk Actions on selected media: move / copy / delete (2026-11-04). */
+const bulk = asyncHandler(async (req, res) => {
+    const result = await service.bulk(req.websiteClient.id, req.params.id, req.body);
+    return ApiResponse.success(res, result, `${result.affected} file(s) updated.`);
+});
+
 module.exports = {
+    bulk,
     list, usage, upload, uploadShort, replaceCover, update, reorder, remove,
     listCategories, createCategory, updateCategory, uploadCategoryCover, removeCategory,
 };

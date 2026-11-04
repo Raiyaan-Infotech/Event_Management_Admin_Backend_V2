@@ -747,3 +747,26 @@ Jamal: "just like the app, nothing special". Module by module:
 - LOCAL event_v2 applied (guest rsvp_* + participant access columns). tsc + eslint clean; not seen in a browser.
 - **PRODUCTION ORDER:** `apply-guest-design-fields.js --prod --apply` (adds the 8 rsvp_* columns) +
   `apply-participant-access.js --prod --apply` BEFORE pushing the V2 backend; then push the portal.
+- **APPLIED to live event_v2 (2026-11-04):** apply-guest-design-fields (8 rsvp_* columns) + apply-participant-access
+  (7 columns); re-check shows nothing missing. Next: push V2 backend, then the portal.
+
+## 7z. Gallery = web design, PHASE 1 (2026-11-04) - DB CHANGE (V2)
+- Designs: `Web Gallery Flow` (00 overview, 00 default view, 01 Create Folder, 02 Upload Media, 03 Edit Video/Shorts,
+  04 Move files, 05 Create Album). Phase 1 built; Phase 2 = Create Album (slideshow: new table + builder + preview + app
+  playback); Phase 3 = Edit Video / Shorts editor (animated text overlays need server-side ffmpeg rendering).
+- Portal `events/[id]/_components/gallery-board.tsx` (event page Gallery tab now uses it; the old `gallery-panel.tsx` only
+  lends MediaViewer, EditMediaDialog, ShortDialog): Gallery Overview (Create Folder / Upload Media / Create Album = "coming
+  next" toast; tiles Images / Videos / Shorts / Folders / Albums + Storage Usage bar; drop zone -> upload page; folder cards
+  with stacked cover, Default badge, counts per kind, ⋮ Open / Upload Here / Edit / Delete; grid / list; Recent Uploads
+  strip + View All). Folder view (breadcrumb, All / Images / Videos / Shorts, search, sort, grid / list, Multi-select +
+  Move / Copy to Folder / Download / Delete, per-file ⋯, Details panel: preview, details, Edit / Download / Move / View /
+  Delete, 24 per page). Upload Media (folder select, Images / Videos / Shorts, queue with status / retry / remove /
+  clear completed, one-by-one upload; Shorts = the existing trim + music Upload Short). Create / Edit Folder (name,
+  description, cover via the gallery cover upload, Folder Type, Sort Order, Notes). Move / Copy Files sheet.
+  Kit: PhotoDropzone takes an `uploader`.
+- Backend: `event_gallery_categories.folder_type` (images|videos|shorts|mixed, default mixed) + `notes`
+  (`migrations/sql/20261104-gallery-folders.sql`, `tools/apply-gallery-folders.js`). Folder list returns `counts`
+  {images, videos, shorts}; uploads into a typed folder of another kind are refused; `POST /client/events/:id/gallery/bulk`
+  {ids, action: move|copy|delete, category_id} (wrong-kind files skipped; copy = same stored file, counted against the
+  plan's photo / video limits); deleting a copy keeps the file while another row uses it. LOCAL applied; test 7/7.
+- **APPLIED to live event_v2 (2026-11-04):** apply-gallery-folders (folder_type + notes); re-check shows both there.
