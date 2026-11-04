@@ -16,6 +16,8 @@ const deviceController = require('../controllers/clientDevice.controller');
 const splashController = require('../controllers/clientSplashScreen.controller');
 const galleryController = require('../controllers/clientGallery.controller');
 const galleryService = require('../services/clientGallery.service');
+const galleryAlbumController = require('../controllers/clientGalleryAlbum.controller');
+const galleryAlbumService = require('../services/clientGalleryAlbum.service');
 const agendaController = require('../controllers/clientAgenda.controller');
 const rsvpBoardController = require('../controllers/clientRsvpBoard.controller');
 const liveStreamController = require('../controllers/clientLiveStream.controller');
@@ -741,6 +743,33 @@ router.delete('/gallery/:itemId', galleryController.remove);
 
 // Gallery categories — per event, host-authored. Declared after the item routes
 // so '/gallery/categories' can never be read as an item id.
+// Gallery albums (Create Album, 2026-11-04): slideshows from the gallery's photos + their MP3.
+const albumMusicUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: galleryAlbumService.MAX_MUSIC_BYTES },
+    fileFilter: (req, file, cb) => (galleryAlbumService.MUSIC_MIMES.includes(file.mimetype)
+        ? cb(null, true) : cb(new Error('Please choose an MP3 file.'), false)),
+});
+router.get('/events/:id/gallery/albums', galleryAlbumController.list);
+router.post('/events/:id/gallery/albums', galleryAlbumController.create);
+router.post(
+    '/events/:id/gallery/albums/music',
+    (req, res, next) => {
+        albumMusicUpload.single('file')(req, res, (err) => {
+            if (err) {
+                return res.status(400).json({
+                    success: false,
+                    message: err.code === 'LIMIT_FILE_SIZE' ? 'The song must be 10 MB or smaller.' : err.message,
+                });
+            }
+            return next();
+        });
+    },
+    galleryAlbumController.uploadMusic,
+);
+router.put('/gallery/albums/:albumId', galleryAlbumController.update);
+router.delete('/gallery/albums/:albumId', galleryAlbumController.remove);
+
 router.get('/events/:id/gallery/categories', galleryController.listCategories);
 router.post('/events/:id/gallery/categories', galleryController.createCategory);
 router.post(

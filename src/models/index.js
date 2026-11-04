@@ -162,6 +162,7 @@ db.SplashScreen = require('./SplashScreen')(sequelize, Sequelize);
 // Events created by those clients in the client portal
 db.Event = require('./Event')(sequelize, Sequelize);
 db.EventGalleryCategory = require('./EventGalleryCategory')(sequelize, Sequelize);
+db.EventGalleryAlbum = require('./EventGalleryAlbum')(sequelize, Sequelize);
 db.EventGalleryItem = require('./EventGalleryItem')(sequelize, Sequelize);
 db.EventAgendaItem = require('./EventAgendaItem')(sequelize, Sequelize);
 db.EventFamilyMember = require('./EventFamilyMember')(sequelize, Sequelize);

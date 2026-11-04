@@ -770,3 +770,19 @@ Jamal: "just like the app, nothing special". Module by module:
   {ids, action: move|copy|delete, category_id} (wrong-kind files skipped; copy = same stored file, counted against the
   plan's photo / video limits); deleting a copy keeps the file while another row uses it. LOCAL applied; test 7/7.
 - **APPLIED to live event_v2 (2026-11-04):** apply-gallery-folders (folder_type + notes); re-check shows both there.
+- **Create Album (Phase 2) built (2026-11-04):** table `event_gallery_albums` (name, description, cover, intro on/text/
+  animation fade_slide_up|fade|zoom|typewriter, intro_seconds, music on/url/name, slide_seconds, slides JSON
+  [{item_id, seconds}], show_in_app, sort_order) — `migrations/sql/20261104-gallery-albums.sql`,
+  `tools/apply-gallery-albums.js`, model `EventGalleryAlbum`, `clientGalleryAlbum.service/controller`:
+  `GET/POST /client/events/:id/gallery/albums`, `PUT/DELETE /client/gallery/albums/:albumId`,
+  `POST /client/events/:id/gallery/albums/music` (MP3 ≤ 10 MB). Slides must be the event's gallery photos; a deleted photo
+  drops out on read; participants (not blocked) read albums shown in the app. Portal: `album-builder.tsx` (Album Slides
+  with Add Images picker / drag reorder / per-slide seconds / use as cover / remove; Album Settings; live Slideshow
+  Preview with timeline + Album Summary; Preview Album full screen) + album cards (Play / Edit / Delete) on the Overview;
+  hook `use-gallery-albums.ts`. The mobile app does not show albums yet.
+- **Tested (2026-11-04):** backend service test 30/30 on LOCAL (folders, real image + ffmpeg video uploads, type refusal,
+  counts, hide, bulk move / copy / delete with shared file, albums create / validate / music / participant read / delete,
+  folder delete moves files to Gallery). Browser test (local backend :5001 + portal :3005, event #68, client 23) 12/12,
+  0 console errors: sign in, Overview, Create Folder, Upload 2 photos, folder view + details, multi-select Move, Create
+  Album with preview, save, play. Test data removed; servers stopped.
+- Albums table on LOCAL and **live event_v2 (applied 2026-11-04, re-check OK)**.
