@@ -2,6 +2,7 @@ const {
     Sequelize,
     sequelize,
     Event,
+    EventParticipant,
     GuestGroup,
     Guest,
     WebsiteClient,
@@ -44,6 +45,69 @@ const {
 
 /** Kept exported for any caller that listed the writable fields. */
 const WRITABLE_FIELDS = PERSON_FIELDS;
+
+/**
+ * ── GUESTS WEB DESIGN (portal, 2026-11-04) ─────────────────────────────────
+ * Guest-only fields of the Add Guest form and the row actions: Guest Type,
+ * Family Side, Invite Count, RSVP Required, Visibility (Hide Guest: reason +
+ * internal note), VIP (Mark as VIP: category, label, where to highlight) and
+ * the last Send Invitation's channels + message. All optional on the API — the
+ * app's guest form does not send them and keeps the defaults.
+ */
+const GUEST_TYPES = ['individual', 'couple', 'family', 'group'];
+const VIP_HIGHLIGHTS = ['organizer_list', 'app_directory', 'invitation_contacts'];
+const INVITE_CHANNELS = ['whatsapp', 'email', 'in_app'];
+const flag = (v) => v === true || v === 1 || v === '1' || v === 'true';
+const text = (v, max) => {
+    const t = typeof v === 'string' ? v.trim() : '';
+    return t ? t.slice(0, max) : null;
+};
+const listOf = (v, allowed) => {
+    const arr = Array.isArray(v) ? v : (typeof v === 'string' && v ? v.split(',') : []);
+    return [...new Set(arr.map((x) => String(x).trim().toLowerCase()).filter((x) => allowed.includes(x)))];
+};
+
+const designFields = (body = {}) => {
+    const has = (f) => Object.prototype.hasOwnProperty.call(body, f);
+    const data = {};
+    if (has('guest_type')) {
+        const t = String(body.guest_type || 'individual').trim().toLowerCase();
+        if (!GUEST_TYPES.includes(t)) throw ApiError.badRequest('Please choose a valid guest type.');
+        data.guest_type = t;
+    }
+    if (has('side')) {
+        const side = String(body.side || '').trim().toLowerCase();
+        if (side && !['groom', 'bride'].includes(side)) throw ApiError.badRequest('Please choose the family side.');
+        data.side = side || null;
+    }
+    if (has('invite_count')) {
+        const n = Number(body.invite_count);
+        if (!Number.isInteger(n) || n < 1 || n > 50) throw ApiError.badRequest('The invite count must be between 1 and 50.');
+        data.invite_count = n;
+    }
+    if (has('rsvp_required')) data.rsvp_required = flag(body.rsvp_required);
+    if (has('is_visible')) data.is_visible = flag(body.is_visible);
+    if (has('hidden_reason')) data.hidden_reason = text(body.hidden_reason, 60);
+    if (has('hidden_note')) data.hidden_note = text(body.hidden_note, 500);
+    if (has('is_vip')) data.is_vip = flag(body.is_vip);
+    if (has('vip_category')) data.vip_category = text(body.vip_category, 60);
+    if (has('vip_label')) data.vip_label = text(body.vip_label, 60);
+    if (has('vip_highlight')) data.vip_highlight = listOf(body.vip_highlight, VIP_HIGHLIGHTS);
+    if (has('invite_channels')) data.invite_channels = listOf(body.invite_channels, INVITE_CHANNELS);
+    if (has('invite_message')) data.invite_message = text(body.invite_message, 1000);
+    // Showing a guest again clears why they were hidden.
+    if (data.is_visible === true) { data.hidden_reason = null; data.hidden_note = null; }
+    return data;
+};
+
+/** The list's sort menu ("Sort by Name (A – Z)"). Default: newest first, as before. */
+const SORTS = {
+    name_asc: [['name', 'ASC'], ['id', 'ASC']],
+    name_desc: [['name', 'DESC'], ['id', 'DESC']],
+    recent: [['created_at', 'DESC'], ['id', 'DESC']],
+    oldest: [['created_at', 'ASC'], ['id', 'ASC']],
+    invite_count: [['invite_count', 'DESC'], ['name', 'ASC']],
+};
 
 const GUEST_INCLUDE = [
     {
@@ -172,12 +236,21 @@ const listGuests = async (clientId, query = {}) => {
     if (groupId) where.group_id = groupId;
     else if (String(query.group_id) === '0') where.group_id = null;
 
+    // The design's tabs (2026-11-04): Bride Side / Groom Side / VIP / Hidden.
+    const side = String(query.side || '').toLowerCase();
+    if (['groom', 'bride'].includes(side)) where.side = side;
+    if (flag(query.vip)) where.is_vip = true;
+    const visibility = String(query.visibility || '').toLowerCase();
+    if (visibility === 'hidden') where.is_visible = false;
+    if (visibility === 'visible') where.is_visible = true;
+
     if (search) {
         where[Op.or] = [
             { name: { [Op.like]: `%${search}%` } },
             { email: { [Op.like]: `%${search}%` } },
             { mobile: { [Op.like]: `%${search}%` } },
             { company: { [Op.like]: `%${search}%` } },
+            { relationship: { [Op.like]: `%${search}%` } },
         ];
     }
 
@@ -185,7 +258,7 @@ const listGuests = async (clientId, query = {}) => {
         where,
         attributes: { include: [[joinedCount, 'events_joined'], [guestStatus, 'status']] },
         include: GUEST_INCLUDE,
-        order: [['created_at', 'DESC'], ['id', 'DESC']],
+        order: SORTS[String(query.sort || '')] || SORTS.recent,
         limit,
         offset: (page - 1) * limit,
         distinct: true,
@@ -212,8 +285,12 @@ const getGuestStats = async (clientId, query = {}) => {
                 SUM(x.status = 'invited') AS s_invited,
                 SUM(x.status = 'pending') AS s_pending,
                 SUM(x.status = 'confirmed') AS s_confirmed,
-                SUM(x.status = 'declined') AS s_declined
-           FROM (SELECT c.group_id, c.source,
+                SUM(x.status = 'declined') AS s_declined,
+                SUM(x.side = 'bride') AS bride,
+                SUM(x.side = 'groom') AS groom,
+                SUM(x.is_vip = 1) AS vip,
+                SUM(x.is_visible = 0) AS hidden
+           FROM (SELECT c.group_id, c.source, c.side, c.is_vip, c.is_visible,
                         EXISTS (SELECT 1 FROM event_participants g
                                  WHERE g.guest_id = c.id AND g.deleted_at IS NULL) AS joined_any,
                         ${statusSql('c')} AS status
@@ -235,6 +312,11 @@ const getGuestStats = async (clientId, query = {}) => {
         joined, joined_pct: pct(joined),
         // Per-event status counts (2026-10-28): added / invited / pending / confirmed / declined.
         statuses,
+        // The design's tabs (2026-11-04).
+        bride: Number(row?.bride) || 0,
+        groom: Number(row?.groom) || 0,
+        vip: Number(row?.vip) || 0,
+        hidden: Number(row?.hidden) || 0,
         // Older readers: one guest is one row and one person.
         total_guests: total,
         total_rows: total,
@@ -247,7 +329,45 @@ const getGuestById = async (clientId, guestId) => {
         attributes: { include: [[joinedCount, 'events_joined'], [guestStatus, 'status']] },
         include: GUEST_INCLUDE,
     });
-    return guest ? present(guest) : null;
+    if (!guest) return null;
+    return { ...present(guest), rsvp: await rsvpOf(guest) };
+};
+
+/**
+ * The guest's answer on their event (View RSVP Response, 2026-11-04): the
+ * participant matched the same way the status is — by guest_id, else the last
+ * 10 digits of the mobile. null when they have not joined.
+ */
+const rsvpOf = async (guest) => {
+    if (!guest.event_id) return null;
+    const key = mobileKey(guest.mobile);
+    const p = await EventParticipant.findOne({
+        where: {
+            event_id: guest.event_id,
+            [Op.or]: [
+                { guest_id: guest.id },
+                ...(key.length >= 7 ? [Sequelize.where(
+                    Sequelize.fn('RIGHT', Sequelize.fn('REGEXP_REPLACE', Sequelize.col('mobile'), '[^0-9]', ''), 10), key,
+                )] : []),
+            ],
+        },
+        attributes: ['id', 'rsvp_status', 'response_type', 'party_size', 'dietary_preference',
+            'special_requirements', 'notes', 'responded_at', 'invite_source', 'created_at'],
+        order: [['id', 'DESC']],
+    });
+    if (!p) return null;
+    return {
+        participant_id: p.id,
+        rsvp_status: p.rsvp_status,
+        response_type: p.response_type,
+        attending_count: p.party_size,
+        meal_preference: p.dietary_preference,
+        special_requests: p.special_requirements,
+        notes: p.notes,
+        responded_at: p.responded_at,
+        joined_at: p.created_at,
+        source: p.invite_source,
+    };
 };
 
 // ── Plan limit: Max Guests = guests in the phone book, in total (§569) ────
@@ -301,7 +421,10 @@ const getGuestCapacity = async (clientId) => {
 // ── Writes ─────────────────────────────────────────────────────────────────
 
 const createGuest = async (clientId, companyId, body) => {
-    const data = await normalisePerson(clientId, body, { partial: false, checkMobileCountry: true });
+    const data = {
+        ...await normalisePerson(clientId, body, { partial: false, checkMobileCountry: true }),
+        ...designFields(body),
+    };
 
     const guest = await sequelize.transaction(async (transaction) => {
         // Optional until the client portal sends it too (2026-10-28).
@@ -352,7 +475,10 @@ const updateGuest = async (clientId, guestId, body) => {
     const guest = await Guest.findOne({ where: { id: guestId, website_client_id: clientId } });
     if (!guest) return null;
 
-    const data = await normalisePerson(clientId, body, { partial: true, existing: guest.toJSON(), checkMobileCountry: true });
+    const data = {
+        ...await normalisePerson(clientId, body, { partial: true, existing: guest.toJSON(), checkMobileCountry: true }),
+        ...designFields(body),
+    };
     // Moving a guest to another of the host's events (2026-10-28).
     if (body?.event_id !== undefined && body.event_id !== null && body.event_id !== '') {
         data.event_id = await ownEventId(clientId, body.event_id);
@@ -421,8 +547,12 @@ const bulkUpdate = async (clientId, guestIds, action, value) => {
     // Invited, then Pending after 24 hours without joining. Sending again
     // restarts the 24 hours. Only guests on an event can be invited.
     if (action === 'invite') {
+        // Send Invitation panel (2026-11-04): `value` = { channels, message } — kept on the guest.
+        const extra = value && typeof value === 'object'
+            ? designFields({ invite_channels: value.channels, invite_message: value.message })
+            : {};
         const [affected] = await Guest.update(
-            { invited_at: new Date() },
+            { invited_at: new Date(), ...extra },
             { where: { ...scope, event_id: { [Op.ne]: null } } },
         );
         return { action, affected };
@@ -526,6 +656,7 @@ const eventGuestFor = (hostId, mobile, eventId) => findByMobile(hostId, mobile, 
 
 module.exports = {
     WRITABLE_FIELDS,
+    designFields,
     ensureEventGuest,
     eventGuestFor,
     GUEST_STATUSES,

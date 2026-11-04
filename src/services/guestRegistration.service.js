@@ -10,6 +10,7 @@ const {
     EventMenu,
     WebsiteClient,
     EventCategory,
+    Guest,
 } = require('../models');
 const { Op } = Sequelize;
 const ApiError = require('../utils/apiError');
@@ -922,13 +923,24 @@ const participantsDirectory = async (clientId, rawEventId, viewer = null) => {
         }),
         EventParticipant.findAll({
             where: { event_id: eventId, participant_client_id: { [Op.ne]: null } },
-            attributes: ['id', 'name', 'title', 'photo', 'relationship', 'mobile', 'email', 'participant_client_id'],
+            attributes: ['id', 'name', 'title', 'photo', 'relationship', 'mobile', 'email', 'participant_client_id', 'guest_id'],
             order: [['name', 'ASC']],
         }),
     ]);
     if (!event) throw ApiError.notFound('Event not found.');
 
     const isOwner = Number(event.website_client_id) === Number(clientId);
+
+    // The host's guest flags (Guests web design, 2026-11-04): a guest the host
+    // hid is left out for other participants; a VIP with "Mobile app participant
+    // directory" ticked carries its badge. One read for the whole list.
+    const guestIds = [...new Set(guests.map((g) => Number(g.guest_id)).filter(Boolean))];
+    const flags = new Map((guestIds.length
+        ? await Guest.findAll({
+            where: { id: { [Op.in]: guestIds } },
+            attributes: ['id', 'is_visible', 'is_vip', 'vip_label', 'vip_highlight'],
+        })
+        : []).map((g) => [Number(g.id), g]));
     if (!isOwner && !membership) {
         throw ApiError.notFound('You are not a guest of this event.');
     }
@@ -958,7 +970,11 @@ const participantsDirectory = async (clientId, rawEventId, viewer = null) => {
             ? profileVisibility.ALL_SHOWN
             : (privacy.get(Number(g.participant_client_id)) || profileVisibility.ALL_SHOWN);
         if (v.visibility === 'private') continue;
+        const gf = flags.get(Number(g.guest_id));
+        if (gf && !gf.is_visible && !isOwner && !self) continue;
+        const vip = !!gf?.is_vip && (Array.isArray(gf.vip_highlight) ? gf.vip_highlight : []).includes('app_directory');
         rows.push({
+            ...(vip ? { is_vip: true, vip_label: gf.vip_label || 'VIP' } : {}),
             id: g.id,
             full_name: v.fields.name ? g.name : 'Participant',
             title: v.fields.name ? g.title : null,

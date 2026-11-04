@@ -38,6 +38,11 @@ module.exports = (sequelize) => {
         email: { type: DataTypes.STRING(150), allowNull: true },
         notes: { type: DataTypes.STRING(500), allowNull: true },
 
+        /** Visibility: false = "Hide from App" — on the organizer's list only, never sent to a participant. */
+        is_visible: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+        /** "Highlight as Key Family Member" — shown with a badge. */
+        is_key: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+
         sort_order: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     }, {
         tableName: 'event_family_members',

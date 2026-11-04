@@ -638,3 +638,68 @@ Jamal: "just like the app, nothing special". Module by module:
   filled → saved, real uploads (photos + crop, short with music), wishes content filter, Create Event 9 steps. All pass,
   0 page errors; saved values checked via the API. Screenshots: Documents\EventInvite_Portal_Test\2026-11-03.
   Tool: V2 backend src/database/tools/create-test-client.js.
+
+## 7u. Agenda = Jamal's web design (2026-11-04) - portal only
+- `agenda-panel.tsx` rebuilt to the mockup ONLY: Event Agenda + Export Agenda (CSV) + View Agenda (Guest); day cards
+  ("Mon, 10 Nov 2026 · N Sessions") + Add Date (another event day); the day: Total Sessions / Total Overlap Groups,
+  timeline (time · dot · card with Edit / Delete), overlapping sessions wrapped in a purple "Overlap Sessions (n)" box;
+  right: Add / Edit Agenda Session (Date, Start, End, Title 100, Description 200 = DB column; Clear / Save Session).
+  Location / images / details / duplicate / move / overlap popup / success page not in the design → not shown
+  (an item's location and images are kept as they are). Checked in a browser (local portal + live V2 data).
+
+## 7v. Family = Jamal's web design (2026-11-04) - DB CHANGE (V2 only)
+- Portal `family-panel.tsx` rebuilt to the mockup: "Event Family"; Family Overview tiles (Total, Bride Side, Groom Side,
+  Visible Groups = sides with a visible member); tabs All Members / Bride Side / Groom Side / Close Family (relation is
+  father, mother, brother, sister, son, daughter, husband, wife, grandparent) / Hidden; search; Sort by Display Order / Name /
+  Relationship / Recently Added; collapsible "Bride Side Family (n)" / "Groom Side Family (n)" cards; row = photo, name
+  (+ "Key" badge), relation, side pill, "#n Display Order" (place WITHIN the side), Visible / Hidden, app note, Edit / Delete;
+  10 per page. Right: Add / Edit Family Member — Family Side *, Member Name * (one field -> `name`), Relationship *, Photo
+  (drag-drop, PNG/JPG/WEBP ≤ 5 MB, square crop 500 px), Mobile (optional), Display Order * (moves the member to that place
+  in its side via /reorder), Notes, Visibility * (Show in App / Hide from App), Highlight as Key Family Member; Clear /
+  Save. Family Settings kept behind a ⚙ button. Removed (not in the design): drag reorder, Family Details, Change Photo
+  menu, success page, Title / Last Name / Email / DOB fields (an edited member keeps them).
+- Backend (V2): `event_family_members.is_visible` (default 1) + `is_key` (default 0). Model, `clientFamily.service`
+  (owner gets both; participant gets is_key, list leaves hidden members out, hidden profile = 404; body accepts both).
+  Migration `migrations/sql/20261104-family-visibility.sql`, tool `tools/apply-family-visibility.js`, `initial_setup.sql`.
+  LOCAL event_v2 applied; service test 7/7. Portal treats a missing is_visible as visible (safe if the portal ships first).
+  The V1 app / V2 app do not show the Key badge yet.
+- ORDER: `node src/database/tools/apply-family-visibility.js --prod --apply` (live event_v2) BEFORE pushing the V2 backend;
+  then push the portal. tsc + eslint clean; not yet seen in a browser.
+
+## 7w. Module kit + Guests = Jamal's web design (2026-11-04) - DB CHANGE (V2 only)
+- Designs: `Downloads\20261103 Wedding Organizer Mobile App UI` (Agenda, Family, Guests 2 + 7 actions, Participants,
+  RSVP, Wishes, Gallery). Rule (Jamal): build repeated parts ONCE as shared components and reuse them.
+- **Portal module kit** `src/components/module-kit/` (index.ts): tones (one colour table for pills / icons),
+  layout (ModuleHeader, OverviewCard + StatTile, ListCard [collapsible], FormPanel, SplitLayout, Notice), filters
+  (CountTabs, SearchBox, SortSelect, Toolbar, Pager + pageWindow), people (PersonAvatar, PersonCell, PersonSummary,
+  StatusPill, StarBadge), form (FormField, FieldNote, SideNote, CharCount, NumberStepper, ChoiceRadio, SwitchField,
+  CheckChoices, PhotoDropzone = drag-drop + square crop + upload), sheets (ActionSheet = slide-in panel, DetailSection /
+  DetailRow, InfoGrid, DeleteSheet = cannot-be-undone + affected data + reason + "I understand", RowActions = ⋯ menu).
+  Family and Agenda now use it (same look as 7u / 7v).
+- **Guests page** (`guests/_components/guests-view.tsx`, `guest-fields.tsx`, `guest-actions.tsx`): Event Guests +
+  Guest Overview (Total, Invited = not "added", Confirmed, Pending RSVP = invited + pending), tabs All / Bride Side /
+  Groom Side / VIP / Hidden, search (name, email, mobile, company, relationship), Sort (name A–Z / Z–A, recent, oldest,
+  invite count), Guest List table (photo + VIP, relationship, side, invite count, RSVP status, app visibility, ⋯), 10 per
+  page. Right: Add Guest (Guest Type, Name, Mobile, Email, Relationship, Family Side, Invite Count stepper, Address ->
+  address_line1, Notes, Photo, RSVP Required, Visibility, Mark as VIP, Send Invitation via WhatsApp / Email / In-App).
+  Save with channels = invite (invited_at + channels) and a toast button opens WhatsApp (wa.me) / Email (mailto) with the
+  message. ⋯ panels: View Guest, Edit Guest, Send Invitation (channels, message template presets, Send Now; Schedule
+  Later shown "soon"), View RSVP Response (the participant's answer; "No response yet" when not joined), Mark as VIP
+  (enable, category, label, where to highlight), Hide Guest (reason + internal note; Show Guest = straight back), Delete
+  Guest (DeleteSheet; the reason is not stored). Header keeps Import / Export / Manage Groups. Removed: group filter,
+  bulk checkboxes. The name is saved whole in first_name (last_name cleared), like the app's form.
+- **Backend (V2):** `guests` + guest_type, side, invite_count, rsvp_required, is_visible, hidden_reason, hidden_note,
+  is_vip, vip_category, vip_label, vip_highlight (JSON), invite_channels (JSON), invite_message. Migration
+  `migrations/sql/20261104-guest-design-fields.sql`, tool `tools/apply-guest-design-fields.js`, model, initial_setup.sql.
+  `clientGuest.service`: designFields() on create/update (optional — the app's form keeps defaults), list filters
+  side / vip / visibility + sort, stats bride / groom / vip / hidden, getGuestById adds `rsvp`, bulk `invite` keeps
+  { channels, message }. `guestRegistration.participantsDirectory`: a participant whose guest is hidden is left out for
+  OTHER participants (host and the person still see it); VIP with "app directory" ticked carries is_vip + vip_label.
+  LOCAL event_v2 applied; tests 19/19 (create, VIP, hide/show, tabs, search, stats, invite, rsvp, directory).
+- tsc + eslint clean on everything changed; not seen in a browser (no dev server per repo rule).
+- ORDER: `apply-family-visibility.js --prod --apply` + `apply-guest-design-fields.js --prod --apply` (live event_v2)
+  BEFORE pushing the V2 backend; then push the portal.
+- Next (same kit): Participants, RSVP, Wishes, Gallery.
+- **APPLIED to live event_v2 (2026-11-04):** apply-family-visibility + apply-guest-design-fields (`--prod --apply`, re-check
+  shows all columns). Run from the V2 backend folder with `$env:NODE_PATH = "D:/Jamal/Event_Management_Admin_Backend/node_modules"`
+  (PowerShell) — V2 has no node_modules. Next: push V2 backend, then the portal.

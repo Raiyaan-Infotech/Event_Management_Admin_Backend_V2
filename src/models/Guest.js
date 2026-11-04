@@ -62,6 +62,27 @@ module.exports = (sequelize) => {
         notes: { type: DataTypes.STRING(500), allowNull: true },
         photo: { type: DataTypes.STRING(500), allowNull: true },
 
+        // ── Guests web design (2026-11-04) ──
+        /** Guest Type on the Add Guest form: individual | couple | family | group. */
+        guest_type: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'individual' },
+        /** Family Side. */
+        side: { type: DataTypes.ENUM('groom', 'bride'), allowNull: true },
+        /** Number of Guests / Invite Count — people this invitation covers. */
+        invite_count: { type: DataTypes.SMALLINT.UNSIGNED, allowNull: false, defaultValue: 1 },
+        rsvp_required: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+        /** false = Hide from App: kept for the organizer, left out of participant-facing lists. */
+        is_visible: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+        hidden_reason: { type: DataTypes.STRING(60), allowNull: true },
+        hidden_note: { type: DataTypes.STRING(500), allowNull: true },
+        is_vip: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        vip_category: { type: DataTypes.STRING(60), allowNull: true },
+        vip_label: { type: DataTypes.STRING(60), allowNull: true },
+        /** Where the VIP badge shows: organizer_list, app_directory, invitation_contacts. */
+        vip_highlight: { type: DataTypes.JSON, allowNull: true },
+        /** The channels and message the last Send Invitation used. */
+        invite_channels: { type: DataTypes.JSON, allowNull: true },
+        invite_message: { type: DataTypes.STRING(1000), allowNull: true },
+
         /** How the guest got into the phone book. */
         source: {
             type: DataTypes.ENUM('manual', 'import'),

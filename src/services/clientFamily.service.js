@@ -19,6 +19,10 @@ const mediaService = require('./media.service');
  * (profile photo, relationship, and whether a member's profile page opens).
  * The server strips what the host switched off, so a modified client cannot
  * read it. Mobile and email are never sent to a participant.
+ *
+ * Per member (portal Family design, 2026-11-04): `is_visible` = Show in App /
+ * Hide from App — a hidden member is never sent to a participant (list or
+ * profile); `is_key` = Highlight as Key Family Member (a badge).
  */
 
 const EVENT_ATTRS = ['id', 'name', 'company_id', 'website_client_id', 'menu_ids', 'family_settings'];
@@ -113,6 +117,7 @@ const present = (row, { isOwner, settings }) => {
         full_name: m.name,
         side: m.side,
         sort_order: m.sort_order,
+        is_key: !!m.is_key,
     };
     if (isOwner) {
         return {
@@ -125,6 +130,7 @@ const present = (row, { isOwner, settings }) => {
             mobile: m.mobile,
             email: m.email,
             notes: m.notes,
+            is_visible: !!m.is_visible,
             created_at: m.created_at,
         };
     }
@@ -141,7 +147,11 @@ const list = async (clientId, eventId) => {
     const { event, isOwner } = await resolveEventForView(clientId, eventId);
     const settings = settingsOf(event);
     const [rows, menu] = await Promise.all([
-        EventFamilyMember.findAll({ where: { event_id: event.id }, order: ORDER }),
+        // A participant never receives a member the host hid.
+        EventFamilyMember.findAll({
+            where: isOwner ? { event_id: event.id } : { event_id: event.id, is_visible: true },
+            order: ORDER,
+        }),
         EventMenu.findOne({ where: { slug: 'family' }, attributes: ['id', 'is_default'] }),
     ]);
     const chosen = (Array.isArray(event.menu_ids) ? event.menu_ids : []).map(Number);
@@ -162,6 +172,7 @@ const getOne = async (clientId, memberId) => {
     const row = await EventFamilyMember.findByPk(Number(memberId) || 0);
     if (!row) throw ApiError.notFound('That family member was not found.');
     const { event, isOwner } = await resolveEventForView(clientId, row.event_id);
+    if (!isOwner && !row.is_visible) throw ApiError.notFound('That family member was not found.');
     const settings = settingsOf(event);
     // A participant cannot open a profile the host switched off.
     if (!isOwner && !settings.profile_screen) {
@@ -233,6 +244,8 @@ const normalise = (body, partial) => {
         data.date_of_birth = dob;
     }
     if (has('notes')) data.notes = str(body.notes, 500);
+    if (has('is_visible')) data.is_visible = bool(body.is_visible, true);
+    if (has('is_key')) data.is_key = bool(body.is_key, false);
 
     return data;
 };
