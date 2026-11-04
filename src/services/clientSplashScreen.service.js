@@ -282,13 +282,13 @@ const getActiveSplashForEvent = async (clientId, rawEventId, viewer = null) => {
     const candidates = mobileDigits ? [...new Set([mobileDigits, mobileDigits.slice(-10)])].filter((d) => d.length >= 7) : [];
     const participantWhere = candidates.length > 0
         ? {
-            event_id: eventId,
+            event_id: eventId, is_blocked: false,
             [Op.or]: [
                 { participant_client_id: clientId },
                 { mobile: { [Op.in]: candidates } },
             ],
         }
-        : { event_id: eventId, participant_client_id: clientId };
+        : { event_id: eventId, participant_client_id: clientId, is_blocked: false };
 
     /*
       The event, the membership probe and the active splash all key on the

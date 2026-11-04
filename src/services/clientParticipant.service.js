@@ -43,10 +43,52 @@ const INCLUDE = [
     },
     {
         model: Guest, as: 'guest',
-        attributes: ['id', 'name'],
+        // + the guest's side / VIP / invitation for the Linked Guest + Invite Status columns (2026-11-04).
+        attributes: ['id', 'name', 'side', 'is_vip', 'vip_label', 'invited_at', 'invite_channels'],
         required: false,
     },
 ];
+
+/**
+ * ── ACCESS (Participants web design, 2026-11-04) ───────────────────────────
+ * blocked (is_blocked) > active (joined through the app) > pending (added by
+ * the host, not joined yet). Hidden (is_hidden) rows leave the main list for
+ * the Hidden tab. Block / Hide come in on the normal update (accessFields).
+ */
+const accessOf = (p) => (p.is_blocked ? 'blocked' : p.participant_client_id ? 'active' : 'pending');
+const ACCESS_WHERE = {
+    active: { participant_client_id: { [Op.ne]: null }, is_blocked: false, is_hidden: false },
+    pending: { participant_client_id: null, is_blocked: false, is_hidden: false },
+    blocked: { is_blocked: true, is_hidden: false },
+    hidden: { is_hidden: true },
+};
+const PARTICIPANT_SORTS = {
+    joined_desc: [['created_at', 'DESC'], ['id', 'DESC']],
+    joined_asc: [['created_at', 'ASC'], ['id', 'ASC']],
+    name_asc: [['name', 'ASC'], ['id', 'ASC']],
+    name_desc: [['name', 'DESC'], ['id', 'DESC']],
+};
+
+const accessFields = (body = {}) => {
+    const has = (f) => Object.prototype.hasOwnProperty.call(body, f);
+    const on = (v) => v === true || v === 1 || v === '1' || v === 'true';
+    const str = (v, max) => { const t = typeof v === 'string' ? v.trim() : ''; return t ? t.slice(0, max) : null; };
+    const data = {};
+    if (has('is_blocked')) {
+        data.is_blocked = on(body.is_blocked);
+        if (data.is_blocked && !str(body.block_reason, 60)) throw ApiError.badRequest('Please choose a block reason.');
+        data.block_reason = data.is_blocked ? str(body.block_reason, 60) : null;
+        data.block_note = data.is_blocked ? str(body.block_note, 500) : null;
+        data.blocked_at = data.is_blocked ? new Date() : null;
+    }
+    if (has('is_hidden')) {
+        data.is_hidden = on(body.is_hidden);
+        if (data.is_hidden && has('hide_reason') && !str(body.hide_reason, 60)) throw ApiError.badRequest('Please choose a hide reason.');
+        data.hide_reason = data.is_hidden ? str(body.hide_reason, 60) : null;
+        data.hide_note = data.is_hidden ? str(body.hide_note, 500) : null;
+    }
+    return data;
+};
 
 const present = (guest) => {
     const plain = guest.toJSON ? guest.toJSON() : guest;
@@ -58,6 +100,9 @@ const present = (guest) => {
         // Joined through the app (scanned + verified) vs added by the host.
         // A boolean, never the id — the id names another person's account.
         has_joined: Boolean(plain.participant_client_id),
+        access: accessOf(plain),
+        // Invitation sent (to them or their guest row) or they joined.
+        invite_status: plain.participant_client_id || plain.invited_at || plain.guest?.invited_at ? 'invited' : 'pending',
         participant_client_id: undefined,
         side,
         rsvp_side: side,
@@ -141,6 +186,10 @@ const listParticipants = async (clientId, query = {}) => {
 
     // Groom / Bride side and the relation — how a participant is placed.
     if (query.side === 'groom' || query.side === 'bride') where.rsvp_side = query.side;
+    // Access tabs (2026-11-04); with none asked, the main list leaves hidden rows out.
+    const access = String(query.access || '').toLowerCase();
+    if (ACCESS_WHERE[access]) Object.assign(where, ACCESS_WHERE[access]);
+    else if (query.access !== undefined) where.is_hidden = false;
     if (query.relationship && query.relationship !== 'all') where.relationship = String(query.relationship).trim();
 
     if (search) {
@@ -148,13 +197,14 @@ const listParticipants = async (clientId, query = {}) => {
             { name: { [Op.like]: `%${search}%` } },
             { email: { [Op.like]: `%${search}%` } },
             { mobile: { [Op.like]: `%${search}%` } },
+            { relationship: { [Op.like]: `%${search}%` } },
         ];
     }
 
     const { rows, count } = await EventParticipant.findAndCountAll({
         where,
         include: INCLUDE,
-        order: [['created_at', 'DESC'], ['id', 'DESC']],
+        order: PARTICIPANT_SORTS[String(query.sort || '')] || PARTICIPANT_SORTS.joined_desc,
         limit,
         offset: (page - 1) * limit,
         distinct: true,
@@ -180,12 +230,18 @@ const getParticipantStats = async (clientId, query = {}) => {
     const eventId = Number(query.event_id) || null;
     if (eventId) where.event_id = eventId;
 
-    const rows = await EventParticipant.findAll({ where, attributes: ['rsvp_status', 'party_size', 'invite_source'] });
+    const rows = await EventParticipant.findAll({
+        where, attributes: ['rsvp_status', 'party_size', 'invite_source', 'participant_client_id', 'is_blocked', 'is_hidden'],
+    });
 
     const counts = { accepted: 0, pending: 0, declined: 0, not_responded: 0, invited: 0 };
+    // Access tiles / tabs (2026-11-04): hidden rows count only as Hidden.
+    const access = { all: 0, active: 0, pending: 0, blocked: 0, hidden: 0 };
     let heads = 0;
     let imported = 0;
     for (const r of rows) {
+        if (r.is_hidden) access.hidden += 1;
+        else { access.all += 1; access[accessOf(r)] += 1; }
         counts[r.rsvp_status] = (counts[r.rsvp_status] || 0) + 1;
         heads += Number(r.party_size) || 1;
         if (r.invite_source === 'import') imported += 1;
@@ -203,6 +259,7 @@ const getParticipantStats = async (clientId, query = {}) => {
         declined: counts.declined, declined_pct: pct(counts.declined),
         not_responded: awaiting, not_responded_pct: pct(awaiting),
         imported,
+        access,
     };
 };
 
@@ -329,7 +386,7 @@ const updateParticipant = async (clientId, id, body = {}) => {
 
     const person = await normalisePerson(clientId, body, { partial: true, existing: guest.toJSON(), withGroup: false, checkMobileCountry: true });
     const attendance = normaliseAttendance(body, { existing: guest.toJSON() });
-    const data = { ...person, ...attendance };
+    const data = { ...person, ...attendance, ...accessFields(body) };
 
     const moving = body.event_id !== undefined && Number(body.event_id) !== Number(guest.event_id);
     const before = guest.response_type;

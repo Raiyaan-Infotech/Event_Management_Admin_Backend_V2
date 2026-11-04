@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Guests web design (2026-11-04): adds the guest columns the portal's Add Guest form and
- * action panels save (src/database/migrations/sql/20261104-guest-design-fields.sql).
+ * action panels save — and the RSVP board's answer for a guest who has not joined (rsvp_*) (src/database/migrations/sql/20261104-guest-design-fields.sql).
  * Re-runnable — only the missing columns are added, in one ALTER.
  *
  *   node src/database/tools/apply-guest-design-fields.js                 dry run, local
@@ -42,6 +42,16 @@ const COLUMNS = [
     ['vip_highlight', '`vip_highlight` json DEFAULT NULL AFTER `vip_label`'],
     ['invite_channels', '`invite_channels` json DEFAULT NULL AFTER `vip_highlight`'],
     ['invite_message', '`invite_message` varchar(1000) DEFAULT NULL AFTER `invite_channels`'],
+    // RSVP board (2026-11-04): the organizer's answer for a guest who has not joined
+    // (a joined guest's answer lives on their event_participants row), + hide / decline reason.
+    ['rsvp_response', "`rsvp_response` enum('yes','no','maybe') DEFAULT NULL AFTER `invite_message`"],
+    ['rsvp_attending', '`rsvp_attending` smallint unsigned DEFAULT NULL AFTER `rsvp_response`'],
+    ['rsvp_meal', '`rsvp_meal` varchar(255) DEFAULT NULL AFTER `rsvp_attending`'],
+    ['rsvp_note', '`rsvp_note` varchar(500) DEFAULT NULL AFTER `rsvp_meal`'],
+    ['rsvp_decline_reason', '`rsvp_decline_reason` varchar(60) DEFAULT NULL AFTER `rsvp_note`'],
+    ['rsvp_responded_at', '`rsvp_responded_at` datetime DEFAULT NULL AFTER `rsvp_decline_reason`'],
+    ['rsvp_hidden', "`rsvp_hidden` tinyint(1) NOT NULL DEFAULT '0' AFTER `rsvp_responded_at`"],
+    ['rsvp_hidden_reason', '`rsvp_hidden_reason` varchar(60) DEFAULT NULL AFTER `rsvp_hidden`'],
 ];
 
 (async () => {

@@ -166,7 +166,7 @@ const resolveEvent = async (clientId, rawId) => {
     if (!event) throw ApiError.notFound('That event was not found.');
     if (Number(event.website_client_id) === Number(clientId)) return { event, isOwner: true };
     const participant = await EventParticipant.findOne({
-        where: { event_id: eventId, participant_client_id: clientId },
+        where: { event_id: eventId, participant_client_id: clientId, is_blocked: false },
         attributes: ['id'],
     });
     if (!participant) throw ApiError.notFound('That event is not on your account.');

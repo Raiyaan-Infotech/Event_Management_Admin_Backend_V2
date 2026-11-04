@@ -95,7 +95,7 @@ const lookup = async (req, eventId, rawToken) => {
     if (!client) throw ApiError.badRequest('This QR code is not valid.');
 
     const p = await EventParticipant.findOne({
-        where: { event_id: event.id, participant_client_id: client.id },
+        where: { event_id: event.id, participant_client_id: client.id, is_blocked: false },
         order: [['id', 'DESC']],
     });
     if (!p) throw ApiError.notFound(`${client.name} is not a participant of this event.`);

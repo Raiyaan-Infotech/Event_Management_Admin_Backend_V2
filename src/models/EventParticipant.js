@@ -176,6 +176,17 @@ module.exports = (sequelize) => {
         participant_client_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
         /** Mark Attendance (private events, 2026-10-28). UTC. */
         checked_in_at: { type: DataTypes.DATE, allowNull: true },
+
+        // ── Participants web design (2026-11-04) ──
+        /** Blocked: no event features in the app, cannot re-join; the history is kept. */
+        is_blocked: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        block_reason: { type: DataTypes.STRING(60), allowNull: true },
+        block_note: { type: DataTypes.STRING(500), allowNull: true },
+        blocked_at: { type: DataTypes.DATE, allowNull: true },
+        /** Hidden: out of the organizer's main list and the app's participant directory; records kept. */
+        is_hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        hide_reason: { type: DataTypes.STRING(60), allowNull: true },
+        hide_note: { type: DataTypes.STRING(500), allowNull: true },
         checked_in_by_client_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
         checked_in_by_name: { type: DataTypes.STRING(200), allowNull: true },
     }, {

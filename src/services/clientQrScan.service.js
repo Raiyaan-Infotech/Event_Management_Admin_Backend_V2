@@ -91,7 +91,7 @@ const resolveAccount = async (req, code, preferred) => {
     const event = await sharedEvent(await callerEventIds(req), await accountEventIds(person.id), preferred);
     const isHost = Number(event.website_client_id) === Number(person.id);
     const part = isHost ? null : await EventParticipant.findOne({
-        where: { event_id: event.id, participant_client_id: person.id },
+        where: { event_id: event.id, participant_client_id: person.id, is_blocked: false },
         attributes: ['relationship', 'rsvp_side', 'photo'],
         order: [['id', 'DESC']],
     });

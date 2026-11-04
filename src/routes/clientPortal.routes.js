@@ -17,6 +17,7 @@ const splashController = require('../controllers/clientSplashScreen.controller')
 const galleryController = require('../controllers/clientGallery.controller');
 const galleryService = require('../services/clientGallery.service');
 const agendaController = require('../controllers/clientAgenda.controller');
+const rsvpBoardController = require('../controllers/clientRsvpBoard.controller');
 const liveStreamController = require('../controllers/clientLiveStream.controller');
 const liveStreamService = require('../services/clientLiveStream.service');
 const socialLinkController = require('../controllers/clientSocialLink.controller');
@@ -778,6 +779,12 @@ const agendaImageUpload = multer({
         cb(new Error('Please choose a JPG, PNG or WEBP image.'), false);
     },
 });
+
+// RSVP board (portal "RSVP Responses", 2026-11-04): one row per event guest with their answer.
+router.get('/events/:id/rsvp-board', rsvpBoardController.list);
+router.put('/rsvp-board/:guestId', rsvpBoardController.update);
+router.put('/rsvp-board/:guestId/hide', rsvpBoardController.hide);
+router.delete('/rsvp-board/:guestId', rsvpBoardController.clear);
 
 router.get('/events/:id/agenda', agendaController.list);
 router.post('/events/:id/agenda', agendaController.create);

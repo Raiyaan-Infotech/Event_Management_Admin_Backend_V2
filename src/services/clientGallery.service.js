@@ -91,7 +91,7 @@ const resolveEventForView = async (clientId, rawId) => {
             attributes: ['id', 'name', 'subscription_plan_id', 'company_id', 'website_client_id'],
         }),
         EventParticipant.findOne({
-            where: { event_id: eventId, participant_client_id: clientId },
+            where: { event_id: eventId, participant_client_id: clientId, is_blocked: false },
             attributes: ['id'],
         }),
     ]);

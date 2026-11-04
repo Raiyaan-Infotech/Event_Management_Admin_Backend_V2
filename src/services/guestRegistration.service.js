@@ -505,6 +505,10 @@ const join = async (client, payload = {}, { event: givenEvent = null } = {}) => 
             where: { event_id: event.id, mobile: { [Op.in]: candidates } },
         })
         : null;
+    // Blocked by the organizer (2026-11-04): no way back in by scanning again.
+    if (existing && existing.is_blocked) {
+        throw ApiError.forbidden('You cannot join this event. Please contact the organizer.');
+    }
     // Read BEFORE the row is updated below (which links it to this account):
     // true only when this account had already joined — a re-scan.
     const alreadyJoined = Boolean(existing)
@@ -698,7 +702,8 @@ const participantWhereForClient = async (clientId, eventId = null, viewer = null
             ],
         }
         : { participant_client_id: clientId };
-    return eventId ? { event_id: eventId, ...condition } : condition;
+    // A blocked participant (2026-11-04) is no longer a member anywhere.
+    return eventId ? { event_id: eventId, is_blocked: false, ...condition } : { is_blocked: false, ...condition };
 };
 
 /**
@@ -923,7 +928,7 @@ const participantsDirectory = async (clientId, rawEventId, viewer = null) => {
         }),
         EventParticipant.findAll({
             where: { event_id: eventId, participant_client_id: { [Op.ne]: null } },
-            attributes: ['id', 'name', 'title', 'photo', 'relationship', 'mobile', 'email', 'participant_client_id', 'guest_id'],
+            attributes: ['id', 'name', 'title', 'photo', 'relationship', 'mobile', 'email', 'participant_client_id', 'guest_id', 'is_blocked', 'is_hidden'],
             order: [['name', 'ASC']],
         }),
     ]);
@@ -972,6 +977,8 @@ const participantsDirectory = async (clientId, rawEventId, viewer = null) => {
         if (v.visibility === 'private') continue;
         const gf = flags.get(Number(g.guest_id));
         if (gf && !gf.is_visible && !isOwner && !self) continue;
+        // Blocked / hidden by the organizer: only the host still sees them here.
+        if ((g.is_blocked || g.is_hidden) && !isOwner && !self) continue;
         const vip = !!gf?.is_vip && (Array.isArray(gf.vip_highlight) ? gf.vip_highlight : []).includes('app_directory');
         rows.push({
             ...(vip ? { is_vip: true, vip_label: gf.vip_label || 'VIP' } : {}),

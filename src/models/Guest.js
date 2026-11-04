@@ -82,6 +82,17 @@ module.exports = (sequelize) => {
         /** The channels and message the last Send Invitation used. */
         invite_channels: { type: DataTypes.JSON, allowNull: true },
         invite_message: { type: DataTypes.STRING(1000), allowNull: true },
+        // ── RSVP board (2026-11-04) — see clientRsvpBoard.service ──
+        /** The organizer's answer for a guest who has NOT joined (a joined guest's is on event_participants). */
+        rsvp_response: { type: DataTypes.ENUM('yes', 'no', 'maybe'), allowNull: true },
+        rsvp_attending: { type: DataTypes.SMALLINT.UNSIGNED, allowNull: true },
+        rsvp_meal: { type: DataTypes.STRING(255), allowNull: true },
+        rsvp_note: { type: DataTypes.STRING(500), allowNull: true },
+        rsvp_decline_reason: { type: DataTypes.STRING(60), allowNull: true },
+        rsvp_responded_at: { type: DataTypes.DATE, allowNull: true },
+        /** Hide Response: out of the main RSVP list, every record kept. */
+        rsvp_hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        rsvp_hidden_reason: { type: DataTypes.STRING(60), allowNull: true },
 
         /** How the guest got into the phone book. */
         source: {

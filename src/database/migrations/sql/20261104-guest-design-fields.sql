@@ -15,4 +15,13 @@ ALTER TABLE `guests`
   ADD COLUMN `vip_label` varchar(60) DEFAULT NULL AFTER `vip_category`,
   ADD COLUMN `vip_highlight` json DEFAULT NULL AFTER `vip_label`,
   ADD COLUMN `invite_channels` json DEFAULT NULL AFTER `vip_highlight`,
-  ADD COLUMN `invite_message` varchar(1000) DEFAULT NULL AFTER `invite_channels`;
+  ADD COLUMN `invite_message` varchar(1000) DEFAULT NULL AFTER `invite_channels`,
+  -- RSVP board: the organizer's answer for a guest who has not joined, + hide / decline reason.
+  ADD COLUMN `rsvp_response` enum('yes','no','maybe') DEFAULT NULL AFTER `invite_message`,
+  ADD COLUMN `rsvp_attending` smallint unsigned DEFAULT NULL AFTER `rsvp_response`,
+  ADD COLUMN `rsvp_meal` varchar(255) DEFAULT NULL AFTER `rsvp_attending`,
+  ADD COLUMN `rsvp_note` varchar(500) DEFAULT NULL AFTER `rsvp_meal`,
+  ADD COLUMN `rsvp_decline_reason` varchar(60) DEFAULT NULL AFTER `rsvp_note`,
+  ADD COLUMN `rsvp_responded_at` datetime DEFAULT NULL AFTER `rsvp_decline_reason`,
+  ADD COLUMN `rsvp_hidden` tinyint(1) NOT NULL DEFAULT '0' AFTER `rsvp_responded_at`,
+  ADD COLUMN `rsvp_hidden_reason` varchar(60) DEFAULT NULL AFTER `rsvp_hidden`;

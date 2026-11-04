@@ -61,7 +61,7 @@ const resolveEventForView = async (clientId, rawId) => {
     const [event, membership] = await Promise.all([
         Event.findByPk(eventId, { attributes: EVENT_ATTRS }),
         EventParticipant.findOne({
-            where: { event_id: eventId, participant_client_id: clientId },
+            where: { event_id: eventId, participant_client_id: clientId, is_blocked: false },
             attributes: ['id'],
         }),
     ]);

@@ -703,3 +703,47 @@ Jamal: "just like the app, nothing special". Module by module:
 - **APPLIED to live event_v2 (2026-11-04):** apply-family-visibility + apply-guest-design-fields (`--prod --apply`, re-check
   shows all columns). Run from the V2 backend folder with `$env:NODE_PATH = "D:/Jamal/Event_Management_Admin_Backend/node_modules"`
   (PowerShell) — V2 has no node_modules. Next: push V2 backend, then the portal.
+
+## 7x. Agenda fixes (Jamal, 2026-11-04) - portal only
+- Session card = the mockup's speech-bubble card (rounded, small pointer towards the timeline dot).
+- Date field opens a CALENDAR (kit `DatePickerField` / `DayCalendar` in module-kit/date-field.tsx; only the event's days
+  can be picked). "+ Add Date" opens the same calendar with the event days that have no session yet.
+- "Unable to add another session on the same date": the backend allows it (tested: 3 sessions, same date, 2 at the same
+  time). The page now has "+ Add Session" on the day header, keeps the form on that day after a save (empty, title
+  focused), and a day card click moves an unsaved new session to that day. Live V2 portal still has the OLD agenda
+  until the portal is pushed.
+
+## 7y. Guests / RSVPs / Participants inside the event page + RSVP & Participants = web design (2026-11-04) - DB CHANGE (V2)
+- **Event page tabs:** Guests, RSVPs and Participants now open IN the event page like Family (`?tab=guests|rsvps|participants`,
+  kept in the URL). `/dashboard/events/:id/{guests,rsvps,participants}` forward there, so every old link / Save / Back still
+  works. Tab bar = `events/[id]/_components/scroll-tabs.tsx`: one row, scrolls sideways (wheel / swipe / ‹ › buttons).
+  The three views no longer draw their own event card.
+- **RSVP Responses** (`rsvps/_components/rsvps-view.tsx`, `rsvp-actions.tsx`, hook `use-rsvp-board.ts`): 6 tiles (Total
+  Invited, Responded + rate, Confirmed / Pending / Declined / Maybe % of invited), Export (CSV of the current filters), Send
+  Reminder (pending guests, one WhatsApp tap each), "Show guests not invited yet", search + Status / Side / Source / Sort /
+  Date range, tabs All / Confirmed / Pending / Declined / Bride / Groom / VIP / Hidden, Response List (guest + VIP,
+  relationship, side, invite count, RSVP status, response type, attending count, meal, response date, source + app
+  visibility, View or Send Reminder + ⋯), right rail: RSVP Summary donut, Invitation Channel Breakdown, Recent Activity,
+  Guest Response Notes. ⋯ = View Response (RSVP Details / Guest Information / Activity), View Guest + Edit Guest (the Guests
+  panels), Send Reminder, Mark as Confirmed / Pending / Declined (= Update RSVP Status: decline reason, attendance count, meal,
+  response note, admin note -> guest note), Add Note (type, priority, previous notes; guest_notes), Hide Response, Delete.
+  Backend: `clientRsvpBoard.service/controller`, `GET /client/events/:id/rsvp-board`, `PUT /client/rsvp-board/:guestId`,
+  `PUT .../:guestId/hide`, `DELETE .../:guestId`. One row per event GUEST; the answer = their participant row when joined
+  (written there), else the organizer's answer on the guest (new `guests.rsvp_*` columns). Delete Response clears the
+  answer only (guest + participant kept). Test 17/17.
+- **Participants** (`participants/_components/participants-view.tsx`, `participant-actions.tsx`): tiles Total / Active /
+  Pending Access / Blocked, tabs All / Active / Pending / Blocked / Hidden, search, Sort (joined, name), list (photo,
+  relationship, linked guest = VIP or side, mobile, invite / RSVP / access status, joined on, ⋯). Panels: View, Edit (name,
+  mobile, email, relationship, side, RSVP status, access Active/Blocked, notes, Visible in App, Send Invitation -> WhatsApp),
+  Send Invitation, View RSVP Response, Block (reason, note, hide too) / Unblock, Hide (reason, note) / Show, Delete. Add
+  Participant (from Guest / Manually) unchanged.
+  Backend: `event_participants` + is_blocked, block_reason, block_note, blocked_at, is_hidden, hide_reason, hide_note
+  (`migrations/sql/20261104-participant-access.sql`, `tools/apply-participant-access.js`). BLOCKED = every participant access
+  check now has `is_blocked: false` (agenda, family, gallery, wishes, live, social, splash, contact chat, nearby, my events,
+  event details, my RSVP, participant settings, check-in, QR profile scan) + join refuses ("You cannot join this event");
+  blocked / hidden rows are left out of the app's participant directory for others. List: `access` (active/pending/blocked/
+  hidden; with `access` sent and none matching, hidden rows are left out), `sort`, search on relationship; stats.access.
+  Test 13/13.
+- LOCAL event_v2 applied (guest rsvp_* + participant access columns). tsc + eslint clean; not seen in a browser.
+- **PRODUCTION ORDER:** `apply-guest-design-fields.js --prod --apply` (adds the 8 rsvp_* columns) +
+  `apply-participant-access.js --prod --apply` BEFORE pushing the V2 backend; then push the portal.

@@ -88,13 +88,13 @@ const get = async (clientId, rawEventId) => {
 
         const participantCondition = mobileCandidates.length > 0
             ? {
-                event_id: id,
+                event_id: id, is_blocked: false,
                 [Op.or]: [
                     { participant_client_id: clientId },
                     { mobile: { [Op.in]: mobileCandidates } },
                 ],
             }
-            : { event_id: id, participant_client_id: clientId };
+            : { event_id: id, participant_client_id: clientId, is_blocked: false };
 
         const participant = await EventParticipant.findOne({ where: participantCondition, attributes: ['id'] });
         if (!participant) {

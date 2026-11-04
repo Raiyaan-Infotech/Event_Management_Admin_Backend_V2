@@ -53,7 +53,7 @@ const resolveEvent = async (clientId, rawId) => {
             ],
         }),
         EventParticipant.findOne({
-            where: { event_id: eventId, participant_client_id: clientId },
+            where: { event_id: eventId, participant_client_id: clientId, is_blocked: false },
             attributes: ['id'],
         }),
     ]);

@@ -661,13 +661,13 @@ const getEventForViewer = async (clientId, eventId, opts = {}) => {
 
     const participantWhere = candidates.length > 0
         ? {
-            event_id: eventId,
+            event_id: eventId, is_blocked: false,
             [Op.or]: [
                 { participant_client_id: clientId },
                 { mobile: { [Op.in]: candidates } },
             ],
         }
-        : { event_id: eventId, participant_client_id: clientId };
+        : { event_id: eventId, participant_client_id: clientId, is_blocked: false };
 
     const [event, membership] = await Promise.all([
         Event.findOne({ where: { id: eventId }, include: EVENT_INCLUDE }),
@@ -1661,7 +1661,7 @@ const getWishlist = async (clientId, { platform = 'website', viewer = null } = {
     const [events, memberships] = await Promise.all([
         Event.findAll({ where: { id: { [Op.in]: ids } }, include: EVENT_INCLUDE }),
         EventParticipant.findAll({
-            where: { event_id: { [Op.in]: ids }, participant_client_id: clientId },
+            where: { event_id: { [Op.in]: ids }, participant_client_id: clientId, is_blocked: false },
             attributes: ['event_id'],
         }),
     ]);
@@ -1712,7 +1712,7 @@ const setWishlisted = async (clientId, eventId, wishlisted) => {
         const [event, membership] = await Promise.all([
             Event.findOne({ where: { id }, attributes: ['id', 'website_client_id'] }),
             EventParticipant.findOne({
-                where: { event_id: id, participant_client_id: clientId },
+                where: { event_id: id, participant_client_id: clientId, is_blocked: false },
                 attributes: ['id'],
             }),
         ]);
