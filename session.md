@@ -786,3 +786,68 @@ Jamal: "just like the app, nothing special". Module by module:
   0 console errors: sign in, Overview, Create Folder, Upload 2 photos, folder view + details, multi-select Move, Create
   Album with preview, save, play. Test data removed; servers stopped.
 - Albums table on LOCAL and **live event_v2 (applied 2026-11-04, re-check OK)**.
+
+## 8a. Event WORKSPACE — View Event opens in its own tab (Jamal's mockup, 2026-11-04) - portal only
+- New route `/event/:id?tab=…` (`src/app/event/[id]/layout.tsx` + `page.tsx`): same auth / plan / theme gates as the
+  dashboard; its own sidebar = the event's sections (`components/layout/EventWorkspace/EventWorkspace.tsx` → EventSidebar:
+  Dashboard, Event Information, Agenda, Venue, Gallery, Family, Wed Wishes, Live Streaming, Social Links, Guests, RSVPs,
+  Participants, Settings, Messages, Activity Log — plan-gated as before; Edit Event + Back to My Events at the bottom); the
+  top bar (`Header left=`) shows the event (thumbnail, name + status, date, venue + city, category) and no New Event.
+- Sections list + icons + status moved to `events/[id]/_components/event-tabs.ts`. `EventDetail` reads the section from
+  `?tab=` (router.replace on change) and, with `workspace`, draws no header card / tab bar.
+- **Overview renamed "Dashboard"** and redesigned to the mockup's 6 cards: Basic Information, Event Status, Quick Links,
+  Date & Time, RSVP Summary (donut + Accepted / Pending / Declined), Region (Venue, Location, City, Map link — the event
+  has no State / Country fields). The old Design card is gone from it.
+- View Event (My Events) and the Dashboard home's event links open `/event/:id` in a NEW TAB. The old
+  `/dashboard/events/:id` now forwards to `/event/:id` keeping `?tab=`, so every other link / Save / Back still works.
+- tsc clean; eslint: no new warnings. Not yet seen in a browser.
+
+## 8b. Every event page stays INSIDE the event workspace (Jamal, 2026-11-05) - portal only
+- Bug: in View Event (`/event/:id`) → Guests → Manage Groups (also Add Guest, Import, RSVP details / edit, Add / Edit
+  Participant, Send Message, Edit Event) opened the normal dashboard (`/dashboard/...`) and left the event tab.
+- Copies under the workspace: `/event/:id/{edit, guests/add, guests/import, guests/groups[/add|/:groupId],
+  guests/:guestId[/profile], rsvps/:rsvpId[/edit], participants/add, participants/:id/edit, messages/send}` — each
+  file just reuses the dashboard page (`src/app/event/[id]/**/page.tsx`).
+- `src/lib/event-workspace.ts` → `useEventHref()`: inside `/event/:id` it turns a `/dashboard/...` link into its
+  `/event/:id/...` copy (+ `event=<id>`); the lists (`/dashboard/guests|rsvps|participants|messages`) become
+  `?tab=`. Outside the workspace links are unchanged. Billing, My Events, Create Event, Templates stay in the dashboard.
+  Shared pages call `wsHref(...)` on every such Link / router.push.
+- Workspace sidebar: links always go to `/event/:id?tab=…` and a sub-page lights up its section (Guests for Manage
+  Groups). The workspace now has the plan section gate too (`PlanSectionGate path=`).
+- tsc clean; eslint no new errors. Not yet clicked through in a browser.
+- Workspace sidebar footer REMOVED (Jamal, 2026-11-05): no "Edit Event" / "Back to My Events" at the bottom. Leave the
+  event with **Exit Event** (top bar); Edit Event stays reachable from the event pages (Dashboard / Event Information).
+- **Manage Groups rows (Jamal, 2026-11-05):** the ⋮ menu is gone; **Edit** and **Delete** are buttons on the row (same
+  style as the Guests table). Dropped with the menu: "View members" (the Guests page no longer filters by group) and
+  "Send message to group" (Messages → Send still does it).
+- **Menu Settings in the workspace sidebar (Jamal, 2026-11-05):** "Settings" renamed **Menu Settings**; under it (chevron,
+  open on its own page) RSVP Settings · Participants Settings · Family Settings · Wish Settings · Contact Person, each
+  `?tab=settings&set=<key>`; Menu Settings alone shows all of them. RSVP / Participants follow the plan. Family and Wish
+  Settings were dialogs inside their modules — now `SettingsShell` (module-ui.tsx) shows them as a dialog (⚙ still works)
+  or inline (`FamilySettingsCard`, `WishSettingsCard`). List: `SETTINGS_PAGES` in event-tabs.ts. **Guests have no
+  settings** (nothing on the server either) — asked Jamal what they should hold.
+- **Edit / Delete out of the ⋯ menu on RSVPs + Participants too (Jamal, 2026-11-05):** each row has Edit + Delete buttons
+  (RSVP: Edit Guest / Delete Response; Participants: Edit / Delete Participant), ⋯ keeps the rest. Guests table already
+  had this (pushed in 897a46d).
+- RSVP rows: the View / Send Reminder button removed from the row (Jamal, 2026-11-05) — both are in ⋯ (View Response,
+  Send Reminder). Row = Edit · Delete · ⋯.
+- **Loader covers the main content only (Jamal, 2026-11-05):** `PageLoader` now fills `#main-content` (the content box
+  of the dashboard layout and of the event workspace layout, `relative`), spinner sticky in view; sidebar + top bar stay
+  usable. GlobalLoader (queries / saves) portals into `#main-content` when the page has one, else full screen.
+  `fullScreen` only for `app/dashboard/loading.tsx` (before the layout exists). New `app/event/[id]/loading.tsx` so a
+  page change inside the workspace (Add Guest, Manage Groups…) also covers the content only. Overlay z-40 = under
+  dialogs / slide-in sheets.
+- **REVERSED (Jamal, 2026-11-05): Edit + Delete live ONLY in the ⋯ menu** on every list — Guests, RSVPs, Participants
+  and Manage Groups (⋯ = Edit Group / Send Message to Group / Delete Group). No separate Edit / Delete row buttons.
+- **RSVP Response List fits the card (Jamal, 2026-11-05):** `min-w-[1080px]` removed; body 11.5px, headings 10.5px and
+  short (Guest, Relation, Side, Invites, RSVP, Response, Attending, Meal, Responded, Source / App — full name on hover),
+  pills 10.5px, cells py-1.5 / pr-2, compact ⋯. Horizontal scroll only as a fallback on narrow screens.
+- **Workspace sidebar "needs 3 clicks" (Jamal, 2026-11-05) — cause:** opening a section starts its first data load; the
+  GlobalLoader then laid a FULL-SCREEN overlay (fixed, z-9999) over the page INCLUDING the sidebar, so clicks during the
+  load hit the overlay and did nothing; once the data arrived the next click worked. Fixed by the content-only loader
+  above (the overlay now sits inside #main-content; the sidebar is never covered). Slow first loads on Render's free
+  plan (~30 s after a quiet spell) made it worse.
+- **Gallery photo limit 2 MB → 5 MB (Jamal, 2026-11-05):** `MAX_IMAGE_BYTES` in `services/clientGallery.service.js`
+  (the one place; upload route + portal Upload Media + app read it via usage `max_image_bytes`). Old portal
+  gallery-panel check updated to 5 MB too. Video stays 5 MB, shorts 10 MB. No DB change — needs a V2 backend push.
+  Covers (folder cover) follow the same constant. Wishes / agenda / live images have their OWN limits (unchanged).

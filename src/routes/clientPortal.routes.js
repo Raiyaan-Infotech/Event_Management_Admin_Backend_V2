@@ -640,7 +640,7 @@ router.post(
  * Event gallery — real photos and videos, replacing the app's mock screen.
  *
  * Multer's ceiling is the VIDEO cap, the larger of the two; the per-type caps
- * (2MB image / 5MB video) are enforced in the service, which knows the file's
+ * (5MB image / 5MB video) are enforced in the service, which knows the file's
  * type. Enforcing 2MB here would reject a legitimate 3MB video before anything
  * could tell the difference.
  */

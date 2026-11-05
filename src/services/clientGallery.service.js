@@ -22,7 +22,7 @@ const notificationTrigger = require('./notificationTrigger.service');
  */
 
 /** Product rule, deliberately not a plan column: nobody sells a bigger photo. */
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB (Jamal, 2026-11-05; was 2 MB)
 const MAX_VIDEO_BYTES = 5 * 1024 * 1024;
 
 /** Shorts (2026-10-23): a vertical clip of up to a minute and 10 MB. */
@@ -641,7 +641,7 @@ const THUMB_SIDE = 480;
 /**
  * A photo's grid thumbnail (Google Photos style): the short side scaled to
  * [THUMB_SIDE], JPEG 72, EXIF orientation applied — tens of KB where the
- * full photo is up to 2 MB. Grids, category covers and lists load this; the
+ * full photo is up to 5 MB. Grids, category covers and lists load this; the
  * viewer still opens the full photo. Returns a Buffer or null (never throws).
  */
 const imageThumb = async (buffer) => {
@@ -885,7 +885,7 @@ const uploadItem = async (clientId, eventId, file, body = {}, short = null) => {
     if (!stored || !stored.url) throw ApiError.badRequest('That file could not be stored.');
 
     // Grid picture, stored next to the file. Video = its first frame; photo =
-    // a ~480 px copy (the full photo is up to 2 MB). Best effort: none means a
+    // a ~480 px copy (the full photo is up to 5 MB). Best effort: none means a
     // video shows its icon and a photo's tile falls back to the full file.
     const companyForFiles = event.company_id || client?.company_id || 1;
     // A short's cover, when the host chose one, is its picture instead.
