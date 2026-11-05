@@ -25,6 +25,8 @@ module.exports = (sequelize) => {
         /** fade_slide_up | fade | zoom | typewriter */
         intro_animation: { type: DataTypes.STRING(30), allowNull: false, defaultValue: 'fade_slide_up' },
         intro_seconds: { type: DataTypes.DECIMAL(4, 1), allowNull: false, defaultValue: 5 },
+        /** { font, color, size, align, position, bold, italic, shadow } — NULL = defaults (2026-11-05). */
+        intro_style: { type: DataTypes.JSON, allowNull: true },
 
         /** Background song for the whole slideshow. */
         music_enabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },

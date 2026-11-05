@@ -1403,6 +1403,7 @@ CREATE TABLE IF NOT EXISTS `event_gallery_albums` (
   `intro_text` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `intro_animation` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fade_slide_up',
   `intro_seconds` decimal(4,1) NOT NULL DEFAULT '5.0',
+  `intro_style` json DEFAULT NULL COMMENT 'font, color, size, align, position, bold, italic, shadow',
   `music_enabled` tinyint(1) NOT NULL DEFAULT '0',
   `music_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `music_name` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,

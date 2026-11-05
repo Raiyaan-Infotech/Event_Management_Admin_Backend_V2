@@ -13,6 +13,30 @@ const mediaService = require('./media.service');
  */
 
 const ANIMATIONS = ['fade_slide_up', 'fade', 'zoom', 'typewriter'];
+
+/** Intro text style (Jamal, 2026-11-05). Anything unknown falls back to the default. */
+const INTRO_FONTS = ['playfair', 'great_vibes', 'dancing', 'cormorant', 'montserrat', 'poppins'];
+const INTRO_SIZES = ['sm', 'md', 'lg', 'xl'];
+const INTRO_ALIGNS = ['left', 'center', 'right'];
+const INTRO_POSITIONS = ['top', 'middle', 'bottom'];
+const INTRO_STYLE_DEFAULT = {
+    font: 'playfair', color: '#FFFFFF', size: 'lg', align: 'center', position: 'middle', bold: false, italic: true, shadow: true,
+};
+const introStyle = (raw) => {
+    let v = raw;
+    if (typeof v === 'string') { try { v = JSON.parse(v); } catch (_) { v = null; } }
+    if (!v || typeof v !== 'object') return { ...INTRO_STYLE_DEFAULT };
+    const pick = (k, list) => (list.includes(v[k]) ? v[k] : INTRO_STYLE_DEFAULT[k]);
+    const bool = (k) => (v[k] === undefined ? INTRO_STYLE_DEFAULT[k] : v[k] === true || v[k] === 'true' || v[k] === 1);
+    return {
+        font: pick('font', INTRO_FONTS),
+        color: /^#[0-9a-fA-F]{6}$/.test(String(v.color || '')) ? String(v.color).toUpperCase() : INTRO_STYLE_DEFAULT.color,
+        size: pick('size', INTRO_SIZES),
+        align: pick('align', INTRO_ALIGNS),
+        position: pick('position', INTRO_POSITIONS),
+        bold: bool('bold'), italic: bool('italic'), shadow: bool('shadow'),
+    };
+};
 const MEDIA_URL = /^(https?:\/\/|\/uploads\/)/i;
 const MAX_SLIDES = 100;
 const MUSIC_MIMES = ['audio/mpeg', 'audio/mp3'];
@@ -63,6 +87,7 @@ const present = (albums, itemsById) => albums.map((a) => {
     return {
         ...plain,
         intro_seconds: Number(plain.intro_seconds),
+        intro_style: introStyle(plain.intro_style),
         slide_seconds: slideSeconds,
         slides,
         slide_count: slides.length,
@@ -107,6 +132,7 @@ const normalise = async (eventId, body, current = null) => {
         data.intro_animation = a;
     }
     if (has('intro_seconds')) data.intro_seconds = seconds(body.intro_seconds, 5);
+    if (has('intro_style')) data.intro_style = introStyle(body.intro_style);
     if (has('slide_seconds')) data.slide_seconds = seconds(body.slide_seconds, 5);
     if (has('music_enabled')) data.music_enabled = on(body.music_enabled);
     if (has('music_url')) {
@@ -193,4 +219,4 @@ const uploadMusic = async (clientId, eventId, file) => {
     return { url: stored.url, name: file.originalname || 'song.mp3', size: file.size };
 };
 
-module.exports = { list, create, update, remove, uploadMusic, MUSIC_MIMES, MAX_MUSIC_BYTES, ANIMATIONS };
+module.exports = { list, create, update, remove, uploadMusic, MUSIC_MIMES, MAX_MUSIC_BYTES, ANIMATIONS, INTRO_STYLE_DEFAULT, introStyle };

@@ -881,3 +881,20 @@ Screenshots: `Documents\EventInvite_Portal_Test\2026-11-05_album_live` (+ `_run2
 - Expected FAIL: cross-fade between intro and first slide — fix is local only (album-builder.tsx), not pushed.
 - Music trim on SHORTS = "Music starts at (seconds)" (works in the form; checked once the trim fix is live).
   ALBUM music has no trim (upload, plays + loops with the slideshow).
+- **Re-test after deploy (backend 6d777b8, portal c3195da), 2026-11-05: 25 / 26 PASS** (`..._album_live_run3`).
+  Upload Short with trim + music now works on Render: 90 s video, kept 10–60 s → stored 50 s, 2.98 MB, "Upload
+  Successful". Cross-fade: all 4 layers loaded before their turn (no gap). The 1 "FAIL" (saved: NOT FOUND) is the test
+  script reading the list before the save finished — the next steps (Play / Edit / Delete the saved album) pass.
+
+## 8d. Album intro TEXT STYLE (Jamal, 2026-11-05) - DB CHANGE (V2)
+- Create / Edit Album → under Intro Text + Text Animation: **Text Style** — Font (Playfair Display, Great Vibes,
+  Dancing Script, Cormorant Garamond, Montserrat, Poppins; Google Fonts, one stylesheet hoisted by the player), Size
+  S/M/L/XL, Colour (6 presets + custom picker, hex shown), Alignment left/centre/right, Position top/middle/bottom,
+  Bold / Italic / Shadow, Reset style. The preview, Preview Album and Play draw the intro with it.
+- Backend: `event_gallery_albums.intro_style` JSON NULL (`migrations/sql/20261105-album-intro-style.sql`,
+  `tools/apply-album-intro-style.js`, model, initial_setup.sql). `clientGalleryAlbum.service.introStyle()` cleans the
+  body (unknown font/size/align/position → default, colour must be #RRGGBB) and every read returns a full style
+  (NULL = defaults: Playfair, #FFFFFF, L, centre, middle, italic, shadow — same look as before).
+- LOCAL event_v2 applied. tsc + eslint clean. The mobile app does not show albums yet.
+- **ORDER: `node src/database/tools/apply-album-intro-style.js --prod --apply` (live event_v2) BEFORE pushing the V2
+  backend** — the model reads the column; without it every album request fails. Then push the portal.
