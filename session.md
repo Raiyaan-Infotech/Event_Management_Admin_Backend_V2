@@ -851,3 +851,33 @@ Jamal: "just like the app, nothing special". Module by module:
   (the one place; upload route + portal Upload Media + app read it via usage `max_image_bytes`). Old portal
   gallery-panel check updated to 5 MB too. Video stays 5 MB, shorts 10 MB. No DB change — needs a V2 backend push.
   Covers (folder cover) follow the same constant. Wishes / agenda / live images have their OWN limits (unchanged).
+- **Create Album: name not in the video (Jamal, 2026-11-05):** the player plays the intro only when Intro Text has
+  text; it was empty (the text was typed in Album Name), so the video skipped the intro while the timeline / summary
+  still showed "Intro 0:00 – 0:05". Now the intro shows Intro Text, or the **Album Name when Intro Text is empty**
+  (preview + saved `intro_text`); Intro Text no longer required; its placeholder says so. Portal only.
+- **Album intro text OVER the cover image (Jamal's mockup, 2026-11-05):** the intro was white-pink text on a pink
+  gradient; now the cover image fills the frame (slow zoom, dark gradient) with the intro text in white on top.
+  No cover → first slide; neither → the old pink card. `PlayerAlbum.cover_image`; preview, Preview Album and Play
+  (saved albums carry cover_image). Portal only.
+- **Album slideshow: no lag / black gap between cover and the next image (Jamal, 2026-11-05):** the player mounted a
+  slide's <img> only when its turn came (download + fade from black). Now every layer (intro/cover + each slide) is
+  mounted up front (all images load at once) and the next one cross-fades (700 ms) over the last; the outgoing layer
+  keeps its zoom so it does not jump. Controls bar z-10 above the layers. Portal only.
+
+## 8c. Live browser test — Gallery / Album / Upload Short (2026-11-05)
+Headless Chromium against the LIVE V2 portal + Render backend, account qa.portal (Basic), event #37 "QA Test Wedding".
+Screenshots: `Documents\EventInvite_Portal_Test\2026-11-05_album_live` (+ `_run2`). Test data removed afterwards.
+- PASS: Gallery Overview; Create Folder (Images); Upload 3 photos incl. a 3.5 MB one (5 MB limit live); a 5.6 MB photo
+  refused; folder view + details; multi-select Move; Create Album (3 slides, Move Up, Use as Cover, intro with EMPTY
+  text → album name, MP3 upload, durations); preview intro over the cover (white text); music plays; Preview Album;
+  Save; Play saved album; Edit (intro text + remove slide); Delete; no page errors.
+- **FAIL → FIXED (backend, not pushed): Upload Short with TRIM always failed on Render** — 400 "This video could not be
+  trimmed. ffmpeg timed out": the trim re-encoded the kept part (libx264 veryfast) and Render's free CPU passed the
+  60 s ffmpeg limit (local: 2 s). The 11-03 live test never reached "Upload Successful" either. `trimVideo` now COPIES
+  an H.264/yuv420p picture (≈1 s, sound re-encoded) and checks the result's length — a video with few key frames
+  (copy would start too early) falls back to a re-encode; re-encode = ultrafast, ≤ 1280 px, 170 s limit. Local:
+  phone-like 1.1 s → 50.02 s; sparse key frames 3.9 s → 50.02 s; HEVC 2.5 s → 50.02 s; music on the cut 1.2 s.
+  The error toast does show (4 s) — easy to miss.
+- Expected FAIL: cross-fade between intro and first slide — fix is local only (album-builder.tsx), not pushed.
+- Music trim on SHORTS = "Music starts at (seconds)" (works in the form; checked once the trim fix is live).
+  ALBUM music has no trim (upload, plays + loops with the slideshow).

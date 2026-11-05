@@ -87,10 +87,10 @@ const probe = (file) => new Promise((resolve) => {
     });
 });
 
-const run = (args) => new Promise((resolve, reject) => {
+const run = (args, timeoutMs = TIMEOUT_MS) => new Promise((resolve, reject) => {
     const child = spawn(ffmpegPath, args, { windowsHide: true });
     let stderr = '';
-    const timer = setTimeout(() => { child.kill('SIGKILL'); reject(new Error('ffmpeg timed out')); }, TIMEOUT_MS);
+    const timer = setTimeout(() => { child.kill('SIGKILL'); reject(new Error('ffmpeg timed out')); }, timeoutMs);
     child.stderr.on('data', (d) => { stderr += d.toString(); if (stderr.length > 8000) stderr = stderr.slice(-4000); });
     child.on('error', (e) => { clearTimeout(timer); reject(e); });
     child.on('close', (code) => {
@@ -296,6 +296,19 @@ ensureBinary().then(selfCheck);
  * exact and every phone plays it. THROWS on failure: a short that was meant to
  * be cut must never be stored whole.
  */
+/** A re-encoded trim may take this long (Render's free plan has very little CPU). */
+const TRIM_TIMEOUT_MS = 170 * 1000;
+
+/**
+ * Cuts `start`–`end` seconds out of a video (web Upload Short, 2026-11-03). THROWS on failure.
+ *
+ * FAST PATH (Jamal, 2026-11-05 — on Render a 50 s re-encode ran past the 60 s ffmpeg limit, so
+ * every trimmed short failed with "ffmpeg timed out"): a picture every phone already plays
+ * (H.264, yuv420p) is COPIED, not re-encoded — only the sound is re-encoded. A second or so on
+ * any server. The cut starts at the key frame at or just before `start` (phones record one
+ * every 1–2 s); the length stays `end − start`.
+ * Anything else (HEVC, 10-bit…) is re-encoded with the fastest preset, at most 1280 px.
+ */
 const trimVideo = async (buffer, start, end) => {
     if (!ffmpegPath) throw new Error('Video trimming is not available on this server.');
     const from = Math.max(0, Number(start) || 0);
@@ -304,17 +317,32 @@ const trimVideo = async (buffer, start, end) => {
     const [inFile, outFile] = tempPaths('trim', 'mp4');
     try {
         fs.writeFileSync(inFile, buffer);
-        await run([
+        const { codec, pixFmt } = await probe(inFile);
+        const cut = (copy) => run([
             '-y', '-ss', String(from), '-i', inFile, '-t', String(length),
             '-map', '0:v:0', '-map', '0:a:0?',
-            '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-pix_fmt', 'yuv420p', '-profile:v', 'main',
+            ...(copy
+                ? ['-c:v', 'copy']
+                : ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '27', '-pix_fmt', 'yuv420p', '-profile:v', 'main',
+                    '-vf', "scale='if(gt(iw,ih),min(1280,iw),-2)':'if(gt(iw,ih),-2,min(1280,ih))'"]),
             '-c:a', 'aac', '-b:a', '128k',
+            '-avoid_negative_ts', 'make_zero',
             '-movflags', '+faststart',
             outFile,
-        ]);
+        ], copy ? TIMEOUT_MS : TRIM_TIMEOUT_MS);
+
+        let copied = codec === 'h264' && pixFmt === 'yuv420p';
+        if (copied) {
+            await cut(true);
+            // A copy can only start on a key frame; when the nearest one is far before `start`
+            // (a video with few key frames) the clip comes out too long — then re-encode.
+            const got = (await probe(outFile)).duration;
+            if (!Number.isFinite(got) || got > length + 1.5) copied = false;
+        }
+        if (!copied) await cut(false);
         const out = fs.readFileSync(outFile);
         if (!out.length) throw new Error('The trimmed video came out empty.');
-        return { buffer: out, mimetype: 'video/mp4' };
+        return { buffer: out, mimetype: 'video/mp4', copied };
     } finally {
         cleanup(inFile, outFile);
     }
