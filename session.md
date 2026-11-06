@@ -1052,3 +1052,25 @@ the timeline frame strip needs CORS on the media bucket.
   **Add-on Menu** (`menu-form-content.tsx`); the view page says "Menu Type: Default Menu / Add-on Menu". Same field
   (`is_default`), no backend change. Syntax-checked only — the V2 admin folder has no node_modules for tsc / eslint.
   V1 admin unchanged.
+- **Event workspace top bar + sidebar bottom (Jamal, 2026-11-06), portal only:** top bar shows the venue's **City** only
+  (venue_landmark; was "venue name - city"). "Menu Settings" → **App Menu**. Sidebar bottom: **SETTING** → App Menu (its
+  RSVP / Participants / Family / Wish Settings / Contact Person sub-list unchanged); **REPORT** → Activity Log
+  (`SETTING_TABS` / `REPORT_TABS` in event-tabs.ts). Jamal also listed "Website" under SETTING — no such section or page
+  exists in the portal, so it is NOT added (Jamal: "reorder side bar only"); waiting for which item that means.
+- **Family + Agenda tidy (Jamal, 2026-11-06), portal only:** Family tabs = All Members / Bride Side / Groom Side
+  (**Close Family** and **Hidden** tabs removed; a hidden member still shows its Hidden pill). Agenda: the day header's
+  "+ Add Session" removed (header Add Session stays); **Add Date** is now an outline button in the header row (Export
+  Agenda · View Agenda (Guest) · Add Date · Add Session) with the same calendar popover — no longer a dashed card after
+  the day cards.
+- **Guests = the mobile app's flow (Jamal, 2026-11-06), portal only, no backend change** (reverses most of 7w on the web):
+  list tabs = **All + one tab per guest group** (the app's pills; `group_id` filter) — Bride Side / Groom Side / VIP /
+  Hidden tabs gone; table = Guest Name (+ email) · Mobile Number · Group · Status · ⋯ — Relationship, Side, Invite Count
+  and App Visibility columns gone; Sort "Invite Count" gone; ⋯ = View / Edit / Send Invitation / View RSVP Response /
+  Delete (Mark as VIP, Hide / Show removed). **Add Guest** = the app's form page (Full Name *, Mobile *, Group *,
+  Email (Optional), Note (Optional); group pre-chosen from the open tab) — the design's slide-in panel (Guest Type,
+  Relationship, Family Side, Invite Count, Address, Photo, RSVP Required, Visibility, VIP, Send via) removed.
+  **Edit Guest** = the app's Edit Guest page (GuestForm). View Guest shows Group + Status instead of Relationship /
+  Side / Invite Count / Visibility. The stored columns (side, is_vip, …) stay untouched.
+- **Guest Import:** a **Download Sample File** card is now FIRST (above Upload CSV File), as the app. Text corrected to
+  the server's rule: required **First Name + Mobile Number** (was "First Name, Email"); duplicates are by mobile number.
+- Still on the RSVPs page (not asked): Bride / Groom tabs and Relation / Side columns.
