@@ -997,3 +997,58 @@ NOTHING of it shows in the portal (no menu item, no "soon"). Off = the route is 
 4. Test: export a 30–60 s video with 2 texts + music; check the time it takes and the result on a phone.
 Known limits: underline width is estimated from the character count; Zoom needs ffmpeg ≥ 5 (bundled 6.1 OK);
 the timeline frame strip needs CORS on the media bucket.
+- **Correction (Jamal, 2026-11-06):** the mockup's "List View (Preview)" block only SHOWS what List View looks like — it is
+  not a section of the page. Removed from the folder view: Grid View = grid only, List View = list only.
+- **Upload queue: Trim & Music = the editor's design (Jamal, 2026-11-06):** the cramped inline row controls (Trim popover,
+  Mute checkbox, music link, cover box) are gone. A video row now shows one **Trim & Music** button + chips of what is
+  set (trim range, song, Muted, cover thumbnail). The button opens a slide-in panel: player (plays the kept part with
+  the song), **Timeline & Clip Trimming** (ticks, frame strip, drag handles, Start / End ▲▼, Duration, Reset — warns when
+  the kept part is still over the 5 MB video cap), **Music (Background MP3)** (song card, Upload MP3 ≤ 10 MB, Mute
+  Original Audio — on + locked with a song, because the upload REPLACES the video's sound; waveform Music Timeline,
+  "Song starts at" → sent as music_start) and **Cover**. Apply / Cancel. No backend change (same /gallery/shorts kind=video).
+- Built ONCE in `events/[id]/_components/media-edit-parts.tsx` (`useClipPlayer`, `TrimTimeline`, `MusicSection`,
+  `TimeInput`, `clampTrim`, `loadMusic`) and used by the Upload panel AND the (switched-off) `video-editor.tsx`.
+  tsc + eslint clean; not seen in a browser.
+- **Trim & Music in the PAGE, not a slide-in (Jamal, 2026-11-06):** the panel (`VideoEditPanel`) now opens in place, right
+  under its video's row in the Upload Queue (row highlighted), laid out like the mockup: player + Cover card side by side,
+  then Timeline & Clip Trimming, then Music (Background MP3), Cancel / Apply at the bottom; ✕ closes it.
+- **Trim & Music: smaller player (Jamal, 2026-11-06):** the full-width 16:9 player took too much space → fixed height
+  220 px (250 px from sm), video fitted inside; cover box 110 px; tighter panel spacing.
+- **Trim & Music checked LIVE (2026-11-06, headless Chromium 1366×768, Jamal's account, event 36, nothing uploaded):** live
+  (`b08e770`) player was ~810×455 (full column, 16:9) — it filled the laptop screen and pushed Timeline / Music below
+  the fold; Cover card tall with an empty box. Fix (not pushed): player = 16:9 box 230 px high (≈410 px wide, full width
+  on phones), Cover card beside it at the same height (picture 160 px + text + buttons side by side). Previewed on
+  the live page with the same sizes: the whole panel (title → Apply) fits one screen; page 1433 → 1207 px.
+- **Event workspace sidebar grouped + rename (Jamal, 2026-11-06), portal only:** "Event Information" → **Event Info**
+  (sidebar + event tab bar; `EVENT_TABS`). Sidebar (`EventWorkspace.tsx`) now: Dashboard, Event Info (no heading) →
+  **DEFAULT MENU** → **ADDITIONAL MENU** → **SETTINGS** (Menu Settings, Activity Log). A section's group = its app menu's
+  `is_default` (`TAB_MENU_SLUG` in event-tabs.ts: agenda, venue, gallery, family, wishes, live-streaming, social-links,
+  guests, rsvp, participants, messages), read from the event's menus, else the plan's `/client/event-options` menus.
+  Event 36 today: Default = Agenda, Venue, Guests, RSVPs, Participants, Messages; Additional = Gallery, Family,
+  Wed Wishes, Live Streaming, Social Links. Collapsed sidebar: a thin line instead of each heading.
+- **Participants: plan limit as a 5th tile (Jamal, 2026-11-06):** the "2 / 100 participants on this event" line above the
+  tiles is now a **Plan Limit** tile in the same row ("2 / 100", caption "98 places left"; red + "Limit reached —
+  upgrade your plan" when full). Shown only when the plan has a limit. Portal only.
+- **Venue tab = the real Edit Venue page (Jamal, 2026-11-06), portal only:** the event workspace's Venue section showed two
+  read-only rows (+ an old "wizard does not collect a venue" note). It now renders `EventWizard section="venue" embedded`
+  — the same page as Edit Event → Venue (Step 1 Search on Map / Step 2 Want to Edit, map pin, name, address, city, map
+  link, lat / lng) with Save. New wizard prop `embedded`: no page title / Exit, no Cancel, and Save stays on the page
+  (toast "Event updated successfully") instead of going to the Edit Event hub.
+
+## 8h. Family = DEFAULT menu + admin Menu Type field (Jamal, 2026-11-06)
+- New tool `src/database/tools/set-menu-default.js --slug <slug> --default 1|0 [--prod] [--apply]` — same as the admin's
+  Default switch: sets `event_menus.is_default` and (Default) grants the menu to every live plan that lacks it. Events
+  need nothing (a Default menu is on for every event of its category); the portal's grant cache clears within 60 s.
+- **Family (#7): LOCAL event_v2 applied** (is_default 0 → 1; all 9 plans already granted it).
+  **LIVE event_v2: APPLIED 2026-11-06** (run at Jamal's request; #7 is_default=1, 4 plans already granted it; the live
+  API now returns Family default=true for event 36). Earlier note, kept for the command: Dry run on live:
+  `#7 Family is_default 0 -> 1`, 4 live plans, all already grant it. To apply (from the V2 backend folder):
+  `$env:NODE_PATH = "D:/Jamal/Event_Management_Admin_Backend/node_modules"; node src/database/tools/set-menu-default.js --slug family --default 1 --prod --apply`
+  (or V2 admin → Menu Management → Family → Edit → Menu Type = Default Menu → Update, signed in as developer@admin.com —
+  admin@admin.com's saves go to approval). After it: the portal's event sidebar shows Family under DEFAULT MENU.
+- **Admin "unable to change Default / Add-on" — checked LIVE:** the V2 Edit Menu form HAS it (a small "Plan Default"
+  switch, Family = Add-on, switch enabled for developer@admin.com). It read as missing (list calls it "Menu Type").
+  Fix (V2 admin frontend, not pushed): the switch is now **Menu Type \*** with two choice cards **Default Menu** /
+  **Add-on Menu** (`menu-form-content.tsx`); the view page says "Menu Type: Default Menu / Add-on Menu". Same field
+  (`is_default`), no backend change. Syntax-checked only — the V2 admin folder has no node_modules for tsc / eslint.
+  V1 admin unchanged.
