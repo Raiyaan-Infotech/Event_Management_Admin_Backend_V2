@@ -348,4 +348,178 @@ const trimVideo = async (buffer, start, end) => {
     }
 };
 
-module.exports = { processVideo, videoPoster, videoDuration, videoInfo, addMusic, trimVideo };
+/* ─────────────────────────────────────────────────────────────────────────────
+ * EDIT VIDEO / SHORTS (web gallery design 03, 2026-11-06) — OFF until a paid server.
+ * Used only by services/galleryVideoEditor.service.js, whose route is mounted only
+ * when VIDEO_EDITOR_ENABLED=true (see session.md 8g). A full re-encode with text
+ * drawn into the picture: far heavier than a trim, so it needs real CPU.
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+/** A full render may take this long (override with VIDEO_EDITOR_TIMEOUT_MS). */
+const EDIT_TIMEOUT_MS = Number(process.env.VIDEO_EDITOR_TIMEOUT_MS) || 10 * 60 * 1000;
+
+/**
+ * Fonts for the burned-in text. Put the .ttf files in `assets/fonts/` named
+ * `<Family without spaces>-<Regular|Bold|Italic|BoldItalic>.ttf` (e.g.
+ * `Poppins-BoldItalic.ttf`). A missing file falls back to the system font of
+ * that family (fontconfig), then to Regular.
+ */
+const FONT_DIR = path.join(__dirname, '../../assets/fonts');
+const EDIT_FONTS = ['Poppins', 'Montserrat', 'Playfair Display', 'Great Vibes', 'Dancing Script', 'Cormorant Garamond'];
+
+/** A path or text inside a filter option: forward slashes, `:` and `'` escaped. */
+const filterPath = (p) => p.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/'/g, "\\'");
+
+const fontOption = (family, bold, italic) => {
+    const fam = EDIT_FONTS.includes(family) ? family : 'Poppins';
+    const base = fam.replace(/\s+/g, '');
+    const variant = bold && italic ? 'BoldItalic' : bold ? 'Bold' : italic ? 'Italic' : 'Regular';
+    for (const v of [variant, 'Regular']) {
+        const file = path.join(FONT_DIR, `${base}-${v}.ttf`);
+        if (fs.existsSync(file)) return `fontfile='${filterPath(file)}'`;
+    }
+    const style = bold && italic ? 'Bold Italic' : bold ? 'Bold' : italic ? 'Italic' : 'Regular';
+    return `font='${fam}\\:style=${style}'`;
+};
+
+/**
+ * Render an edit of `buffer`.
+ *   spec = {
+ *     trim: { start, end },            seconds of the source to keep
+ *     mute, video_volume (0–2), music_volume (0–2), music_start (s),
+ *     texts: [{ text, animation: fade|slide|zoom|typewriter, duration (s),
+ *               direction: in|out|in_out (fade) · left|right|up|down (slide),
+ *               font, color '#RRGGBB', bold, italic, underline,
+ *               position 0–8 (3×3 grid, row by row), from, to (s, on the KEPT clip) }],
+ *     max_bytes                        the stored file's cap — the bitrate is fitted to it
+ *   }
+ * THROWS on failure (the caller turns it into a 400).
+ */
+const renderEdit = async (buffer, spec, musicBuffer = null) => {
+    if (!ffmpegPath) throw new Error('Video editing is not available on this server.');
+    const [inFile, outFile] = tempPaths('edit', 'mp4');
+    const [musicFile] = tempPaths('edit-music', 'audio');
+    const [scriptFile] = tempPaths('edit-graph', 'txt');
+    const textFiles = [];
+    try {
+        fs.writeFileSync(inFile, buffer);
+        if (musicBuffer) fs.writeFileSync(musicFile, musicBuffer);
+        const src = await probe(inFile);
+        if (!src.duration) throw new Error('The video could not be read.');
+
+        const start = Math.max(0, Math.min(Number(spec.trim?.start) || 0, src.duration));
+        const end = Math.min(src.duration, Number(spec.trim?.end) || src.duration);
+        const len = end - start;
+        if (!(len > 0.2)) throw new Error('The kept part of the video is too short.');
+
+        // ── Picture: at most 1280 px on the long side, then every text layer. ──
+        const S = 'h/14'; // text size: a fixed share of the picture height
+        const chain = ["scale='if(gt(iw,ih),min(1280,iw),-2)':'if(gt(iw,ih),-2,min(1280,ih))'", 'format=yuv420p'];
+        const texts = Array.isArray(spec.texts) ? spec.texts.slice(0, 10) : [];
+        texts.forEach((t, idx) => {
+            const text = String(t.text || '').slice(0, 100);
+            if (!text.trim()) return;
+            const F = Math.max(0, Math.min(len, Number(t.from) || 0));
+            const T = Math.max(F + 0.1, Math.min(len, Number(t.to) || len));
+            const D = Math.max(0.1, Math.min(3, Number(t.duration) || 1, (T - F) / 2));
+            const pos = Number.isInteger(t.position) && t.position >= 0 && t.position <= 8 ? t.position : 4;
+            const col = pos % 3;
+            const row = Math.floor(pos / 3);
+            const baseX = col === 0 ? 'w*0.06' : col === 1 ? '(w-text_w)/2' : 'w-text_w-w*0.06';
+            const baseY = row === 0 ? 'h*0.08' : row === 1 ? `(h-${S})/2` : `h-${S}-h*0.1`;
+            const color = /^#[0-9a-f]{6}$/i.test(t.color || '') ? `0x${t.color.slice(1)}` : 'white';
+            const font = fontOption(t.font, !!t.bold, !!t.italic);
+            const p = `min(1,max(0,(t-${F})/${D}))`;
+            const ease = `(1-pow(1-${p},3))`;
+            const fadeIn = `min(1,max(0,(t-${F})/${D}))`;
+            const fadeOut = `min(1,max(0,(${T}-t)/${D}))`;
+            const anim = ['fade', 'slide', 'zoom', 'typewriter'].includes(t.animation) ? t.animation : 'fade';
+            const dir = String(t.direction || '');
+            let alpha = fadeIn;
+            let x = baseX;
+            let y = baseY;
+            let size = S;
+            if (anim === 'fade') alpha = dir === 'out' ? fadeOut : dir === 'in_out' ? `min(${fadeIn},${fadeOut})` : fadeIn;
+            if (anim === 'slide') {
+                if (dir === 'right') x = `${baseX}+(1-${ease})*w*0.3`;
+                else if (dir === 'up') y = `${baseY}+(1-${ease})*h*0.3`;
+                else if (dir === 'down') y = `${baseY}-(1-${ease})*h*0.3`;
+                else x = `${baseX}-(1-${ease})*w*0.3`;
+            }
+            if (anim === 'zoom') size = `${S}*(0.4+0.6*${ease})`;
+            const layer = (content, enable, a = alpha) => {
+                const file = path.join(os.tmpdir(), `edit-text-${crypto.randomBytes(6).toString('hex')}-${idx}.txt`);
+                fs.writeFileSync(file, content, 'utf8');
+                textFiles.push(file);
+                return `drawtext=${font}:textfile='${filterPath(file)}':fontsize='${size}':fontcolor=${color}:alpha='${a}'`
+                    + `:x='${x}':y='${y}':shadowcolor=black@0.45:shadowx=2:shadowy=2:enable='${enable}'`;
+            };
+            if (anim === 'typewriter') {
+                // One layer per step of typed characters (at most 40 steps), the full text after.
+                const steps = Math.min(text.length, 40);
+                const per = D / steps;
+                for (let k = 1; k <= steps; k++) {
+                    const shown = text.slice(0, Math.ceil((text.length * k) / steps));
+                    const a = F + (k - 1) * per;
+                    const b = k === steps ? T : F + k * per;
+                    chain.push(layer(shown, `between(t,${a.toFixed(3)},${b.toFixed(3)})`, '1'));
+                }
+            } else {
+                chain.push(layer(text, `between(t,${F},${T})`));
+            }
+            if (t.underline) {
+                // drawbox cannot measure text, so the line is sized from the character count.
+                const w = `${text.length}*${S}*0.5`;
+                const bx = col === 0 ? 'iw*0.06' : col === 1 ? `(iw-${w})/2` : `iw-${w}-iw*0.06`;
+                const by = row === 0 ? `ih*0.08+${S}*1.05` : row === 1 ? `(ih-${S})/2+${S}*1.05` : `ih-${S}-ih*0.1+${S}*1.05`;
+                chain.push(`drawbox=x='${bx.replace(/\bh\b/g, 'ih')}':y='${by.replace(/\bh\b/g, 'ih')}':w='${w.replace(/\bh\b/g, 'ih')}':h='max(2,ih/220)':color=${color}@1:t=fill:enable='between(t,${F},${T})'`);
+            }
+        });
+        const graph = [`[0:v]${chain.join(',')}[vout]`];
+
+        // ── Sound: the clip's own (volume, or muted) mixed with the background music. ──
+        const vVol = Math.max(0, Math.min(2, spec.video_volume === undefined ? 1 : Number(spec.video_volume)));
+        const mVol = Math.max(0, Math.min(2, spec.music_volume === undefined ? 0.8 : Number(spec.music_volume)));
+        const keepOwn = !!src.audio && !spec.mute && vVol > 0;
+        const withMusic = !!musicBuffer && mVol > 0;
+        const fade = Math.min(1.5, len / 4).toFixed(2);
+        const fadeAt = Math.max(0, len - Number(fade)).toFixed(2);
+        if (keepOwn && withMusic) {
+            graph.push(`[0:a]volume=${vVol}[a0]`, `[1:a]volume=${mVol},afade=t=out:st=${fadeAt}:d=${fade}[a1]`,
+                '[a0][a1]amix=inputs=2:duration=first:normalize=0[aout]');
+        } else if (keepOwn) {
+            graph.push(`[0:a]volume=${vVol}[aout]`);
+        } else if (withMusic) {
+            graph.push(`[1:a]volume=${mVol},atrim=0:${len.toFixed(2)},afade=t=out:st=${fadeAt}:d=${fade}[aout]`);
+        }
+        const hasAudio = keepOwn || withMusic;
+        fs.writeFileSync(scriptFile, graph.join(';\n'), 'utf8');
+
+        // Fit the bitrate to the stored file's cap (gallery videos are small on purpose).
+        const cap = Number(spec.max_bytes) || 10 * 1024 * 1024;
+        const totalK = Math.floor((cap * 8 * 0.9) / len / 1000);
+        const videoK = Math.max(250, totalK - (hasAudio ? 128 : 0));
+
+        const musicStart = Math.max(0, Math.min(3600, Number(spec.music_start) || 0));
+        await run([
+            '-y',
+            '-ss', start.toFixed(3), '-t', len.toFixed(3), '-i', inFile,
+            ...(withMusic ? ['-stream_loop', '-1', ...(musicStart > 0 ? ['-ss', musicStart.toFixed(2)] : []), '-i', musicFile] : []),
+            '-filter_complex_script', scriptFile,
+            '-map', '[vout]', ...(hasAudio ? ['-map', '[aout]'] : ['-an']),
+            '-c:v', 'libx264', '-preset', 'veryfast', '-b:v', `${videoK}k`, '-maxrate', `${Math.round(videoK * 1.2)}k`,
+            '-bufsize', `${videoK * 2}k`, '-profile:v', 'main',
+            ...(hasAudio ? ['-c:a', 'aac', '-b:a', '128k'] : []),
+            '-t', len.toFixed(3),
+            '-movflags', '+faststart',
+            outFile,
+        ], EDIT_TIMEOUT_MS);
+        const out = fs.readFileSync(outFile);
+        if (!out.length) throw new Error('The edited video came out empty.');
+        return { buffer: out, mimetype: 'video/mp4', duration: len };
+    } finally {
+        cleanup(inFile, outFile, musicFile, scriptFile, ...textFiles);
+    }
+};
+
+module.exports = { processVideo, videoPoster, videoDuration, videoInfo, addMusic, trimVideo, renderEdit, EDIT_FONTS };

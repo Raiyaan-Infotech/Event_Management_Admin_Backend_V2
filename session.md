@@ -898,3 +898,102 @@ Screenshots: `Documents\EventInvite_Portal_Test\2026-11-05_album_live` (+ `_run2
 - LOCAL event_v2 applied. tsc + eslint clean. The mobile app does not show albums yet.
 - **ORDER: `node src/database/tools/apply-album-intro-style.js --prod --apply` (live event_v2) BEFORE pushing the V2
   backend** — the model reads the column; without it every album request fails. Then push the portal.
+
+## 8e. RSVP Summary card moved to the event Dashboard (Jamal, 2026-11-06) - portal only
+- The RSVP Responses page's "RSVP Summary" card (donut Confirmed / Pending / Declined / Maybe with % of invited,
+  Responded in the middle, Total Invited + Responded tiles) now replaces the Dashboard's old 3-slice RSVP Summary
+  (which read participant stats). Shared component `rsvps/_components/rsvp-summary.tsx` (reads the rsvp-board stats).
+- Removed from the RSVPs page: that row now has 3 cards (Channels, Recent Activity, Notes). tsc clean; not seen in a browser.
+- Same day: **Invitation Channel Breakdown, Recent Activity, Guest Response Notes** moved to the Dashboard too
+  (`RsvpChannels`, `RsvpRecent`, `RsvpNotes` in rsvp-summary.tsx; Dashboard = 9 cards, 3 per row on xl). A Recent
+  Activity line opens the RSVPs section. The RSVPs page no longer has that row at all.
+- **Gallery Overview: drag & drop upload box removed (Jamal, 2026-11-06)** (`gallery-board.tsx`). Upload Media (header) and
+  a folder's ⋮ Upload Here still upload. Portal only.
+- **Loader over a loader on first open (Jamal, 2026-11-06):** opening `/event/:id` showed "Checking your session…"
+  (ClientAuthGate) with GlobalLoader's full-screen "Loading..." on top — both reacted to the `/client/me` request.
+  GlobalLoader now ignores `['client','me']`; the gate shows the standard `PageLoader fullScreen` ("Loading...").
+  Also fixed the old set-state-in-effect lint error in global-loader.tsx. Portal only.
+- **Gallery folder Multi-select = Jamal's design (2026-11-06)** (`gallery-board.tsx` FolderView): a click in multi-select
+  ticks the file AND opens it in the Details panel (un-ticking the shown file moves the panel to the last ticked one);
+  the pink "N items selected" bar is replaced by a **Bulk Actions (n)** dropdown next to Multi-select (Move / Copy to
+  Folder, Download, Delete) and **Select All** at the right of "N Media Items"; grid = fixed small cards
+  (auto-fill, min 150 px) so one file no longer fills a quarter of the page. Portal only.
+- **Loader hidden behind dialogs (Jamal, 2026-11-06):** saving from a dialog / slide-in sheet (Delete Folder, Create
+  Folder, every page) showed the content-only loader (z-40) UNDER the dialog (z-50). GlobalLoader now checks for an open
+  `[role=dialog|alertdialog][data-state=open]` (Radix Dialog + Sheet, so every ActionSheet too) and then shows the
+  FULL-SCREEN loader (z-9999) on top; with no dialog open it stays content-only. Portal only.
+- **Upload Media page: back navigation (Jamal, 2026-11-06):** back arrow + breadcrumb "Gallery › <folder> › Upload Media"
+  (same as the folder page). Back = where Upload was opened from (that folder, or the Gallery Overview). Portal only.
+- **Upload Media: Video Only folder stuck on Images (Jamal, 2026-11-06):** the Images / Videos / Shorts choice was set
+  once from the folder the page opened with; changing "Upload to Folder" kept it, so a Video Only folder showed
+  "Drag & drop images", the picker offered images only and the folder refused them. Changing the folder now switches
+  the choice to the folder's type (mixed folders keep the current one). Portal only.
+- **Upload queue: folder-type check in the browser (Jamal, 2026-11-06):** queue a video in a Video folder, switch to an
+  Images folder, Upload → the backend refused it. Now changing the folder re-checks the waiting files at once: a file the
+  folder does not take shows **"Wrong folder"** + the message (new status `wrong_folder`, no request sent, not counted in
+  Upload Media (n) / Retry Failed); switching back to a folder that takes it returns it to "Ready to upload". The upload
+  itself checks again before sending. Backend check unchanged (still the safety net). Portal only.
+- **After upload → the folder's list (Jamal, 2026-11-06):** when Upload Media (n) finishes with every file uploaded, a
+  toast "N files uploaded to <folder>" shows and the page opens that folder's list. Any failed / wrong-folder file keeps
+  the Upload page open (queue + Retry). Portal only.
+
+## 8f. Gallery = the design's missing parts (Jamal, 2026-11-06) - backend list fields + portal, NO DB change
+Compared with `Web Gallery Flow` 00 / 00 default view / 01 / 02; built what was missing (`gallery-board.tsx`):
+- **Overview (00):** Select All + checkbox per folder card (the default folder has none — non-deletable), **Bulk Actions**
+  (one folder: Open / Upload Here / Edit; any: Clear Selection, Delete Folders → one confirm, files move to Gallery;
+  hook `useDeleteGalleryCategories`), **Filter** by folder type, Sort "Recent Activity" (latest upload in the folder),
+  search also matches the description. Drop box stays removed (Jamal's earlier request).
+- **Folder view (00 default view):** labelled **Grid View / List View** buttons; **List View (Preview)** under the grid
+  (first 3 files + "Switch to List View"); list table + **Uploaded By** column + row icons Rename / Download / Move /
+  Delete (+ ⋯). **Details panel:** tabs **Details / Actions / Activity / Metadata**; Details adds copy-file-name,
+  **Resolution** (read from the loaded image / video — not stored), **Uploaded By**, icons; Actions = full list incl.
+  Show/Hide in Event App + Copy Link; Activity = Uploaded (by, folder, when) + Last updated; Metadata = id, MIME,
+  extension, bytes, resolution, aspect, duration, short, title, caption. Bottom buttons Rename / Download / Move / Edit /
+  Delete. **Rename** dialog = the item's `title` (the name shown everywhere; stored file keeps its name).
+- **Upload Media (02):** queue **Move Up / Move Down** (ticked rows) + drag handle; **Pause** (row + footer — stops after
+  the file now uploading; Upload Media carries on); **Preview** (eye) on uploaded rows; **Save as Draft** (queue + folder
+  kept in GalleryBoard state while the page is open — files cannot survive a reload); per-VIDEO **Trim** (mm:ss
+  popover), **Mute original audio**, **background Music (MP3)**, **Cover** picture. A video with any option goes through
+  `POST /gallery/shorts` with `kind=video` (server already trims / mixes / covers; video limits, not a short); a
+  too-large video (> 5 MB) can be queued up to 50 MB and must be trimmed (checked in the browser). Status `invalid`
+  ("Cannot upload" + reason) replaces `wrong_folder`.
+- **Backend (V2):** `clientGallery.service.present()` now also returns `uploaded_by` + `updated_at` (columns exist). No DB
+  change — needs a V2 backend push (portal works without it: Uploaded By shows "—").
+- tsc + eslint clean; `node --check` OK. Not seen in a browser.
+- NOT built: **03 Edit Video / Shorts** editor (text overlays need server-side rendering); upload % progress (the API
+  client has no progress events — bar stays animated).
+
+## 8g. Upload % + Edit Video / Shorts (design 03) — BUILT, SWITCHED OFF until a paid server (Jamal, 2026-11-06)
+**Upload % (live now, portal only):** `api.upload(path, form, onProgress)` in `lib/api-client.ts` (XMLHttpRequest — fetch
+has no upload progress; same base URL / cookie / envelope / ApiError). `useUploadGalleryItem` + `useUploadShort` take
+`onProgress`; the Upload Media queue shows "48% • Uploading… (1.2 MB / 3.0 MB)", then "100% • Saving…" /
+"Processing on the server…" while the server stores / trims it.
+
+**Edit Video / Shorts — OFF.** Jamal: build it now, switch it on when the backend moves to a paid server; while off
+NOTHING of it shows in the portal (no menu item, no "soon"). Off = the route is not mounted and the UI is not rendered.
+- Portal: `events/[id]/_components/video-editor.tsx` (design 03: tools Add Text / Trim & Cut / Music & Audio / Volume;
+  player with live text preview — select a text → edit / duplicate / delete; Timeline & Clip Trimming = frame strip
+  (needs CORS on the media files, else plain), drag handles, Start / End boxes, Reset, max 1:00 for shorts; Music
+  (MP3 ≤ 10 MB, waveform, "song starts at", Mute Original Audio, length hint); Volume Controls (video / music %);
+  Add Text panel = content 100, Fade / Slide / Zoom / Typewriter, duration, direction, 6 fonts, colour, B / I / U,
+  3×3 position, show from–to, Add Another Text; Preview, Save Draft (localStorage per file; the MP3 must be picked
+  again), Export with send % then "Rendering…"). Entry: a video's ⋯ → **Edit Video** and Details → Actions → Edit Video,
+  both only when `VIDEO_EDITOR_ENABLED` (`src/lib/features.ts`). Hook `useExportVideoEdit`.
+- Backend: `POST /client/gallery/:itemId/edit` (multipart `spec` JSON + optional `music` + `title`) — mounted in
+  `clientPortal.routes.js` ONLY when `VIDEO_EDITOR_ENABLED=true`. `services/galleryVideoEditor.service.js` (owner check,
+  videos only, spec cleaned, reads the stored file from /uploads or its URL) → `utils/videoProcess.renderEdit` (ffmpeg:
+  trim, scale ≤ 1280, drawtext per layer with fade / slide / zoom / typewriter expressions, underline box, own sound
+  volume / mute + looped music mix + fade-out, bitrate fitted to the 5 MB video / 10 MB short cap, timeout
+  VIDEO_EDITOR_TIMEOUT_MS default 10 min) → stored as a NEW file in the same folder via `uploadItem` (plan limits,
+  storage, poster; a short stays a short). The original is kept. No DB change.
+- Local render test (ffmpeg 6.1, generated 12 s 720p clip): 4 text layers (all animations, underline) + music + volumes
+  → 8 s, 1.8 MB in 5 s; muted cut → 0.5 MB in 0.7 s. Frame checked: every layer drawn. Not run on Render.
+
+**TO SWITCH IT ON (paid server):**
+1. Add the font files to the backend `assets/fonts/` (list in `assets/fonts/README.md`) — without them the text uses a
+   plain fallback font (Render has no Poppins etc.).
+2. Render (backend): `VIDEO_EDITOR_ENABLED=true` (optional `VIDEO_EDITOR_TIMEOUT_MS`), redeploy.
+3. Vercel (portal): `NEXT_PUBLIC_VIDEO_EDITOR_ENABLED=true`, redeploy (read at build time).
+4. Test: export a 30–60 s video with 2 texts + music; check the time it takes and the result on a phone.
+Known limits: underline width is estimated from the character count; Zoom needs ffmpeg ≥ 5 (bundled 6.1 OK);
+the timeline frame strip needs CORS on the media bucket.

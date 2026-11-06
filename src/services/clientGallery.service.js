@@ -181,6 +181,9 @@ const present = (row) => {
         duration_seconds: item.duration_seconds ?? null,
         sort_order: item.sort_order,
         created_at: item.created_at,
+        // Details panel "Uploaded By" + Activity "Last updated" (web gallery design, 2026-11-06).
+        uploaded_by: item.uploaded_by ?? null,
+        updated_at: item.updated_at ?? null,
     };
 };
 

@@ -741,6 +741,35 @@ router.post(
 );
 router.delete('/gallery/:itemId', galleryController.remove);
 
+// Edit Video / Shorts export (web gallery design 03, 2026-11-06) — OFF until a paid server:
+// mounted only with VIDEO_EDITOR_ENABLED=true (a full re-encode needs real CPU). session.md 8g.
+if (process.env.VIDEO_EDITOR_ENABLED === 'true') {
+    const videoEditorController = require('../controllers/clientVideoEditor.controller');
+    const editMusicUpload = multer({
+        storage: multer.memoryStorage(),
+        limits: { fileSize: galleryService.MAX_MUSIC_BYTES, files: 1 },
+        fileFilter: (req, file, cb) => ((/^audio\//.test(file.mimetype) || ['video/mp4', 'application/octet-stream'].includes(file.mimetype))
+            ? cb(null, true) : cb(new Error('Please choose a song (MP3, M4A, AAC, WAV or OGG).'), false)),
+    });
+    router.post(
+        '/gallery/:itemId/edit',
+        (req, res, next) => {
+            editMusicUpload.single('music')(req, res, (err) => {
+                if (err) {
+                    return res.status(400).json({
+                        success: false,
+                        message: err.code === 'LIMIT_FILE_SIZE'
+                            ? `The music must be ${Math.round(galleryService.MAX_MUSIC_BYTES / (1024 * 1024))}MB or smaller.`
+                            : err.message || 'That song could not be uploaded.',
+                    });
+                }
+                next();
+            });
+        },
+        videoEditorController.exportEdit,
+    );
+}
+
 // Gallery categories — per event, host-authored. Declared after the item routes
 // so '/gallery/categories' can never be read as an item id.
 // Gallery albums (Create Album, 2026-11-04): slideshows from the gallery's photos + their MP3.
