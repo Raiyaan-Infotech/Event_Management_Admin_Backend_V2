@@ -97,6 +97,22 @@ const exportGuests = async (clientId, query = {}) => {
  * The "Download Sample CSV" link on the import screen — built from the same
  * COLUMNS, with the client's own first group, so it imports as-is.
  */
+/**
+ * The sample = the MOBILE APP's guest form only (Jamal, 2026-11-07): First Name, Mobile Number,
+ * Guest Group, Email, Notes — the import still reads every other header (Export keeps them all).
+ */
+const SAMPLE_COLUMNS = [
+    ['First Name*', (c) => c.first_name],
+    ['Mobile Number*', (c) => c.mobile],
+    ['Guest Group', (c) => c.group],
+    ['Email', (c) => c.email],
+    ['Notes', (c) => c.notes],
+];
+
+/**
+ * The "Download Sample CSV" link on the import screen, with the client's own first group, so it
+ * imports as-is.
+ */
 const sampleCsv = async (clientId) => {
     const group = await GuestGroup.findOne({
         where: { website_client_id: clientId },
@@ -106,26 +122,12 @@ const sampleCsv = async (clientId) => {
     const groupName = group?.name ?? 'Family';
 
     const sample = [
-        {
-            first_name: 'Amit', last_name: 'Sharma', mobile: '+919876543210', whatsapp: '+919876543210',
-            email: 'amit.sharma@example.com', group: groupName, title: 'Mr.', company: '',
-            address_line1: '12 Gandhi Street', address_line2: '', city: 'Chennai', state: 'Tamil Nadu',
-            postal_code: '600001', country: 'India', dietary_preference: 'Vegetarian',
-            special_requirements: 'Wheelchair access', notes: 'Close relative',
-        },
-        {
-            first_name: 'Priya', last_name: 'Mehta', mobile: '+919812345678', whatsapp: '',
-            email: '', group: groupName, title: 'Ms.', company: 'ABC Events',
-            address_line1: '45 Rose Avenue', address_line2: 'Apt 2B', city: 'Bengaluru', state: 'Karnataka',
-            postal_code: '560001', country: 'India', dietary_preference: 'Vegan',
-            special_requirements: '', notes: 'College friend',
-        },
+        { first_name: 'Amit Sharma', mobile: '+919876543210', group: groupName, email: 'amit.sharma@example.com', notes: 'Close relative' },
+        { first_name: 'Priya Mehta', mobile: '+919812345678', group: groupName, email: '', notes: 'College friend' },
     ];
-    // Read through COLUMNS so the sample can never fall out of step with them.
-    const ctx = { groupNames: new Map([[1, groupName]]) };
     const rows = [
-        COLUMNS.map(([header]) => header),
-        ...sample.map((s) => COLUMNS.map(([, read]) => read({ ...s, group_id: 1 }, ctx))),
+        SAMPLE_COLUMNS.map(([header]) => header),
+        ...sample.map((s) => SAMPLE_COLUMNS.map(([, read]) => read(s))),
     ];
 
     return {

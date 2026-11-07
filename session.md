@@ -1074,3 +1074,39 @@ the timeline frame strip needs CORS on the media bucket.
 - **Guest Import:** a **Download Sample File** card is now FIRST (above Upload CSV File), as the app. Text corrected to
   the server's rule: required **First Name + Mobile Number** (was "First Name, Email"); duplicates are by mobile number.
 - Still on the RSVPs page (not asked): Bride / Groom tabs and Relation / Side columns.
+- **RSVPs + Participants (Jamal, 2026-11-06), portal only:** RSVPs — "Show guests not invited yet (n)" switch removed
+  (`show_uninvited` no longer sent); **Export** + **Send Reminder** moved into the heading row (ModuleHeader actions).
+  Participants — tile "Pending Access" → **Pending**; new **Download CSV** button beside Add Participant: the list as
+  shown (tab, search, sort, all pages) → Name, Mobile, Email, Relationship, Side, Members, RSVP Status, Access, Linked
+  Guest, Joined On (UTF-8 BOM so Excel shows Tamil etc.); file `participants-<event-name>.csv`. Built in the browser
+  from the already-loaded list — no backend change.
+- **Guests Add / Edit back in the SLIDE-IN panel (Jamal, 2026-11-06 — "uniform with the other modules"):** the move to the
+  GuestForm page is undone. New `guests/_components/guest-sheet.tsx` (FormPanel sheet) for BOTH Add Guest (header
+  button) and Edit Guest (⋯ on Guests and on RSVPs): the app's fields only — Full Name *, Mobile Number * (country +
+  per-country check), Group * ("Create a group first" when none; the open group tab is pre-chosen on Add), Email
+  (Optional), Note (Optional, 300); "x / y guests used" line + Save blocked when the plan is full. Name saved whole in
+  first_name (last_name cleared) as the app; Edit sends only these fields. The /guests/add and /guests/:id pages still
+  exist (old links) but nothing in the Guests list opens them now.
+- **Guest Import page tidy (Jamal, 2026-11-07), portal only:** right sidebar removed (Import Summary, Pro Tip, Need Help);
+  page is one column. **CSV File Guidelines + Required / Recommended Columns** now sit in their own card ABOVE Upload CSV
+  File (order: Download Sample File → Guidelines → Upload). The Excel "format phone as Text" tip is a guideline line now.
+  **Back arrow** beside the "Import Guests" title → the event's Guests list (`wsHref`, so it stays in the event workspace).
+- **Manage Groups: right sidebar removed (Jamal, 2026-11-07), portal only:** About Groups, Quick Actions and Pro Tip cards
+  gone; the groups table uses the full width. Add Group stays in the header; Send Message to Group stays in each row's ⋯.
+- **Manage Groups header (Jamal, 2026-11-07), portal only:** back arrow beside the title → Guests list (`wsHref`); button
+  renamed **Add Guest Group**; **Export** moved from the filter row into the header, left of Add Guest Group.
+- **Agenda: Add Date moved (Jamal, 2026-11-07), portal only:** the Add Date button now sits right AFTER the day cards
+  (same row/grid, same calendar popover), not in the header. Header = Export Agenda · View Agenda (Guest) · Add Session.
+- **Agenda: View Agenda (Guest) removed (Jamal, 2026-11-07), portal only:** the header button and its "what your guests see"
+  dialog are gone. Header = Export Agenda · Add Session.
+- **Guests list (Jamal, 2026-11-07), portal only:** header **Add Group** button removed (Manage Groups stays; Add Guest's
+  "Create a group first" still opens the group panel). New **Plan Limit** tile in Guest Overview ("4 / 50", "46 places
+  left"; red when full), same as Participants; Add Guest is disabled when full. The "x / y guests used on your plan" line
+  is gone from the Add Guest panel — it only shows a red "Guest limit reached" note when full.
+- **Guest Import: "Create missing groups" switch + "Important" note removed (Jamal, 2026-11-07), portal only.** Missing
+  Guest Group names in the file are now ALWAYS created (`create_groups: true`, the switch's old default).
+- **Guest import SAMPLE CSV = the app's form (Jamal, 2026-11-07) - BACKEND change, no DB change:** `clientGuestExport.service
+  .sampleCsv` now writes only **First Name\*, Mobile Number\*, Guest Group, Email, Notes** (own `SAMPLE_COLUMNS`; was all 17
+  export columns). Sample rows "Amit Sharma" / "Priya Mehta", group = the client's first group. Export unchanged (all columns,
+  round trip). Import still reads every header. Portal Import page: "Recommended Columns" → **Optional Columns** = Guest Group,
+  Email, Notes. Needs a V2 backend push (portal works either way).
