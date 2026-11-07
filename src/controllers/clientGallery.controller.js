@@ -4,12 +4,12 @@ const ApiResponse = require('../utils/apiResponse');
 
 const list = asyncHandler(async (req, res) => {
     const result = await service.listItems(req.websiteClient.id, req.params.id, req.query);
-    return ApiResponse.success(res, result, 'Gallery loaded.');
+    return ApiResponse.success(res, result, 'Media loaded.');
 });
 
 const usage = asyncHandler(async (req, res) => {
     const result = await service.getUsage(req.websiteClient.id, req.params.id);
-    return ApiResponse.success(res, result, 'Gallery usage loaded.');
+    return ApiResponse.success(res, result, 'Media usage loaded.');
 });
 
 const upload = asyncHandler(async (req, res) => {
@@ -70,7 +70,7 @@ const update = asyncHandler(async (req, res) => {
 
 const reorder = asyncHandler(async (req, res) => {
     const result = await service.reorderItems(req.websiteClient.id, req.params.id, req.body);
-    return ApiResponse.success(res, result, 'Gallery order saved.');
+    return ApiResponse.success(res, result, 'Media order saved.');
 });
 
 /** Bulk Actions on selected media: move / copy / delete (2026-11-04). */

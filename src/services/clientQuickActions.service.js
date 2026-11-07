@@ -25,7 +25,7 @@ const clientPortalService = require('./clientPortal.service');
  */
 const DEFAULT_SLUGS = [
     'event-invitation', 'venue', 'agenda', 'family',
-    'participants', 'rsvp', 'gallery', 'contact-us',
+    'participants', 'rsvp', 'gallery', 'media', 'contact-us', // 'media' = Gallery's slug after the rename (2026-11-07)
 ];
 
 /**

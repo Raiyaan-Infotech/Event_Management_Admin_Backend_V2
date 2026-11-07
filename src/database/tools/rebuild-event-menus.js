@@ -55,7 +55,7 @@ const CATALOGUE = [
     { slug: 'event-information', name: 'Event Information', group: 'core', web: 1, mob: 1, icon: 'mdi:information-outline', color: '#6E22FE' },
     { slug: 'agenda', name: 'Agenda', group: 'core', web: 1, mob: 1, icon: 'mdi:calendar-clock', color: '#F59E0B' },
     { slug: 'venue', name: 'Venue', group: 'core', web: 1, mob: 1, icon: 'mdi:map-marker-outline', color: '#EF4444' },
-    { slug: 'gallery', name: 'Gallery', group: 'core', web: 1, mob: 1, icon: 'mdi:image-multiple', color: '#EC4899' },
+    { slug: 'gallery', name: 'Media', group: 'core', web: 1, mob: 1, icon: 'mdi:image-multiple', color: '#EC4899' },
     { slug: 'rsvp', name: 'RSVP', group: 'core', web: 1, mob: 1, icon: 'mdi:clipboard-check-outline', color: '#10B981' },
     { slug: 'contact-us', name: 'Contact Us', group: 'core', web: 1, mob: 1, icon: 'mdi:phone-outline', color: '#0D9488' },
     { slug: 'family', name: 'Family', group: 'app', web: 0, mob: 1, icon: 'mdi:account-group', color: '#8B5CF6' },

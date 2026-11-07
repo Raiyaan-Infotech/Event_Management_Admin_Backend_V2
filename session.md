@@ -1110,3 +1110,46 @@ the timeline frame strip needs CORS on the media bucket.
   export columns). Sample rows "Amit Sharma" / "Priya Mehta", group = the client's first group. Export unchanged (all columns,
   round trip). Import still reads every header. Portal Import page: "Recommended Columns" → **Optional Columns** = Guest Group,
   Email, Notes. Needs a V2 backend push (portal works either way).
+- **Manage Groups ⋯ (Jamal, 2026-11-07), portal only:** "Send Message to Group" removed; ⋯ = Edit Group / Delete Group.
+- **Export button named the same everywhere (Jamal, 2026-11-07), portal only:** Participants "Download CSV" → **Export**,
+  Agenda "Export Agenda" → **Export**. Guests, RSVPs, Manage Groups already said Export (all outline + download icon).
+- **Gallery sidebar child menu + Upload Image (Jamal, 2026-11-07), portal only:** workspace sidebar Gallery children =
+  **Upload Image** · Create Video · Create Shorts (`?tab=gallery&create=image|video|short`). Upload Image opens the Upload
+  Media panel on Images, in the default folder (or the first folder that takes images).
+  Each child has an icon: Upload Image = ImagePlus, Create Video = Clapperboard, Create Shorts = Zap (same as the gallery's Shorts).
+- **Agenda Add Date = a day-card-sized FILLED primary button (Jamal, 2026-11-07):** fills its grid cell (same width / height
+  as a day card), icon box + "Add Date".
+- **Family Export + Participants ⚙ (Jamal, 2026-11-07), portal only:**
+  - Family header: **Export** (CSV of the list as shown — tab, search, sort, all pages: Name, Family Side, Relationship, Mobile,
+    Display Order, Visibility, Key Family Member, Notes; UTF-8 BOM; `family-<event>.csv`). Order: Export · ⚙ · Add Family Member.
+  - Participants header: **⚙ Participants Settings** button (same as Family's), opens the settings as a dialog. `ParticipantsForm`
+    (settings-panel.tsx) now uses `SettingsShell` — dialog (Cancel / Save, closes on save) or inline card on App Menu → Participants
+    Settings (gains a one-line description + footer, like Family / Wish settings). Order: Export · ⚙ · Add Participant.
+- **Add Participant = slide-in panel ("canvas"), uniform with Guests / Family (Jamal, 2026-11-07), portal only:** the header
+  button opens the panel straight away (the "Add from Guest / Add Manually" chooser dialog and the jump to the
+  /participants/add page are gone). Same fields as before (`ParticipantForm` gained a `sheet` mode: FormPanel, 2 columns,
+  Cancel / Add Participant footer, closes on save). "Fill from an event guest" at the top opens the guest picker; the picked
+  guest fills the form ("Pick another guest" to change). The /participants/add page still works for old links.
+
+## Gallery renamed to MEDIA everywhere (Jamal, 2026-11-07) - portal + backend + app + DB (names only)
+- Portal: sidebar "Media" (children Upload Image / Create Video / Create Shorts), Media Overview, breadcrumbs, Edit Event
+  hub tile, album builder, video editor, dialogs, toasts, home-screen preview. URLs stay `?tab=gallery`.
+- Portal also this day: Upload Media = right-side panel (Select Folder → File Type → drop zone → Selected Files → Upload N
+  Files); Add/Edit Group = slide-in panel (`groups/_components/group-sheet.tsx`); Venue tab = heading outside + one overall
+  card with Step 1 / Step 2 cards inside.
+- Backend: `clientGallery.service` DEFAULT_CATEGORY_NAME 'Media' (new events' default folder); messages say "Media";
+  `rebuild-event-menus.js` names the gallery menu "Media". Slug stays `gallery`.
+- DB tool `src/database/tools/apply-media-rename.js`: event_menus "Gallery" (slug gallery*) → "Media"; every default folder
+  still named "Gallery" → "Media". Only exact "Gallery" rows change; re-run = no-op.
+  **Applied LOCAL event_v2 (1 menu, 19 folders) AND PRODUCTION event_v2 (11 folders; prod menu #4 was already
+  name 'Media' with slug 'media' — renamed in the admin).**
+- Slug `media` accepted alongside `gallery`: portal sidebar (SLUG_ALIASES), app tile route/icon + offline prefetch,
+  backend clientQuickActions DEFAULT_SLUGS. Local DB still has slug `gallery`.
+- Sidebar Media = parent only (click = open/close, no page; collapsed icon still opens it). Children:
+  Gallery (`?tab=gallery&create=gallery` → Gallery view, Upload Media inside), Create Album (`create=album` → album
+  builder), Create Video (`create=video` → Upload Media on Video), Create Short (`create=short` → Upload Short).
+  (V2 backend has no node_modules: prefix `NODE_PATH=d:/Jamal/Event_Management_Admin_Backend/node_modules`.)
+- App: participant Media screen title + "Media Categories", Edit Event description, downloads + permission texts.
+  Phone-gallery texts ("Save to Gallery", "Upload QR from Gallery", create-post picker) left as they are. Tiles read the
+  menu name from the DB, so they show "Media" after the DB step. `dart analyze`: clean.
+- Not done: V1 (d:\Jamal\...) projects, website-builder "Our Gallery" (public site, unrelated).

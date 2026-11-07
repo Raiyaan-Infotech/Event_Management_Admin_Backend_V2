@@ -106,7 +106,7 @@ const resolveEventForView = async (clientId, rawId) => {
 };
 
 /** The name of the built-in category every event always has. */
-const DEFAULT_CATEGORY_NAME = 'Gallery';
+const DEFAULT_CATEGORY_NAME = 'Media'; // was 'Gallery' (renamed 2026-11-07, tool apply-media-rename.js)
 
 /**
  * The event's built-in "Gallery" category, created the first time it is needed.
@@ -517,7 +517,7 @@ const updateCategory = async (clientId, categoryId, body = {}) => {
     const isDefault = row.is_default === true || row.is_default === 1;
     if (isDefault && body.name !== undefined
         && String(body.name).trim() !== row.name) {
-        throw ApiError.badRequest('The Gallery category cannot be renamed.');
+        throw ApiError.badRequest('The default Media folder cannot be renamed.');
     }
     if (body.name !== undefined && !isDefault) {
         const name = String(body.name || '').trim().slice(0, 120);
@@ -591,7 +591,7 @@ const removeCategory = async (clientId, categoryId) => {
     if (!row) throw ApiError.notFound('That category was not found.');
 
     if (row.is_default === true || row.is_default === 1) {
-        throw ApiError.badRequest('The Gallery category cannot be deleted.');
+        throw ApiError.badRequest('The default Media folder cannot be deleted.');
     }
 
     const eventId = row.event_id;
