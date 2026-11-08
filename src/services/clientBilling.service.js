@@ -367,20 +367,37 @@ const getCurrentSubscription = async (clientId) => {
                 ? new Date(started.getTime() + Number(plan.trial_days) * 86400000)
                 : null;
 
-            const created = await ClientSubscription.create({
-                website_client_id: clientId,
-                subscription_plan_id: plan.id,
-                company_id: client.company_id ?? null,
-                vendor_id: client.vendor_id ?? null,
-                status: trialEnds && trialEnds > now ? 'trialing' : 'active',
-                billing_cycle: plan.billing_cycle,
-                price: plan.price,
-                currency_code: plan.currency_code || 'INR',
-                started_at: started,
-                current_period_start: periodStart,
-                current_period_end: periodEnd,
-                trial_ends_at: trialEnds,
+            // ⚠ Several Billing requests arrive together on a client's first visit. Unguarded, each made
+            // its own subscription (+ invoice) — 30 at once made 30 (2026-11-09 load test). The client
+            // row is locked while we look again and create; the others wait, then find this one.
+            const { created, isNew } = await sequelize.transaction(async (t) => {
+                await WebsiteClient.findByPk(clientId, { attributes: ['id'], transaction: t, lock: t.LOCK.UPDATE });
+                const already = await ClientSubscription.findOne({
+                    where: { website_client_id: clientId },
+                    order: [['created_at', 'DESC']],
+                    transaction: t,
+                    lock: t.LOCK.UPDATE,
+                });
+                if (already) return { created: already, isNew: false };
+                const row = await ClientSubscription.create({
+                    website_client_id: clientId,
+                    subscription_plan_id: plan.id,
+                    company_id: client.company_id ?? null,
+                    vendor_id: client.vendor_id ?? null,
+                    status: trialEnds && trialEnds > now ? 'trialing' : 'active',
+                    billing_cycle: plan.billing_cycle,
+                    price: plan.price,
+                    currency_code: plan.currency_code || 'INR',
+                    started_at: started,
+                    current_period_start: periodStart,
+                    current_period_end: periodEnd,
+                    trial_ends_at: trialEnds,
+                }, { transaction: t });
+                return { created: row, isNew: true };
             });
+            if (!isNew) {
+                sub = await ClientSubscription.findByPk(created.id, { include: SUBSCRIPTION_INCLUDE });
+            } else {
 
             await logEvent({
                 client_subscription_id: created.id,
@@ -405,6 +422,7 @@ const getCurrentSubscription = async (clientId) => {
             });
 
             sub = await ClientSubscription.findByPk(created.id, { include: SUBSCRIPTION_INCLUDE });
+            }
         }
     }
 

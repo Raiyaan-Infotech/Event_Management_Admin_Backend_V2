@@ -223,12 +223,23 @@ const raiseInvoiceForTerm = async (subscription, {
     // Only stamped when money can actually be taken — see PAYMENTS_ENABLED.
     const due = PAYMENTS_ENABLED ? new Date(issue.getTime() + dueInDays * 86400000) : null;
 
-    return sequelize.transaction(async (t) => {
+    // Two requests landing together (the Billing page loads several at once) used to either
+    // deadlock on the numbering lock — a 400 for the client — or, once serialised, BOTH raise an
+    // invoice for the same term. Now: re-check under the lock, and on a deadlock re-read the
+    // winner's invoice (2026-11-09 load test).
+    const raise = () => sequelize.transaction(async (t) => {
         const number = await nextInvoiceNumber(
             client?.company_id ?? null,
             issue.getFullYear(),
             t,
         );
+        // A locking read sees rows committed after this transaction began: the other request's invoice.
+        const raced = await ClientInvoice.findOne({
+            where: { client_subscription_id: subscription.id, period_start: start },
+            transaction: t,
+            lock: t.LOCK.UPDATE,
+        });
+        if (raced) return raced;
 
         const invoice = await ClientInvoice.create({
             invoice_number: number,
@@ -284,6 +295,22 @@ const raiseInvoiceForTerm = async (subscription, {
 
         return invoice;
     });
+
+    const isRace = (e) => {
+        const code = e?.original?.errno ?? e?.parent?.errno;
+        return code === 1213 || code === 1205 || e?.name === 'SequelizeUniqueConstraintError';
+    };
+    for (let attempt = 0; ; attempt += 1) {
+        try {
+            // eslint-disable-next-line no-await-in-loop
+            return await raise();
+        } catch (e) {
+            if (!isRace(e) || attempt >= 2) throw e;
+            // eslint-disable-next-line no-await-in-loop
+            const winner = await ClientInvoice.findOne({ where: { client_subscription_id: subscription.id, period_start: start } });
+            if (winner) return winner;
+        }
+    }
 };
 
 /**

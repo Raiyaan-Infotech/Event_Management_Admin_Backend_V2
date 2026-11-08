@@ -1185,3 +1185,21 @@ the timeline frame strip needs CORS on the media bucket.
   Blocked Words "Action When Detected", Settings → Allow Comments + Show Likes.
 - Tests (local): API 29/29, browser 8/8. Test accounts LOCAL only: browser.test@ (#145, event 86), browser.participant@ (#146).
 - Not done: the participant APP screens to comment / report (backend is ready for them).
+
+## Wishes full test + V2 API load check + Billing race fix (Jamal, 2026-11-09) - backend, no DB change
+- Wishes browser test (local): 20/20 — post (text / image / hidden), edit (text, recipient, add + remove photo), hide/show,
+  filter hold → Pending → approve, reject, in-app message reaches participant, comments (reply / edit own / hide / show /
+  delete / comments-off enforced), reports + dismiss, block reason + note + unblock, blocked words per action, settings,
+  delete, filters. Every action checked as SAVED via the API (and reload where it matters).
+- Load test (local, 200 req × 28 endpoints, 20 at once): single request 5–13 ms; under load p95 44–190 ms; gzip on.
+  Pages make 8–11 API calls, no duplicates.
+- **BUG FIXED — Billing first visit made duplicate subscriptions + invoices.** `clientBilling.getCurrentSubscription`
+  creates the subscription on read for clients whose plan was set from the admin Clients screen (pointer only). The
+  Billing page fires several requests at once → 30 simultaneous made 30 subscriptions / 17 invoices / 13 deadlock 400s.
+  Now: lock the client row, re-check, create once. `clientInvoice.raiseInvoiceForTerm`: re-checks the term under the
+  numbering lock + on deadlock returns the winner (no 2nd invoice for one term). `clientSocialLink.ensurePresets`:
+  a deadlock on the first-read preset insert is ignored (rows exist). After: 30/30 OK, 1 sub, 1 invoice, 0 deadlocks.
+- **Check PRODUCTION for damage (read-only, blocked from here):**
+  `node src/database/tools/report-duplicate-subscriptions.js --prod` — lists clients with >1 subscription and terms with
+  >1 invoice. Local test accounts were cleaned (#145, #147).
+- Not pushed yet: wishes backend + these fixes (backend), wishes portal.

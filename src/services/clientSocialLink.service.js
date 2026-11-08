@@ -101,12 +101,19 @@ const ensurePresets = async (event) => {
     const values = PRESETS.map((p, i) => [
         event.id, event.website_client_id, p.key, p.name, p.name, i - PRESETS.length, event.company_id ?? null,
     ]);
-    await EventSocialLink.sequelize.query(
-        `INSERT IGNORE INTO event_social_links
-            (event_id, website_client_id, platform_key, platform_name, title, sort_order, company_id, created_at, updated_at)
-         VALUES ${values.map(() => '(?, ?, ?, ?, ?, ?, ?, NOW(), NOW())').join(', ')}`,
-        { replacements: values.flat() },
-    );
+    try {
+        await EventSocialLink.sequelize.query(
+            `INSERT IGNORE INTO event_social_links
+                (event_id, website_client_id, platform_key, platform_name, title, sort_order, company_id, created_at, updated_at)
+             VALUES ${values.map(() => '(?, ?, ?, ?, ?, ?, ?, NOW(), NOW())').join(', ')}`,
+            { replacements: values.flat() },
+        );
+    } catch (e) {
+        // Several first reads at once (2026-11-09 load test): one wins, the others deadlock on the
+        // unique key. The rows exist either way — the caller re-reads them.
+        const code = e?.original?.errno ?? e?.parent?.errno;
+        if (code !== 1213 && code !== 1205) throw e;
+    }
     return true;
 };
 
