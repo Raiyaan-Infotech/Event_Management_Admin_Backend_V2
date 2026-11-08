@@ -1,5 +1,5 @@
 const {
-    Sequelize, Event, EventWish, EventWishBlock, EventWishLike, EventParticipant, WebsiteClient,
+    Sequelize, Event, EventWish, EventWishBlock, EventWishLike, EventWishComment, EventWishReport, EventParticipant, WebsiteClient,
 } = require('../models');
 const ApiError = require('../utils/apiError');
 const mediaService = require('./media.service');
@@ -16,7 +16,8 @@ const { Op } = Sequelize;
  *
  * A wish is a POST (Jamal's second mockup): Text, Image or Video, addressed
  * To Groom / To Bride / To Both (a badge — everyone still sees it), that people
- * can LIKE. No comments, no share, no reports (Jamal).
+ * can LIKE. Since 2026-11-09 (the web Wishes Monitor) people can also COMMENT
+ * under a post and REPORT a post; the organizer moderates both.
  *
  * Who does what (Jamal's decisions):
  *   · a participant posts; it is VISIBLE at once — no approval step;
@@ -77,7 +78,20 @@ const SETTINGS_DEFAULTS = Object.freeze({
     /** Participants see a post's image / video. */
     wish_photo: true,
     time: true,
+    /** Participants may comment under a post (2026-11-09). */
+    allow_comments: true,
+    /** Participants see like counts (2026-11-09). The organizer always does. */
+    show_likes: true,
 });
+
+/** Why a participant is blocked / a post is reported (2026-11-09). */
+const REASONS = ['inappropriate', 'spam', 'harassment', 'other'];
+/**
+ * What a blocked word does (2026-11-09, per word): replace = masked only; hold = masked,
+ * flagged and hidden until reviewed; hide = masked and hidden. A word saved before this
+ * (no action) keeps the old rule: flagged, hidden when `auto_hide` is on.
+ */
+const WORD_ACTIONS = ['replace', 'hold', 'hide'];
 
 const mb = (bytes) => Math.round((bytes / (1024 * 1024)) * 10) / 10;
 
@@ -120,7 +134,8 @@ const filterOf = (event) => {
         if (!word || seen.has(word.toLowerCase())) continue;
         seen.add(word.toLowerCase());
         const replace = typeof w?.replace === 'string' ? Array.from(w.replace.trim()).slice(0, MAX_FILTER_WORD).join('') : '';
-        words.push({ word, replace: replace || DEFAULT_REPLACE });
+        const action = WORD_ACTIONS.includes(w?.action) ? w.action : undefined;
+        words.push({ word, replace: replace || DEFAULT_REPLACE, ...(action ? { action } : {}) });
         if (words.length >= MAX_FILTER_WORDS) break;
     }
     return {
@@ -139,17 +154,20 @@ const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
  * either side mean it is part of a longer word — any case.
  */
 const applyFilter = (text, filter) => {
-    if (!filter.enabled || !text || !filter.words.length) return { text, flagged: false };
+    if (!filter.enabled || !text || !filter.words.length) return { text, flagged: false, hidden: false };
     let out = text;
     let flagged = false;
-    for (const { word, replace } of filter.words) {
+    let hidden = false;
+    for (const { word, replace, action } of filter.words) {
         const re = new RegExp(`(?<![\\p{L}\\p{N}\\p{M}])${escapeRegex(word)}(?![\\p{L}\\p{N}\\p{M}])`, 'giu');
         out = out.replace(re, () => {
-            flagged = true;
+            if (action === 'hold') { flagged = true; hidden = true; }
+            else if (action === 'hide') hidden = true;
+            else if (!action) { flagged = true; if (filter.auto_hide) hidden = true; }
             return replace;
         });
     }
-    return { text: out, flagged };
+    return { text: out, flagged, hidden };
 };
 
 /** Tell the organizer a post was flagged (in-app; best effort, never throws). */
@@ -385,7 +403,12 @@ const present = (row, { isOwner, viewerId, ctx, settings = SETTINGS_DEFAULTS }) 
         thumbnail_url: showMedia ? w.thumbnail_url : null,
         duration_seconds: showMedia ? w.duration_seconds : null,
         avatar: person && (whole || settings.profile_photo) ? person.photo : null,
-        like_count: ctx.likes.get(w.id) || 0,
+        // Like counts are hidden from participants when the organizer turns them off.
+        like_count: whole || settings.show_likes ? (ctx.likes.get(w.id) || 0) : 0,
+        /** Comments under it — every one for the organizer, the visible ones (+ own) for others. */
+        comment_count: isOwner ? (ctx.comments.get(w.id)?.all || 0) : (ctx.comments.get(w.id)?.visible || 0),
+        /** Organizer only: how many participants reported it. */
+        report_count: isOwner ? (ctx.reports.get(w.id) || 0) : 0,
         liked_by_me: ctx.mine.has(w.id),
         is_hidden: Number(w.is_hidden) === 1,
         /** Organizer only: the content filter caught a word, not reviewed yet. */
@@ -393,6 +416,8 @@ const present = (row, { isOwner, viewerId, ctx, settings = SETTINGS_DEFAULTS }) 
         status,
         added_by_organizer: !author,
         author_blocked: isOwner ? authorBlocked : false,
+        /** Organizer only: why the writer is blocked (reason + internal note). */
+        author_block: isOwner && authorBlocked ? (ctx.blockInfo.get(author) || null) : null,
         /** The writer's participant row — the organizer contacts them through it. */
         participant_id: isOwner && person ? person.id : null,
         is_mine: mine,
@@ -408,7 +433,7 @@ const present = (row, { isOwner, viewerId, ctx, settings = SETTINGS_DEFAULTS }) 
 const contextFor = async (eventId, rows, viewerId) => {
     const authors = [...new Set(rows.map((r) => Number(r.author_client_id)).filter(Boolean))];
     const ids = rows.map((r) => r.id);
-    const [people, blocks, counts, mine] = await Promise.all([
+    const [people, blocks, counts, mine, commentRows, reportRows] = await Promise.all([
         authors.length
             ? EventParticipant.findAll({
                 where: { event_id: eventId, participant_client_id: authors },
@@ -417,7 +442,7 @@ const contextFor = async (eventId, rows, viewerId) => {
                 raw: true,
             })
             : [],
-        EventWishBlock.findAll({ where: { event_id: eventId }, attributes: ['author_client_id', 'hide_menu'], raw: true }),
+        EventWishBlock.findAll({ where: { event_id: eventId }, attributes: ['author_client_id', 'hide_menu', 'reason', 'note'], raw: true }),
         ids.length
             ? EventWishLike.findAll({
                 where: { wish_id: ids },
@@ -429,7 +454,32 @@ const contextFor = async (eventId, rows, viewerId) => {
         ids.length
             ? EventWishLike.findAll({ where: { wish_id: ids, client_id: viewerId }, attributes: ['wish_id'], raw: true })
             : [],
+        ids.length
+            ? EventWishComment.findAll({
+                where: { wish_id: ids },
+                attributes: ['wish_id', 'is_hidden', 'author_client_id', [Sequelize.fn('COUNT', Sequelize.col('id')), 'n']],
+                group: ['wish_id', 'is_hidden', 'author_client_id'],
+                raw: true,
+            })
+            : [],
+        ids.length
+            ? EventWishReport.findAll({
+                where: { wish_id: ids },
+                attributes: ['wish_id', [Sequelize.fn('COUNT', Sequelize.col('id')), 'n']],
+                group: ['wish_id'],
+                raw: true,
+            })
+            : [],
     ]);
+    const comments = new Map();
+    for (const c of commentRows) {
+        const key = Number(c.wish_id);
+        const n = Number(c.n);
+        const e = comments.get(key) || { all: 0, visible: 0 };
+        e.all += n;
+        if (Number(c.is_hidden) === 0 || Number(c.author_client_id) === Number(viewerId)) e.visible += n;
+        comments.set(key, e);
+    }
     const byClient = new Map();
     for (const p of people) {
         const key = Number(p.participant_client_id);
@@ -441,6 +491,9 @@ const contextFor = async (eventId, rows, viewerId) => {
         blocked: new Set(blocks.map((b) => Number(b.author_client_id))),
         hiddenMenu: new Set(blocks.filter((b) => Number(b.hide_menu) === 1).map((b) => Number(b.author_client_id))),
         likes: new Map(counts.map((c) => [Number(c.wish_id), Number(c.n)])),
+        comments,
+        reports: new Map(reportRows.map((r) => [Number(r.wish_id), Number(r.n)])),
+        blockInfo: new Map(blocks.map((b) => [Number(b.author_client_id), { reason: b.reason || null, note: b.note || null }])),
         mine: new Set(mine.map((m) => Number(m.wish_id))),
     };
 };
@@ -483,6 +536,8 @@ const list = async (clientId, eventId) => {
             blocked_users: ctx.blocked.size,
             /** Caught by the content filter, not reviewed yet. */
             flagged: wishes.filter((w) => w.is_flagged).length,
+            /** Reported by at least one participant. */
+            reported: wishes.filter((w) => w.report_count > 0).length,
         };
     }
     return result;
@@ -537,8 +592,8 @@ const create = async (clientId, eventId, body = {}, file = null) => {
     // never flagged, hidden or notified (they would be reviewing themselves).
     const filter = filterOf(event);
     const found = applyFilter(message, filter);
-    const checked = isOwner ? { text: found.text, flagged: false } : found;
-    const flaggedHidden = checked.flagged && filter.auto_hide;
+    const checked = isOwner ? { text: found.text, flagged: false, hidden: false } : found;
+    const flaggedHidden = checked.hidden;
 
     const media = file ? await storeMedia(event, file, body) : { ...NO_MEDIA, post_type: 'text' };
     const row = await EventWish.create({
@@ -590,10 +645,9 @@ const update = async (clientId, wishId, body = {}) => {
             const filter = filterOf(event);
             const checked = applyFilter(data.message, filter);
             data.message = checked.text;
-            if (checked.flagged && !isOwner) {
-                flaggedNow = filter.notify;
-                data.is_flagged = 1;
-                if (filter.auto_hide) data.is_hidden = 1;
+            if (!isOwner && (checked.flagged || checked.hidden)) {
+                if (checked.flagged) { flaggedNow = filter.notify; data.is_flagged = 1; }
+                if (checked.hidden) data.is_hidden = 1;
             }
         }
     }
@@ -607,6 +661,8 @@ const update = async (clientId, wishId, body = {}) => {
         if (body.show_in_app) data.is_flagged = 0;
     }
     if (isOwner && bool(body.reviewed, false)) data.is_flagged = 0;
+    // Reviewed the reports (Reported tab): they are cleared.
+    if (isOwner && bool(body.dismiss_reports, false)) await EventWishReport.destroy({ where: { wish_id: wish.id } });
 
     const before = wish.toJSON();
     if (toText) Object.assign(data, NO_MEDIA, { post_type: 'text' });
@@ -677,8 +733,12 @@ const setBlocked = async (clientId, wishId, blocked, options = {}) => {
     }
 
     const hideMenu = 1;
-    const [row, created] = await EventWishBlock.findOrCreate({ where, defaults: { ...where, hide_menu: hideMenu } });
-    if (!created && Number(row.hide_menu) !== hideMenu) await row.update({ hide_menu: hideMenu });
+    // Why (2026-11-09): one of REASONS, plus the organizer's internal note.
+    const reason = options.reason === undefined ? undefined : pick(options.reason, REASONS, 'other');
+    const note = options.note === undefined ? undefined : str(options.note, 500);
+    const extra = { ...(reason !== undefined ? { reason } : {}), ...(note !== undefined ? { note } : {}) };
+    const [row, created] = await EventWishBlock.findOrCreate({ where, defaults: { ...where, hide_menu: hideMenu, ...extra } });
+    if (!created) await row.update({ hide_menu: hideMenu, ...extra });
 
     let removed = 0;
     if (bool(options.remove_wishes, false)) {
@@ -717,6 +777,175 @@ const purgeEvent = async (eventId) => {
         await dropMediaOf(w, w.company_id);
     }
     await EventWish.destroy({ where: { event_id: eventId } });
+};
+
+// ── Comments (2026-11-09) ────────────────────────────────────────────────────
+
+const MAX_COMMENT = 500;
+
+const presentComment = (c, isOwner, viewerId) => {
+    const r = c.toJSON ? c.toJSON() : c;
+    const author = Number(r.author_client_id) || null;
+    const mine = !!author && author === Number(viewerId);
+    return {
+        id: r.id,
+        wish_id: r.wish_id,
+        guest_name: r.guest_name,
+        message: r.message,
+        is_hidden: Number(r.is_hidden) === 1,
+        status: Number(r.is_hidden) === 1 ? 'hidden' : 'visible',
+        /** Organizer only: the blocked-words filter caught it, not reviewed yet. */
+        is_flagged: isOwner ? Number(r.is_flagged) === 1 : false,
+        added_by_organizer: !author,
+        is_mine: mine,
+        // Same rule as wishes: the organizer words only their own comments.
+        can_edit: (isOwner && !author) || mine,
+        can_delete: isOwner || mine,
+        created_at: r.created_at,
+    };
+};
+
+/** A wish the caller may see: the organizer always; others when it is visible or theirs. */
+const visibleWish = async (clientId, wishId) => {
+    const access = await resolveWish(clientId, wishId);
+    const mine = Number(access.wish.author_client_id) === Number(clientId);
+    if (!access.isOwner && !mine && Number(access.wish.is_hidden) === 1) throw ApiError.notFound('That wish was not found.');
+    return access;
+};
+
+const listComments = async (clientId, wishId) => {
+    const { wish, isOwner } = await visibleWish(clientId, wishId);
+    const where = { wish_id: wish.id };
+    if (!isOwner) where[Op.or] = [{ is_hidden: 0 }, { author_client_id: clientId }];
+    const rows = await EventWishComment.findAll({ where, order: [['created_at', 'ASC'], ['id', 'ASC']] });
+    return { wish_id: wish.id, comments: rows.map((c) => presentComment(c, isOwner, clientId)) };
+};
+
+const addComment = async (clientId, wishId, body = {}) => {
+    const { wish, event, isOwner, participant } = await visibleWish(clientId, wishId);
+    const settings = settingsOf(event);
+    if (!isOwner) {
+        if (await isBlocked(event.id, clientId)) throw refuseBlocked();
+        if (!settings.allow_comments) throw ApiError.forbidden('The organizer has turned off comments for this event.');
+    }
+    const message = str(body.message, MAX_COMMENT);
+    if (!message) throw ApiError.badRequest('Please write a comment.');
+    const filter = filterOf(event);
+    const found = applyFilter(message, filter);
+    const checked = isOwner ? { text: found.text, flagged: false, hidden: false } : found;
+    let name;
+    if (isOwner) name = await organizerName(event, clientId);
+    else {
+        name = str(participant?.name, MAX_NAME);
+        if (!name) {
+            const me = await WebsiteClient.findByPk(clientId, { attributes: ['name'] });
+            name = str(me?.name, MAX_NAME) || 'Participant';
+        }
+    }
+    const row = await EventWishComment.create({
+        event_id: event.id,
+        wish_id: wish.id,
+        website_client_id: event.website_client_id,
+        author_client_id: isOwner ? null : clientId,
+        guest_name: name,
+        message: checked.text,
+        is_hidden: checked.hidden ? 1 : 0,
+        is_flagged: checked.flagged ? 1 : 0,
+        company_id: event.company_id ?? null,
+    });
+    if (checked.flagged && filter.notify) await notifyFlagged(event, { id: wish.id, guest_name: name, message: checked.text });
+    return presentComment(row, isOwner, clientId);
+};
+
+const resolveComment = async (clientId, commentId) => {
+    const comment = await EventWishComment.findByPk(Number(commentId) || 0);
+    if (!comment) throw ApiError.notFound('That comment was not found.');
+    const access = await resolveWish(clientId, comment.wish_id);
+    return { comment, ...access };
+};
+
+/** Edit the text (its writer; the organizer for their own), hide / show and review (organizer). */
+const updateComment = async (clientId, commentId, body = {}) => {
+    const { comment, event, isOwner } = await resolveComment(clientId, commentId);
+    const has = (f) => Object.prototype.hasOwnProperty.call(body, f);
+    const mine = Number(comment.author_client_id) === Number(clientId);
+    const data = {};
+    if (has('message')) {
+        const own = (isOwner && !comment.author_client_id) || mine;
+        if (!own) throw ApiError.forbidden(isOwner ? "The organizer cannot edit a participant's comment." : 'Only the writer can edit this comment.');
+        if (!isOwner && await isBlocked(event.id, clientId)) throw refuseBlocked();
+        const message = str(body.message, MAX_COMMENT);
+        if (!message) throw ApiError.badRequest('Please write a comment.');
+        const checked = applyFilter(message, filterOf(event));
+        data.message = checked.text;
+        if (!isOwner) {
+            if (checked.flagged) data.is_flagged = 1;
+            if (checked.hidden) data.is_hidden = 1;
+        }
+    }
+    if (has('show_in_app')) {
+        if (!isOwner) throw ApiError.forbidden('Only the organizer can hide or show a comment.');
+        data.is_hidden = body.show_in_app ? 0 : 1;
+        if (body.show_in_app) data.is_flagged = 0;
+    }
+    if (isOwner && bool(body.reviewed, false)) data.is_flagged = 0;
+    await comment.update(data);
+    return presentComment(comment, isOwner, clientId);
+};
+
+const removeComment = async (clientId, commentId) => {
+    const { comment, isOwner } = await resolveComment(clientId, commentId);
+    const mine = Number(comment.author_client_id) === Number(clientId);
+    if (!isOwner && !mine) throw ApiError.forbidden('Only the organizer or the writer can delete this comment.');
+    await comment.destroy();
+    return { removed: true };
+};
+
+// ── Reports (2026-11-09) ─────────────────────────────────────────────────────
+
+/** A participant reports a post (once per person; again = updates the reason). */
+const reportWish = async (clientId, wishId, body = {}) => {
+    const { wish, event, isOwner } = await visibleWish(clientId, wishId);
+    if (isOwner) throw ApiError.badRequest('You manage this event — hide or delete the wish instead.');
+    if (Number(wish.author_client_id) === Number(clientId)) throw ApiError.badRequest('You cannot report your own wish.');
+    const where = { wish_id: wish.id, reporter_client_id: clientId };
+    const values = { reason: pick(body.reason, REASONS, 'other'), note: str(body.note, 300) };
+    const [row, created] = await EventWishReport.findOrCreate({ where, defaults: { ...where, event_id: event.id, ...values } });
+    if (!created) await row.update(values);
+    if (created) {
+        const ids = [Number(event.website_client_id)].filter(Boolean);
+        await Promise.all(ids.map((id) => notificationService.notify(id, {
+            type: 'wish_reported',
+            title: 'A wish was reported',
+            body: `${wish.guest_name}: ${Array.from(wish.message || '').slice(0, 100).join('')}`,
+            eventId: event.id,
+            companyId: event.company_id ?? null,
+            meta: { wish_id: wish.id, reason: values.reason },
+        }).catch(() => null)));
+    }
+    return { reported: true, reason: values.reason };
+};
+
+/** Organizer: who reported a post, and why. */
+const listReports = async (clientId, wishId) => {
+    const { wish, event, isOwner } = await resolveWish(clientId, wishId);
+    if (!isOwner) throw ApiError.forbidden('Only the organizer can see reports.');
+    const rows = await EventWishReport.findAll({ where: { wish_id: wish.id }, order: [['created_at', 'DESC']], raw: true });
+    const ids = [...new Set(rows.map((r) => Number(r.reporter_client_id)))];
+    const people = ids.length
+        ? await EventParticipant.findAll({ where: { event_id: event.id, participant_client_id: ids }, attributes: ['participant_client_id', 'name'], raw: true })
+        : [];
+    const nameOf = new Map(people.map((p) => [Number(p.participant_client_id), p.name]));
+    return {
+        wish_id: wish.id,
+        reports: rows.map((r) => ({
+            id: r.id,
+            reporter_name: nameOf.get(Number(r.reporter_client_id)) || 'Participant',
+            reason: r.reason,
+            note: r.note,
+            created_at: r.created_at,
+        })),
+    };
 };
 
 // ── Settings (the settings icon on the Wishes list) ─────────────────────────
@@ -784,4 +1013,11 @@ module.exports = {
     setLiked,
     setBlocked,
     purgeEvent,
+    REASONS,
+    listComments,
+    addComment,
+    updateComment,
+    removeComment,
+    reportWish,
+    listReports,
 };

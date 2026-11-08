@@ -1153,3 +1153,35 @@ the timeline frame strip needs CORS on the media bucket.
   Phone-gallery texts ("Save to Gallery", "Upload QR from Gallery", create-post picker) left as they are. Tiles read the
   menu name from the DB, so they show "Media" after the DB step. `dart analyze`: clean.
 - Not done: V1 (d:\Jamal\...) projects, website-builder "Our Gallery" (public site, unrelated).
+
+## Wed Wishes Monitor — Jamal's web design (Wishes_Monitor_Action_Flows, 2026-11-07) - portal only, no backend change
+- `wishes-panel.tsx` rebuilt from the module kit: header (Wishes Settings · Post Wish), tiles (Total · Published · Pending
+  Review · Hidden · Total Likes), search + Wish Type / Recipient / Date, tabs (All · Published · Pending · Hidden · Blocked),
+  Wishes List table (Participant · Wish/Message + To · Type · Status · Likes · Posted On · ⋯), 10 per page.
+- ⋯ actions open a panel on the RIGHT of the table (InlineSheets): View, Edit (organizer posts only — the server refuses
+  edits to a participant's wish), Approve / Publish (Moderate: approve / keep pending / hide / reject = delete), Hide/Show
+  (instant), Send In-App Message (templates), Block / Unblock (+ "Hide their existing wishes" = all_from_writer), Delete.
+  Post a Wish (Post As, Recipient, Message, Upload Image / Video, Publish Immediately off = saved hidden), Blocked Words.
+- Wishes Settings = own page, two cards (Visibility & Publishing = wish-settings fields; Moderation = filter enabled /
+  auto_hide / notify + Manage Blocked Words). Menu Settings' WishSettingsCard unchanged.
+- "Pending" = flagged by the word filter (server has no other approval state). New hook `useReplaceWishMedia`
+  (POST /wishes/:id/media) for Edit → Replace.
+- NOT built (no server support): Manage Comments, Reported tab, block reason / internal note, per-word action
+  (Hold / Hide per word — the server has one global "auto_hide").
+
+## Wishes Monitor BACKEND — comments, reports, block reason, per-word actions (Jamal, 2026-11-09) - backend + portal, DB CHANGE
+- DB (`migrations/sql/20261109-wish-comments-reports.sql`, tool `apply-wish-comments-reports.js`, initial_setup.sql):
+  new `event_wish_comments`, new `event_wish_reports` (one per person per wish), `event_wish_blocks.reason` + `.note`.
+  **Applied LOCAL and PRODUCTION (event_v2, 2026-11-09).** Next: push backend, then portal.
+- Models EventWishComment, EventWishReport (index.js); EventWishBlock reason/note; eventOrganizerAccess pins /wish-comments/:id.
+- clientWish.service: settings `allow_comments`, `show_likes` (participants see like_count 0 when off); filter words get
+  `action` replace | hold | hide (old words without action keep the old flag + auto_hide rule); comments (list / add /
+  edit own / hide-show-review / delete, filter applies, blocked or comments-off → 403); reports (participant only, not own
+  wish, notifies organizer `wish_reported`, organizer lists them, `dismiss_reports` on PUT /wishes/:id clears);
+  block takes `reason` + `note`; list adds comment_count, report_count, author_block, counts.reported.
+- Routes: GET/POST /wishes/:id/comments, PUT/DELETE /wish-comments/:id, POST /wishes/:id/report, GET /wishes/:id/reports.
+- Portal: Reported tab + pill, Manage Comments panel (reply as organizer, edit own, hide/show, delete, Allow New Comments +
+  filter toggle), View → Reports (Dismiss) + Latest Comments, Approve also dismisses reports, Block Reason + Internal Note,
+  Blocked Words "Action When Detected", Settings → Allow Comments + Show Likes.
+- Tests (local): API 29/29, browser 8/8. Test accounts LOCAL only: browser.test@ (#145, event 86), browser.participant@ (#146).
+- Not done: the participant APP screens to comment / report (backend is ready for them).

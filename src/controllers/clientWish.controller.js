@@ -73,7 +73,38 @@ const updateSettings = asyncHandler(async (req, res) => {
     return ApiResponse.success(res, result, 'Wish settings saved.');
 });
 
+// ── Comments + reports (2026-11-09) ──
+const listComments = asyncHandler(async (req, res) => {
+    const result = await service.listComments(req.websiteClient.id, req.params.wishId);
+    return ApiResponse.success(res, result, 'Comments loaded.');
+});
+
+const addComment = asyncHandler(async (req, res) => {
+    const comment = await service.addComment(req.websiteClient.id, req.params.wishId, req.body);
+    return ApiResponse.created(res, { comment }, 'Comment added.');
+});
+
+const updateComment = asyncHandler(async (req, res) => {
+    const comment = await service.updateComment(req.websiteClient.id, req.params.commentId, req.body);
+    return ApiResponse.success(res, { comment }, 'Comment updated.');
+});
+
+const removeComment = asyncHandler(async (req, res) => {
+    const result = await service.removeComment(req.websiteClient.id, req.params.commentId);
+    return ApiResponse.success(res, result, 'Comment deleted.');
+});
+
+const report = asyncHandler(async (req, res) => {
+    const result = await service.reportWish(req.websiteClient.id, req.params.wishId, req.body);
+    return ApiResponse.success(res, result, 'Thanks — the organizer will review this wish.');
+});
+
+const listReports = asyncHandler(async (req, res) => {
+    const result = await service.listReports(req.websiteClient.id, req.params.wishId);
+    return ApiResponse.success(res, result, 'Reports loaded.');
+});
+
 module.exports = {
     list, getOne, create, update, replaceMedia, remove, like, unlike, block, unblock, getSettings, updateSettings,
-    getFilter, updateFilter,
+    getFilter, updateFilter, listComments, addComment, updateComment, removeComment, report, listReports,
 };

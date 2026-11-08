@@ -42,6 +42,8 @@ const TYPE_CATEGORY = {
     contact_chat_reply: 'message',
     // Wed Wishes: the content filter caught a blocked word in a post.
     wish_flagged: 'system',
+    // Wed Wishes: a participant reported a post (2026-11-09).
+    wish_reported: 'system',
     // Plan storage reached 50% / 100% (notificationTrigger.triggerStorageAlert).
     storage_alert: 'system',
     // RSVP

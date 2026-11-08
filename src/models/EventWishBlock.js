@@ -13,6 +13,10 @@ module.exports = (sequelize) => {
         author_client_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
         /** The Wed Wishes menu is hidden from this participant too. */
         hide_menu: { type: DataTypes.TINYINT(1), allowNull: false, defaultValue: 1 },
+        /** Why they were blocked (2026-11-09): inappropriate | spam | harassment | other. */
+        reason: { type: DataTypes.STRING(40), allowNull: true },
+        /** The organizer's internal note — never shown to the participant. */
+        note: { type: DataTypes.STRING(500), allowNull: true },
     }, {
         tableName: 'event_wish_blocks',
         timestamps: true,

@@ -1056,6 +1056,13 @@ router.post('/wishes/:wishId/like', wishController.like);
 router.delete('/wishes/:wishId/like', wishController.unlike);
 router.post('/wishes/:wishId/block', wishController.block);
 router.delete('/wishes/:wishId/block', wishController.unblock);
+// Comments + reports (Wishes Monitor, 2026-11-09).
+router.get('/wishes/:wishId/comments', wishController.listComments);
+router.post('/wishes/:wishId/comments', wishController.addComment);
+router.put('/wish-comments/:commentId', wishController.updateComment);
+router.delete('/wish-comments/:commentId', wishController.removeComment);
+router.post('/wishes/:wishId/report', wishController.report);
+router.get('/wishes/:wishId/reports', wishController.listReports);
 
 // Near By (2026-10-24): settings = organizer; places = organizer + participants.
 router.get('/events/:id/nearby-settings', nearbyController.getSettings);
