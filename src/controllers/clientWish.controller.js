@@ -80,7 +80,7 @@ const listComments = asyncHandler(async (req, res) => {
 });
 
 const addComment = asyncHandler(async (req, res) => {
-    const comment = await service.addComment(req.websiteClient.id, req.params.wishId, req.body);
+    const comment = await service.addComment(req.websiteClient.id, req.params.wishId, req.body, req.file || null);
     return ApiResponse.created(res, { comment }, 'Comment added.');
 });
 
@@ -92,6 +92,12 @@ const updateComment = asyncHandler(async (req, res) => {
 const removeComment = asyncHandler(async (req, res) => {
     const result = await service.removeComment(req.websiteClient.id, req.params.commentId);
     return ApiResponse.success(res, result, 'Comment deleted.');
+});
+
+// ── Conversations (2026-11-09) ──
+const markRead = asyncHandler(async (req, res) => {
+    const result = await service.markThreadRead(req.websiteClient.id, req.params.id, req.body);
+    return ApiResponse.success(res, result, 'Marked as read.');
 });
 
 const report = asyncHandler(async (req, res) => {
@@ -106,5 +112,5 @@ const listReports = asyncHandler(async (req, res) => {
 
 module.exports = {
     list, getOne, create, update, replaceMedia, remove, like, unlike, block, unblock, getSettings, updateSettings,
-    getFilter, updateFilter, listComments, addComment, updateComment, removeComment, report, listReports,
+    getFilter, updateFilter, listComments, addComment, updateComment, removeComment, report, listReports, markRead,
 };

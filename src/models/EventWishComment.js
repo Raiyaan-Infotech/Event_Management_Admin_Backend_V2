@@ -14,6 +14,9 @@ module.exports = (sequelize) => {
         author_client_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
         guest_name: { type: DataTypes.STRING(150), allowNull: false },
         message: { type: DataTypes.STRING(500), allowNull: false },
+        /** An attached image: the organizer's photo reply from the conversation (2026-11-09). */
+        photo: { type: DataTypes.STRING(500), allowNull: true },
+        size_bytes: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false, defaultValue: 0 },
         is_hidden: { type: DataTypes.TINYINT(1), allowNull: false, defaultValue: 0 },
         is_flagged: { type: DataTypes.TINYINT(1), allowNull: false, defaultValue: 0 },
         company_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },

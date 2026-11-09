@@ -171,6 +171,7 @@ db.EventWishBlock = require('./EventWishBlock')(sequelize, Sequelize);
 db.EventWishLike = require('./EventWishLike')(sequelize, Sequelize);
 db.EventWishComment = require('./EventWishComment')(sequelize, Sequelize);
 db.EventWishReport = require('./EventWishReport')(sequelize, Sequelize);
+db.EventWishRead = require('./EventWishRead')(sequelize, Sequelize);
 db.EventLiveStreamType = require('./EventLiveStreamType')(sequelize, Sequelize);
 db.EventLiveStream = require('./EventLiveStream')(sequelize, Sequelize);
 db.EventSocialLink = require('./EventSocialLink')(sequelize, Sequelize);

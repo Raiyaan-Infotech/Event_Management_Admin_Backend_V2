@@ -1199,7 +1199,47 @@ the timeline frame strip needs CORS on the media bucket.
   Now: lock the client row, re-check, create once. `clientInvoice.raiseInvoiceForTerm`: re-checks the term under the
   numbering lock + on deadlock returns the winner (no 2nd invoice for one term). `clientSocialLink.ensurePresets`:
   a deadlock on the first-read preset insert is ignored (rows exist). After: 30/30 OK, 1 sub, 1 invoice, 0 deadlocks.
-- **Check PRODUCTION for damage (read-only, blocked from here):**
+- **PRODUCTION checked 2026-11-09: 0 clients with >1 subscription, 0 terms with >1 invoice — no damage.** Tool:
   `node src/database/tools/report-duplicate-subscriptions.js --prod` — lists clients with >1 subscription and terms with
   >1 invoice. Local test accounts were cleaned (#145, #147).
 - Not pushed yet: wishes backend + these fixes (backend), wishes portal.
+
+## Post Wish = slide-in panel ("canvas") (Jamal, 2026-11-09) - portal only, no backend change
+- Wishes header **Post Wish** now opens the right-side slide-in panel (`FormPanel sheet`, same as Add Guest / Add
+  Participant) over the page, instead of the card beside the Wishes table (`InlineSheets`). Same fields and save.
+  The other ⋯ panels (View, Edit, Moderate, …) still open beside the table. `wishes-panel.tsx`; tsc + eslint clean.
+- **All Wishes panels slide in too (Jamal, 2026-11-09):** View, Edit, Manage Comments, Moderate, Send In-App Message,
+  Block, Delete and Blocked Words now open as the right-side slide-in (`ActionSheet` default) like Post Wish — the
+  `SplitLayout` + `InlineSheets` beside the table is gone; the list always uses the full width. Wishes was the only
+  module still opening panels beside the table (Agenda / Family / Guests / Groups / Participants already slide in).
+- **Delete Wish = centred confirm pop-up (Jamal, 2026-11-09):** "Delete Wish?" Dialog (Cancel / Delete), the same as
+  Delete in Family / Agenda / Media / Live / Social Links — no longer a slide-in. Portal only; tsc + eslint clean.
+
+## Wed Wishes = CHAT view per participant (Jamal's design, 2026-11-09) - backend + portal, DB CHANGE
+- Organizer web view only (the participant app keeps its own view). Replaces the Wishes List table.
+- Jamal's choices: organizer reply = PUBLIC comment on the wish (everyone sees it); build Unread + Online now;
+  composer = text + photo + emoji (no voice); old table removed. NOT built: emoji reactions, About / Notes, voice.
+- **Portal** (`events/[id]/_components/wishes-chat.tsx`, used by `wishes-panel.tsx`): tiles unchanged (Total → all,
+  Pending → filter, Hidden → Hidden tab). Left "Conversations (n)": search, filter (All / Pending review / Reported /
+  Blocked), tabs All / Unread / Hidden, rows = avatar + Online dot, name, last message ("You: …" for own reply), time,
+  unread badge. "Event Organizer" = the organizer's own posts (composer there = Post a Wish). Middle: wishes oldest
+  first as bubbles (media, To Bride/Groom, Pending / Hidden / Reported pills, likes, comment count, Reply), day pills,
+  organizer replies on the right (crown, ✓✓), the participant's own replies on the left; ⋯ per wish = View / Edit /
+  Approve-Publish / Hide-Show / Send In-App Message / Manage Comments / Delete (panels unchanged); ⋯ per reply =
+  Hide/Show, Delete (pop-up). Header: ⓘ Participant Details, Block / Unblock, ⋯ (Participant Details, Send In-App
+  Message, Remove Participant = pop-up). Participant Details slide-in: Profile (Basic Details, Event Participation,
+  Activity Summary) / Wishes / Media / Comments — data from `/client/participants` (no new endpoint). Phones: list
+  OR conversation with a back arrow. Header also gained a **Blocked Words** button.
+- **Backend** (`clientWish.service`): owner list adds `wish.thread_key` (`c:<writer client id>` | `org`),
+  `wish.replies` (organizer + that writer's comments, oldest first) and `threads[key] = { unread, online, last_read_at }`.
+  Unread = the writer's wishes + their own comments newer than the organizer's last read (never opened = all).
+  Online = used the app in the last 3 min (same per-number presence as the Contact Person chat).
+  `POST /client/events/:id/wish-threads/read { thread }` (owner only). `POST /wishes/:id/comments` takes an optional
+  image `file` (organizer only; JPG/PNG/WEBP; same caps as wish photos) → comment `photo`; reply photos count in Max
+  Photos + storage (clientGallery photosUsedFor / storageUsedFor); photos removed with the comment / wish / event.
+- **DB:** `event_wish_reads` (event, reader, thread_key, last_read_at; unique) + `event_wish_comments.photo`,
+  `.size_bytes`. Migration `20261109-wish-threads.sql`, tool `apply-wish-threads.js`, initial_setup.sql, model
+  EventWishRead. **Applied LOCAL event_v2 only.** PRODUCTION ORDER: `apply-wish-threads.js --prod` (dry run) →
+  `--prod --apply` → push backend → push portal.
+- Tests: service 12/12 local (threads, unread, mark read, reply in thread, participant view has no thread data,
+  refusals). tsc + eslint clean. **Not yet tried in a browser** (servers were not running).

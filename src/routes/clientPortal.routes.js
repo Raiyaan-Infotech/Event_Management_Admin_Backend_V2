@@ -1058,7 +1058,8 @@ router.post('/wishes/:wishId/block', wishController.block);
 router.delete('/wishes/:wishId/block', wishController.unblock);
 // Comments + reports (Wishes Monitor, 2026-11-09).
 router.get('/wishes/:wishId/comments', wishController.listComments);
-router.post('/wishes/:wishId/comments', wishController.addComment);
+router.post('/wishes/:wishId/comments', wishMedia, wishController.addComment);
+router.post('/events/:id/wish-threads/read', wishController.markRead);
 router.put('/wish-comments/:commentId', wishController.updateComment);
 router.delete('/wish-comments/:commentId', wishController.removeComment);
 router.post('/wishes/:wishId/report', wishController.report);

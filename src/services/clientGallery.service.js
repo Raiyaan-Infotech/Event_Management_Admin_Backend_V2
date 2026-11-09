@@ -1,5 +1,5 @@
 const {
-    Sequelize, EventGalleryItem, EventGalleryCategory, Event, EventParticipant, WebsiteClient, EventWish,
+    Sequelize, EventGalleryItem, EventGalleryCategory, Event, EventParticipant, WebsiteClient, EventWish, EventWishComment,
 } = require('../models');
 const { Op } = Sequelize;
 const ApiError = require('../utils/apiError');
@@ -199,20 +199,23 @@ const LIVE_EVENT = Sequelize.literal('`event_id` IN (SELECT `id` FROM `events` W
  */
 const storageUsedFor = async (clientId) => {
     const where = { website_client_id: clientId, [Op.and]: [LIVE_EVENT] };
-    const [galleryBytes, wishBytes] = await Promise.all([
+    const [galleryBytes, wishBytes, replyBytes] = await Promise.all([
         EventGalleryItem.sum('size_bytes', { where }),
         EventWish.sum('size_bytes', { where }),
+        // The organizer's photo replies in Wed Wishes (2026-11-09).
+        EventWishComment.sum('size_bytes', { where }),
     ]);
-    return Number(galleryBytes || 0) + Number(wishBytes || 0);
+    return Number(galleryBytes || 0) + Number(wishBytes || 0) + Number(replyBytes || 0);
 };
 
 /** Photos on one event, gallery + Wed Wishes — what "Max Photos" counts. */
 const photosUsedFor = async (eventId) => {
-    const [galleryPhotos, wishPhotos] = await Promise.all([
+    const [galleryPhotos, wishPhotos, replyPhotos] = await Promise.all([
         EventGalleryItem.count({ where: { event_id: eventId, type: 'image' } }),
         EventWish.count({ where: { event_id: eventId, post_type: 'image' } }),
+        EventWishComment.count({ where: { event_id: eventId, photo: { [Op.ne]: null } } }),
     ]);
-    return galleryPhotos + wishPhotos;
+    return galleryPhotos + wishPhotos + replyPhotos;
 };
 
 /** Videos on one event, gallery + Wed Wishes — what "Max Videos" counts. */

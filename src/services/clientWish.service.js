@@ -1,5 +1,6 @@
 const {
-    Sequelize, Event, EventWish, EventWishBlock, EventWishLike, EventWishComment, EventWishReport, EventParticipant, WebsiteClient,
+    Sequelize, Event, EventWish, EventWishBlock, EventWishLike, EventWishComment, EventWishReport, EventWishRead, EventParticipant,
+    WebsiteClient, ContactPersonLogin,
 } = require('../models');
 const ApiError = require('../utils/apiError');
 const mediaService = require('./media.service');
@@ -240,6 +241,11 @@ const dropMediaOf = (w, companyId) => Promise.all(
     [...new Set([w.photo, w.video_url, w.thumbnail_url].filter(Boolean))].map((u) => dropFile(u, companyId)),
 );
 
+/** Photos on comments matching [where] — removed from storage with their wish / event. */
+const commentPhotosOf = async (where) => (await EventWishComment.findAll({
+    where: { ...where, photo: { [Op.ne]: null } }, attributes: ['photo'], raw: true,
+})).map((c) => c.photo);
+
 const NO_MEDIA = Object.freeze({ photo: null, video_url: null, thumbnail_url: null, duration_seconds: null, size_bytes: 0 });
 
 /** Who is posting as the organizer: the event's organizer name, else the client's. */
@@ -420,6 +426,8 @@ const present = (row, { isOwner, viewerId, ctx, settings = SETTINGS_DEFAULTS }) 
         author_block: isOwner && authorBlocked ? (ctx.blockInfo.get(author) || null) : null,
         /** The writer's participant row — the organizer contacts them through it. */
         participant_id: isOwner && person ? person.id : null,
+        /** Organizer only: the conversation it belongs to — `c:<writer's client id>`, or `org` (2026-11-09). */
+        thread_key: isOwner ? threadKeyOf(w) : null,
         is_mine: mine,
         // The organizer edits only their own posts; a participant's wish is theirs to word.
         can_edit: (isOwner && !author) || (mine && !authorBlocked),
@@ -498,6 +506,106 @@ const contextFor = async (eventId, rows, viewerId) => {
     };
 };
 
+// ── Conversations (Jamal's chat design, 2026-11-09) ─────────────────────────
+//
+// The organizer's Wed Wishes page is a chat: one conversation per participant
+// (their wishes, oldest first) plus one for the organizer's own posts. The
+// organizer's replies are PUBLIC comments on a wish (Jamal: everyone sees them).
+
+const ORG_THREAD = 'org';
+/** How recently someone must have used the app to show as Online (same as the Contact Person chat). */
+const ONLINE_MS = 3 * 60 * 1000;
+
+const threadKeyOf = (w) => (Number(w.author_client_id) ? `c:${Number(w.author_client_id)}` : ORG_THREAD);
+
+/** Which of [clientIds] used the app in the last few minutes (per-number presence, eventOrganizer.touchPresence). */
+const onlineClients = async (clientIds) => {
+    const ids = [...new Set(clientIds.map(Number).filter(Boolean))];
+    if (!ids.length) return new Set();
+    const { nationalOf } = require('./eventOrganizer.service');
+    const clients = await WebsiteClient.findAll({ where: { id: ids }, attributes: ['id', 'mobile', 'vendor_id'], raw: true });
+    const keyOf = (vendor, mobile) => `${vendor}:${mobile}`;
+    const owners = new Map();
+    for (const c of clients) {
+        const national = nationalOf(c.mobile);
+        if (national && c.vendor_id) owners.set(keyOf(c.vendor_id, national), Number(c.id));
+    }
+    if (!owners.size) return new Set();
+    const rows = await ContactPersonLogin.findAll({
+        where: {
+            vendor_id: [...new Set(clients.map((c) => c.vendor_id).filter(Boolean))],
+            mobile: [...new Set([...owners.keys()].map((k) => k.split(':')[1]))],
+            last_seen_at: { [Op.gte]: new Date(Date.now() - ONLINE_MS) },
+        },
+        attributes: ['vendor_id', 'mobile'],
+        raw: true,
+    });
+    return new Set(rows.map((r) => owners.get(keyOf(r.vendor_id, r.mobile))).filter(Boolean));
+};
+
+/**
+ * Organizer only: each wish's conversation replies (the organizer's comments and the writer's
+ * own, oldest first) and, per conversation, how many new messages since the organizer last
+ * opened it and whether the participant is online.
+ */
+const threadsFor = async (event, rows, wishes, readerId) => {
+    const ids = rows.map((r) => r.id);
+    const authorOf = new Map(rows.map((r) => [r.id, Number(r.author_client_id) || null]));
+    const authors = [...new Set([...authorOf.values()].filter(Boolean))];
+    const [comments, reads, online] = await Promise.all([
+        ids.length
+            ? EventWishComment.findAll({ where: { wish_id: ids }, order: [['created_at', 'ASC'], ['id', 'ASC']] })
+            : [],
+        EventWishRead.findAll({ where: { event_id: event.id, reader_client_id: readerId }, raw: true }),
+        onlineClients(authors).catch(() => new Set()),
+    ]);
+    const lastRead = new Map(reads.map((r) => [r.thread_key, new Date(r.last_read_at).getTime()]));
+    const replies = new Map();
+    const threads = {};
+    const thread = (key) => {
+        if (!threads[key]) {
+            const author = key === ORG_THREAD ? null : Number(key.slice(2));
+            threads[key] = { unread: 0, online: !!author && online.has(author), last_read_at: lastRead.has(key) ? new Date(lastRead.get(key)).toISOString() : null };
+        }
+        return threads[key];
+    };
+    const isNew = (key, at) => {
+        const last = lastRead.get(key);
+        return !last || new Date(at).getTime() > last;
+    };
+    for (const r of rows) {
+        const key = threadKeyOf(r);
+        const t = thread(key);
+        if (key !== ORG_THREAD && isNew(key, r.created_at)) t.unread += 1;
+    }
+    for (const c of comments) {
+        const writer = authorOf.get(Number(c.wish_id)) ?? null;
+        const by = Number(c.author_client_id) || null;
+        // Only the two people in the conversation: the organizer and the wish's writer.
+        if (by !== null && by !== writer) continue;
+        const list = replies.get(Number(c.wish_id)) || [];
+        list.push(presentComment(c, true, readerId));
+        replies.set(Number(c.wish_id), list);
+        const key = writer ? `c:${writer}` : ORG_THREAD;
+        if (by !== null && isNew(key, c.created_at)) thread(key).unread += 1;
+    }
+    for (const w of wishes) w.replies = replies.get(w.id) || [];
+    return { threads };
+};
+
+/** The organizer opened a conversation: everything in it up to now is read. */
+const markThreadRead = async (clientId, eventId, body = {}) => {
+    const { event, isOwner } = await resolveEvent(clientId, eventId);
+    if (!isOwner) throw ApiError.forbidden('Only the organizer can do this.');
+    const key = String(body.thread || '').trim();
+    if (key !== ORG_THREAD && !/^c:\d{1,10}$/.test(key)) throw ApiError.badRequest('Please choose a conversation.');
+    const where = { event_id: event.id, reader_client_id: clientId, thread_key: key };
+    const now = new Date();
+    const [row, created] = await EventWishRead.findOrCreate({ where, defaults: { ...where, last_read_at: now } });
+    if (!created) await row.update({ last_read_at: now });
+    return { thread: key, last_read_at: now.toISOString() };
+};
+
 const presentOne = async (row, clientId, isOwner, event) => {
     const ctx = await contextFor(row.event_id, [row], clientId);
     return present(row, { isOwner, viewerId: clientId, ctx, settings: settingsOf(event) });
@@ -526,6 +634,7 @@ const list = async (clientId, eventId) => {
         can_write: isOwner || (settings.allow_new && !blockedHere),
     };
     if (isOwner) {
+        Object.assign(result, await threadsFor(event, rows, wishes, clientId));
         const count = (s) => wishes.filter((w) => w.status === s).length;
         result.counts = {
             all: wishes.length,
@@ -697,8 +806,10 @@ const remove = async (clientId, wishId) => {
     const mine = Number(wish.author_client_id) === Number(clientId);
     if (!isOwner && !mine) throw ApiError.forbidden('Only the organizer or the writer can delete this wish.');
     const before = wish.toJSON();
+    const commentPhotos = await commentPhotosOf({ wish_id: wish.id });
     await wish.destroy();
     await dropMediaOf(before, event.company_id);
+    await Promise.all(commentPhotos.map((u) => dropFile(u, event.company_id)));
     return { removed: true };
 };
 
@@ -771,6 +882,10 @@ const menuHiddenFor = async (clientId, eventIds) => {
 
 /** Removes every wish file of a deleted event (with clientGallery.purgeEvent). */
 const purgeEvent = async (eventId) => {
+    for (const url of await commentPhotosOf({ event_id: eventId })) {
+        // eslint-disable-next-line no-await-in-loop
+        await dropFile(url, null);
+    }
     const rows = await EventWish.findAll({ where: { event_id: eventId }, raw: true });
     for (const w of rows) {
         // eslint-disable-next-line no-await-in-loop
@@ -792,6 +907,9 @@ const presentComment = (c, isOwner, viewerId) => {
         wish_id: r.wish_id,
         guest_name: r.guest_name,
         message: r.message,
+        /** An attached image (the organizer's photo reply, 2026-11-09). */
+        photo: r.photo || null,
+        author_client_id: isOwner ? (Number(r.author_client_id) || null) : null,
         is_hidden: Number(r.is_hidden) === 1,
         status: Number(r.is_hidden) === 1 ? 'hidden' : 'visible',
         /** Organizer only: the blocked-words filter caught it, not reviewed yet. */
@@ -821,15 +939,18 @@ const listComments = async (clientId, wishId) => {
     return { wish_id: wish.id, comments: rows.map((c) => presentComment(c, isOwner, clientId)) };
 };
 
-const addComment = async (clientId, wishId, body = {}) => {
+const addComment = async (clientId, wishId, body = {}, file = null) => {
     const { wish, event, isOwner, participant } = await visibleWish(clientId, wishId);
+    // A photo on a comment is the organizer's reply from the conversation (2026-11-09).
+    if (file && !isOwner) throw ApiError.forbidden('Only the organizer can add a photo to a comment.');
+    if (file && !IMAGE_MIMES.includes(file.mimetype)) throw ApiError.badRequest('Please choose a JPG, PNG or WEBP image.');
     const settings = settingsOf(event);
     if (!isOwner) {
         if (await isBlocked(event.id, clientId)) throw refuseBlocked();
         if (!settings.allow_comments) throw ApiError.forbidden('The organizer has turned off comments for this event.');
     }
-    const message = str(body.message, MAX_COMMENT);
-    if (!message) throw ApiError.badRequest('Please write a comment.');
+    const message = str(body.message, MAX_COMMENT) || '';
+    if (!message && !file) throw ApiError.badRequest('Please write a comment.');
     const filter = filterOf(event);
     const found = applyFilter(message, filter);
     const checked = isOwner ? { text: found.text, flagged: false, hidden: false } : found;
@@ -842,13 +963,17 @@ const addComment = async (clientId, wishId, body = {}) => {
             name = str(me?.name, MAX_NAME) || 'Participant';
         }
     }
+    // Same rules as a wish photo: per-file cap, the event's Max Photos, the account's storage.
+    const media = file ? await storeMedia(event, file, body) : null;
     const row = await EventWishComment.create({
         event_id: event.id,
         wish_id: wish.id,
         website_client_id: event.website_client_id,
         author_client_id: isOwner ? null : clientId,
         guest_name: name,
-        message: checked.text,
+        message: checked.text || '',
+        photo: media ? media.photo : null,
+        size_bytes: media ? media.size_bytes : 0,
         is_hidden: checked.hidden ? 1 : 0,
         is_flagged: checked.flagged ? 1 : 0,
         company_id: event.company_id ?? null,
@@ -897,7 +1022,9 @@ const removeComment = async (clientId, commentId) => {
     const { comment, isOwner } = await resolveComment(clientId, commentId);
     const mine = Number(comment.author_client_id) === Number(clientId);
     if (!isOwner && !mine) throw ApiError.forbidden('Only the organizer or the writer can delete this comment.');
+    const photo = comment.photo;
     await comment.destroy();
+    if (photo) await dropFile(photo, comment.company_id);
     return { removed: true };
 };
 
@@ -1020,4 +1147,5 @@ module.exports = {
     removeComment,
     reportWish,
     listReports,
+    markThreadRead,
 };

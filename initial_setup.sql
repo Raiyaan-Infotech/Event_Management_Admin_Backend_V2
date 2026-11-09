@@ -1543,6 +1543,8 @@ CREATE TABLE IF NOT EXISTS `event_wish_comments` (
   `author_client_id` int unsigned DEFAULT NULL COMMENT 'the participant who wrote it, NULL = the organizer',
   `guest_name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
   `message` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `photo` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'an attached image (organizer replies)',
+  `size_bytes` bigint unsigned NOT NULL DEFAULT '0' COMMENT 'stored bytes of the photo, counted in the plan storage',
   `is_hidden` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1 = hidden from participants',
   `is_flagged` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1 = the blocked-words filter caught it, not reviewed yet',
   `company_id` int unsigned DEFAULT NULL,
@@ -1553,6 +1555,19 @@ CREATE TABLE IF NOT EXISTS `event_wish_comments` (
   KEY `idx_wish_comment_event` (`event_id`),
   CONSTRAINT `fk_event_wish_comment_wish` FOREIGN KEY (`wish_id`) REFERENCES `event_wishes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Comments under a Wed Wishes post';
+
+-- Wed Wishes conversations: organizer last-read per thread (2026-11-09, apply-wish-threads.js)
+CREATE TABLE IF NOT EXISTS `event_wish_reads` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `event_id` int unsigned NOT NULL,
+  `reader_client_id` int unsigned NOT NULL COMMENT 'the organizer (event owner) who read it',
+  `thread_key` varchar(24) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'c:<participant client id> | org (the organizer posts)',
+  `last_read_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_wish_read` (`event_id`,`reader_client_id`,`thread_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Organizer last-read time per Wed Wishes conversation';
 
 CREATE TABLE IF NOT EXISTS `event_wish_reports` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
