@@ -1282,3 +1282,54 @@ the timeline frame strip needs CORS on the media bucket.
   **Applied LOCAL only.** ⚠ PRODUCTION: `apply-wish-threads.js --prod --apply` BEFORE pushing the backend (the model
   reads event_wishes.allow_comments — without it the wishes list fails).
 - Tests: service 18/18 local (+ hide / show chat, participant can't hide, comments closed per wish). tsc + eslint clean.
+- **Participant Details = Jamal's design (2026-11-09), portal only, no backend change** (wishes-chat.tsx): header (big photo
+  + Online dot, name, Active pill, side; Send Message, call, mail, ⋯ = Hide Chat / Block / Remove Participant),
+  underlined tabs. **Profile:** Basic Details (Edit → /participants/:id/edit in the workspace; name, mobile + copy, email
+  + copy, relationship, city), Event Participation (Invitation, RSVP, Joined), Activity Summary tiles. **Wishes:** filter
+  by type, "N Published", one card per wish (type, status, ⋯ = the bubble actions, text box or thumbnail + likes / length /
+  To, View → View Wish). **Media:** Grid / List view, chips All / Images / Videos, big preview, Uploaded date, likes, View
+  Media / Watch Video. **Comments:** EVERY comment on this person's wishes (new hook `useWishCommentsMany`, one request per
+  wish, shared cache), chips All / Visible / Hidden, "On <name>'s photo wish", Visible / Hidden pill, Actions = Edit
+  (own) / Hide-Show / Delete. About / Notes NOT built (Jamal: skip). tsc + eslint clean.
+
+## LIVE browser test of the Wed Wishes chat (Jamal, 2026-11-09)
+- LIVE DB: `apply-wish-threads.js --prod --apply` round 2 applied (event_wish_reads hide columns, last_read_at NULL-able,
+  event_wishes.allow_comments) — re-check all "already there".
+- QA account: **QA Tester #53** (qa.portal@eventinvite-test.com), event **#37 "QA Test Wedding"** — sample conversations
+  seeded there (`seed-sample-wish-threads.js --event 37`). Password was unknown (bcrypt) → reset with new tool
+  `src/database/tools/set-test-client-password.js --email <x>@eventinvite-test.com --prod --apply` (only
+  @eventinvite-test.com). **The login is in `Event_Management_Admin_Backend/.env.qa-test` (git-ignored) — never in this
+  file; the repo is on GitHub.**
+- **Bug fixed in the seed tool:** mysql2 wrote the PC's local time (IST) → sample wishes were 5½ h in the future and
+  stayed Unread. Now `timezone: 'Z'`. Sample data on #36 and #37 removed and re-seeded with correct times.
+- Test = Playwright on https://eventmanagementclientv2.vercel.app, signed in through the login API in the same browser
+  context; every step checked against the live API. Script + screenshots + report.json:
+  `Documents\EventInvite_Portal_Test\2026-11-09_wishes_chat\` (`live_wishes_test.cjs`, run from a folder with playwright:
+  `NODE_PATH=D:/Jamal/event_client_single/node_modules node live_wishes_test.cjs`; `cleanup_stamps.cjs` removes any
+  "QA-xxxx " test item left on #37).
+- **Result: 15 / 17 pass** — chat view, fits screen, unread clears on open, text reply, photo + emoji reply, View Wish,
+  Hide / Show wish, Send In-App Notification, Participant Details 4 tabs, Block / Unblock, Approve & Publish, organizer
+  post → Edit Wish → Delete pop-up, search + filter, Delete Reply pop-up. 0 page errors.
+  **2 fail only because the live backend on Render is still the PREVIOUS build:** Manage Comments "Allow new comments"
+  (list has no allow_comments) and Hide Chat (`POST /wish-threads/hide` → 404). Commit d7e0fc2 is on GitHub but not
+  deployed — redeploy the V2 backend on Render, then re-run the script.
+- Everything the runs created was deleted (replies, organizer posts); in-app test notifications went to sample account #45.
+- **Wishes panels smaller (Jamal, 2026-11-09), portal only:** design-style ActionSheet header 18 px title / 10.5 px eyebrow / tighter padding, buttons 36 px, body 12.5 px; wish-panels cards p-3, avatar 36, message 13.5 px; View / Edit / Approve / Manage Comments 520 px wide (was 600). tsc + eslint clean.
+- **Other Wishes panels smaller too (Jamal, 2026-11-09), portal only:** Participant Details (photo 60, name 17 px, small header buttons, tabs 12 px, cards p-3, rows 12 px, activity numbers 17 px), Hide Chat, Send In-App Notification (inputs 36 px, 5-row message), Block, Blocked Words — all 520 px wide. tsc + eslint clean.
+
+## Organizer can EDIT a participant's wish (Jamal, 2026-11-09) - backend + portal, DB CHANGE
+- Reverses the V1 rule "the organizer never rewords a participant's wish". `assertCanEdit`: the event owner may change
+  any wish (message, recipient, type, media); a participant still only their own. `can_edit` = owner always.
+- The wish keeps the participant's name; `event_wishes.edited_by_organizer_at` is set → `edited_by_organizer: true` for
+  everyone (organizer + participants in the list). The writer editing it again clears the mark.
+- Portal: Edit Wish now on every wish's ⋯ (chat bubble + Participant Details → Wishes); Edit panel note "This is X's
+  wish. It keeps their name, and everyone sees an 'Edited by organizer' label"; label in the chat bubble + View Wish.
+  The participant APP does not show the label yet (field is in the API).
+- DB: `20261109-wish-edited.sql`, round 3 of `apply-wish-threads.js`, initial_setup.sql, model. **LOCAL applied.**
+  ⚠ PRODUCTION: `node src/database/tools/apply-wish-threads.js --prod --apply` BEFORE pushing the backend — the model
+  reads `edited_by_organizer_at`; without it the wishes list fails. (Dry run on live: "+ event_wishes.edited_by_organizer_at
+  WOULD ADD".)
+- Tests: service 22/22 local (+ organizer edits participant wish → saved / marked / name kept, participant sees the mark,
+  writer edit clears it). Portal tsc + eslint clean.
+- Note: a script slip emptied initial_setup.sql locally during this change; restored from the last commit (d7e0fc2) at
+  once and the one new line re-added — diff vs commit = 1 line.

@@ -37,6 +37,8 @@ module.exports = (sequelize) => {
         is_flagged: { type: DataTypes.TINYINT(1), allowNull: false, defaultValue: 0 },
         /** 0 = participants cannot add new comments on this wish (Manage Comments, 2026-11-09). */
         allow_comments: { type: DataTypes.TINYINT(1), allowNull: false, defaultValue: 1 },
+        /** When the organizer last changed this participant's wish ("Edited by organizer", 2026-11-09). */
+        edited_by_organizer_at: { type: DataTypes.DATE, allowNull: true },
     }, {
         tableName: 'event_wishes',
         timestamps: true,

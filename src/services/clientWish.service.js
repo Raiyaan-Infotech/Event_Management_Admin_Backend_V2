@@ -434,7 +434,10 @@ const present = (row, { isOwner, viewerId, ctx, settings = SETTINGS_DEFAULTS }) 
         thread_key: isOwner ? threadKeyOf(w) : null,
         is_mine: mine,
         // The organizer edits only their own posts; a participant's wish is theirs to word.
-        can_edit: (isOwner && !author) || (mine && !authorBlocked),
+        // The organizer edits any wish on their event (2026-11-09); a writer their own while not blocked.
+        can_edit: isOwner || (mine && !authorBlocked),
+        /** A participant's wish whose words / media the organizer changed. Everyone sees the mark. */
+        edited_by_organizer: !!author && !!w.edited_by_organizer_at,
         can_delete: isOwner || mine,
         created_at: whole || settings.time ? w.created_at : null,
         updated_at: w.updated_at,
@@ -750,16 +753,21 @@ const create = async (clientId, eventId, body = {}, file = null) => {
 };
 
 /**
- * Who may change [wish]'s content: its writer while not blocked, or the organizer
- * for their own post. The organizer never rewords a participant's wish — they can
- * only hide / show, review, block or delete it.
+ * Who may change [wish]'s content: its writer while not blocked, or the organizer — any wish
+ * on their event (Jamal, 2026-11-09; before this the organizer could only edit their own posts).
+ * A participant's wish the organizer changed keeps the participant's name and is marked
+ * `edited_by_organizer_at` ("Edited by organizer"); the participant editing it again clears that.
  */
 const assertCanEdit = async (wish, event, isOwner, clientId) => {
     const mine = Number(wish.author_client_id) === Number(clientId);
-    const organizerPost = !wish.author_client_id;
-    if (isOwner && !organizerPost) throw ApiError.forbidden("The organizer cannot edit a participant's wish.");
     if (!isOwner && !mine) throw ApiError.forbidden('Only the writer can edit this wish.');
     if (!isOwner && await isBlocked(event.id, clientId)) throw refuseBlocked();
+};
+
+/** The organizer changing a participant's wish marks it; the writer editing it clears the mark. */
+const editMark = (wish, isOwner) => {
+    if (!wish.author_client_id) return {};
+    return { edited_by_organizer_at: isOwner ? new Date() : null };
 };
 
 /**
@@ -805,6 +813,7 @@ const update = async (clientId, wishId, body = {}) => {
 
     const before = wish.toJSON();
     if (toText) Object.assign(data, NO_MEDIA, { post_type: 'text' });
+    if (editsContent) Object.assign(data, editMark(wish, isOwner));
     await wish.update(data);
     if (toText) await dropMediaOf(before, event.company_id);
     if (flaggedNow) await notifyFlagged(event, wish);
@@ -826,7 +835,7 @@ const replaceMedia = async (clientId, wishId, file, body = {}) => {
 
     const before = wish.toJSON();
     const media = await storeMedia(event, file, body, before);
-    await wish.update(media);
+    await wish.update({ ...media, ...editMark(wish, isOwner) });
     await dropMediaOf(before, event.company_id);
     return presentOne(wish, clientId, isOwner, event);
 };

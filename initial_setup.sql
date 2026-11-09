@@ -1517,6 +1517,7 @@ CREATE TABLE IF NOT EXISTS `event_wishes` (
   `is_hidden` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1 = hidden from participants, kept for the organizer',
   `is_flagged` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1 = the content filter caught a blocked word, not reviewed yet',
   `allow_comments` tinyint(1) NOT NULL DEFAULT '1' COMMENT '0 = participants cannot add new comments on this wish',
+  `edited_by_organizer_at` datetime DEFAULT NULL COMMENT 'the organizer changed this participant wish',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

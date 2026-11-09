@@ -33,6 +33,8 @@ const ROUND2 = [
     ['event_wish_reads', 'hide_note', 'ADD COLUMN `hide_note` varchar(250) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `is_hidden`'],
     ['event_wish_reads', 'hidden_at', 'ADD COLUMN `hidden_at` datetime DEFAULT NULL AFTER `hide_note`'],
     ['event_wishes', 'allow_comments', "ADD COLUMN `allow_comments` tinyint(1) NOT NULL DEFAULT '1' COMMENT '0 = participants cannot add new comments on this wish' AFTER `is_flagged`"],
+    // Round 3 (20261109-wish-edited.sql): the organizer edits a participant's wish → "Edited by organizer".
+    ['event_wishes', 'edited_by_organizer_at', "ADD COLUMN `edited_by_organizer_at` datetime DEFAULT NULL COMMENT 'the organizer changed this participant wish' AFTER `allow_comments`"],
 ];
 
 const COLUMNS = [
@@ -65,7 +67,7 @@ const COLUMNS = [
             console.log(has ? `  = event_wish_comments.${c}   already there` : `  + event_wish_comments.${c}   ${APPLY ? 'adding' : 'WOULD ADD'}`);
             if (!has && APPLY) await conn.query(`ALTER TABLE \`event_wish_comments\` ${ddl}`);
         }
-        // Round 2 — Hide Chat + per-wish comments.
+        // Round 2 — Hide Chat + per-wish comments (+ round 3, edited_by_organizer_at).
         const [[nullable]] = await conn.query(
             "SELECT IS_NULLABLE n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'event_wish_reads' AND COLUMN_NAME = 'last_read_at'", [db]);
         const canNull = !nullable || nullable.n === 'YES';

@@ -84,6 +84,9 @@ const PEOPLE = [
         password: process.env.DB_PASSWORD ?? process.env.DB_PASS,
         database: process.env.DB_NAME,
         charset: 'utf8mb4',
+        // Dates go in as UTC, like the app writes them (without this, mysql2 writes the PC's local
+        // time — IST put the sample 5½ h in the future and the wishes never stopped being Unread).
+        timezone: 'Z',
         ...(PROD ? { ssl: { rejectUnauthorized: false } } : {}),
     });
     const mode = REMOVE ? 'REMOVE' : 'SEED';
