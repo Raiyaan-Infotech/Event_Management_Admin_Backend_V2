@@ -35,6 +35,8 @@ module.exports = (sequelize) => {
         is_hidden: { type: DataTypes.TINYINT(1), allowNull: false, defaultValue: 0 },
         /** The content filter caught a blocked word (already replaced); cleared on review. */
         is_flagged: { type: DataTypes.TINYINT(1), allowNull: false, defaultValue: 0 },
+        /** 0 = participants cannot add new comments on this wish (Manage Comments, 2026-11-09). */
+        allow_comments: { type: DataTypes.TINYINT(1), allowNull: false, defaultValue: 1 },
     }, {
         tableName: 'event_wishes',
         timestamps: true,

@@ -408,6 +408,8 @@ const present = (row, { isOwner, viewerId, ctx, settings = SETTINGS_DEFAULTS }) 
         video_url: showMedia ? w.video_url : null,
         thumbnail_url: showMedia ? w.thumbnail_url : null,
         duration_seconds: showMedia ? w.duration_seconds : null,
+        /** The media's stored size (organizer / writer only; View Wish shows it, 2026-11-09). */
+        size_bytes: whole ? Number(w.size_bytes || 0) : null,
         avatar: person && (whole || settings.profile_photo) ? person.photo : null,
         // Like counts are hidden from participants when the organizer turns them off.
         like_count: whole || settings.show_likes ? (ctx.likes.get(w.id) || 0) : 0,
@@ -417,6 +419,8 @@ const present = (row, { isOwner, viewerId, ctx, settings = SETTINGS_DEFAULTS }) 
         report_count: isOwner ? (ctx.reports.get(w.id) || 0) : 0,
         liked_by_me: ctx.mine.has(w.id),
         is_hidden: Number(w.is_hidden) === 1,
+        /** New comments allowed on this wish (per wish, 2026-11-09; the event setting still applies). */
+        allow_comments: w.allow_comments === undefined ? true : Number(w.allow_comments) === 1,
         /** Organizer only: the content filter caught a word, not reviewed yet. */
         is_flagged: isOwner ? Number(w.is_flagged) === 1 : false,
         status,
@@ -559,13 +563,22 @@ const threadsFor = async (event, rows, wishes, readerId) => {
         EventWishRead.findAll({ where: { event_id: event.id, reader_client_id: readerId }, raw: true }),
         onlineClients(authors).catch(() => new Set()),
     ]);
-    const lastRead = new Map(reads.map((r) => [r.thread_key, new Date(r.last_read_at).getTime()]));
+    const lastRead = new Map(reads.filter((r) => r.last_read_at).map((r) => [r.thread_key, new Date(r.last_read_at).getTime()]));
+    const hiddenOf = new Map(reads.filter((r) => Number(r.is_hidden) === 1).map((r) => [r.thread_key, r]));
     const replies = new Map();
     const threads = {};
     const thread = (key) => {
         if (!threads[key]) {
             const author = key === ORG_THREAD ? null : Number(key.slice(2));
-            threads[key] = { unread: 0, online: !!author && online.has(author), last_read_at: lastRead.has(key) ? new Date(lastRead.get(key)).toISOString() : null };
+            const hid = hiddenOf.get(key);
+            threads[key] = {
+                unread: 0,
+                online: !!author && online.has(author),
+                last_read_at: lastRead.has(key) ? new Date(lastRead.get(key)).toISOString() : null,
+                /** Hide Chat: out of the main inbox (the Hidden tab lists it). */
+                hidden: !!hid,
+                hide_note: hid ? hid.hide_note || null : null,
+            };
         }
         return threads[key];
     };
@@ -604,6 +617,22 @@ const markThreadRead = async (clientId, eventId, body = {}) => {
     const [row, created] = await EventWishRead.findOrCreate({ where, defaults: { ...where, last_read_at: now } });
     if (!created) await row.update({ last_read_at: now });
     return { thread: key, last_read_at: now.toISOString() };
+};
+
+/** Hide Chat / Show Chat — the organizer's inbox only; the wishes themselves are unchanged. */
+const setThreadHidden = async (clientId, eventId, body = {}) => {
+    const { event, isOwner } = await resolveEvent(clientId, eventId);
+    if (!isOwner) throw ApiError.forbidden('Only the organizer can do this.');
+    const key = String(body.thread || '').trim();
+    if (key !== ORG_THREAD && !/^c:\d{1,10}$/.test(key)) throw ApiError.badRequest('Please choose a conversation.');
+    const hidden = bool(body.hidden, true);
+    const values = hidden
+        ? { is_hidden: 1, hide_note: str(body.note, 250), hidden_at: new Date() }
+        : { is_hidden: 0, hide_note: null, hidden_at: null };
+    const where = { event_id: event.id, reader_client_id: clientId, thread_key: key };
+    const [row, created] = await EventWishRead.findOrCreate({ where, defaults: { ...where, last_read_at: null, ...values } });
+    if (!created) await row.update(values);
+    return { thread: key, hidden, hide_note: values.hide_note };
 };
 
 const presentOne = async (row, clientId, isOwner, event) => {
@@ -770,6 +799,7 @@ const update = async (clientId, wishId, body = {}) => {
         if (body.show_in_app) data.is_flagged = 0;
     }
     if (isOwner && bool(body.reviewed, false)) data.is_flagged = 0;
+    if (isOwner && has('allow_comments')) data.allow_comments = bool(body.allow_comments, true) ? 1 : 0;
     // Reviewed the reports (Reported tab): they are cleared.
     if (isOwner && bool(body.dismiss_reports, false)) await EventWishReport.destroy({ where: { wish_id: wish.id } });
 
@@ -948,6 +978,7 @@ const addComment = async (clientId, wishId, body = {}, file = null) => {
     if (!isOwner) {
         if (await isBlocked(event.id, clientId)) throw refuseBlocked();
         if (!settings.allow_comments) throw ApiError.forbidden('The organizer has turned off comments for this event.');
+        if (Number(wish.allow_comments) === 0) throw ApiError.forbidden('The organizer has closed comments on this wish.');
     }
     const message = str(body.message, MAX_COMMENT) || '';
     if (!message && !file) throw ApiError.badRequest('Please write a comment.');
@@ -1148,4 +1179,5 @@ module.exports = {
     reportWish,
     listReports,
     markThreadRead,
+    setThreadHidden,
 };

@@ -1243,3 +1243,42 @@ the timeline frame strip needs CORS on the media bucket.
   `--prod --apply` → push backend → push portal.
 - Tests: service 12/12 local (threads, unread, mark read, reply in thread, participant view has no thread data,
   refusals). tsc + eslint clean. **Not yet tried in a browser** (servers were not running).
+- **LIVE (2026-11-09, Jamal's request):** `apply-wish-threads.js --prod --apply` done (event_wish_reads + comment
+  photo / size_bytes on live event_v2; re-check = all "already there").
+- **Sample conversations on LIVE event #36 "Jamal And Fahmi" (owner Jamal #26):** new tool
+  `src/database/tools/seed-sample-wish-threads.js --event <id> [--prod] [--apply] [--remove]`. Uses the five
+  "(Sample)" accounts (#40 Rahul, #45 Aditi, #46 Rohan, #47 Neha, #48 Karan — mobiles 9000000001 / 9000000011–14):
+  each added as a participant of the event (notes = "Sample data (seed-sample-wish-threads)"), 10 text wishes over
+  the last ~2 days, 4 organizer replies (as "Afzar"), 1 participant reply, likes, 1 hidden (Rohan), 1 pending review
+  (Neha). Nothing marked read → all Unread. Checked through the service as the organizer: 5 participant threads +
+  the Organizer thread. Re-run = skipped. Take it out: `... --event 36 --prod --apply --remove`.
+  The 5 sample participants count toward the event's participant numbers while they are there.
+- **Chat fits the screen (Jamal, 2026-11-09), portal only:** the chat box's height = window height minus its top
+  (`useFitHeight` in wishes-chat.tsx, on load + resize, min 420 px) — was a fixed calc(100vh-200px) that pushed the
+  message box below the fold. Conversation rows / thread header a little tighter (avatar 38, py-2.5). tsc + eslint clean.
+- **Header ⋯ (Jamal, 2026-11-09):** "Send In-App Message" removed from the conversation header's ⋯ (now Participant Details · Remove Participant). Still on each wish's ⋯ and in Participant Details.
+
+## Wed Wishes panels = Jamal's designs + Hide Chat + per-wish comments (2026-11-09) - backend + portal, DB CHANGE
+- **Panel look** (module-kit `ActionSheet` new props `eyebrow` / `large`; `FormPanel` passes `eyebrow`): floating rounded
+  slide-in, pink "<EVENT> · WED WISHES" line above a large title, Cancel/Close + main button. Other modules unchanged.
+- New `events/[id]/_components/wish-panels.tsx` (+ `WishPanelsProvider`: event name + participants for "Bride Side"):
+  **View Wish** (person card + status, Wish Details, Attached Media with type • size • ext, Engagement & Status, reports,
+  latest comments), **Edit Wish** (Wish Type Text / Text with Image / Text with Video, Wishes To, message, current media
+  with Replace, or upload), **Approve & Publish** (green check, wish card, "What happens when you publish?", Recipient,
+  Pending → Published), **Manage Comments** (wish card + "N Comments", chips All / Published / Pending (/ Hidden),
+  Approve / Hide-Show / Delete per comment, amber "Allow new comments on this wish" → Save Settings),
+  **Send In-App Notification** (Recipient, Channel In-App, Subject 100, Message 500 prefilled, Live Preview).
+  Block Participant, Blocked Words, Post Wish, Participant Details got the same header.
+  NOT built from the Edit design: "Reason for Editing" + "recorded in the event activity log" — there is no event
+  activity log yet. Notification message max is 500 (server MESSAGE_MAX), the design showed 1,000.
+- **Hide Chat** (conversation ⋯ → Hide Chat / Move to Inbox): note ≤ 250; organizer's inbox only, wishes unchanged.
+  Tabs now: All = main inbox, Unread (inbox), Hidden = hidden chats. "Has hidden wishes" moved to the filter
+  (Hidden Wishes tile → that filter).
+- **Backend:** `POST /client/events/:id/wish-threads/hide { thread, hidden, note }` (owner only); `threads[key].hidden /
+  hide_note`; wish `allow_comments` (PUT /wishes/:id `allow_comments`; participants refused "The organizer has closed
+  comments on this wish."; organizer can still reply); wish `size_bytes` for owner / writer.
+- **DB:** `20261109-wish-chat-hide.sql` — event_wish_reads.last_read_at NULL-able + is_hidden, hide_note, hidden_at;
+  event_wishes.allow_comments. Same tool `apply-wish-threads.js` (now also runs round 2). initial_setup.sql + models.
+  **Applied LOCAL only.** ⚠ PRODUCTION: `apply-wish-threads.js --prod --apply` BEFORE pushing the backend (the model
+  reads event_wishes.allow_comments — without it the wishes list fails).
+- Tests: service 18/18 local (+ hide / show chat, participant can't hide, comments closed per wish). tsc + eslint clean.

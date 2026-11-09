@@ -10,7 +10,11 @@ module.exports = (sequelize) => sequelize.define('EventWishRead', {
     event_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
     reader_client_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
     thread_key: { type: DataTypes.STRING(24), allowNull: false },
-    last_read_at: { type: DataTypes.DATE, allowNull: false },
+    last_read_at: { type: DataTypes.DATE, allowNull: true },
+    /** Hide Chat (2026-11-09): out of the organizer's main inbox, back from the Hidden tab. */
+    is_hidden: { type: DataTypes.TINYINT(1), allowNull: false, defaultValue: 0 },
+    hide_note: { type: DataTypes.STRING(250), allowNull: true },
+    hidden_at: { type: DataTypes.DATE, allowNull: true },
 }, {
     tableName: 'event_wish_reads',
     timestamps: true,

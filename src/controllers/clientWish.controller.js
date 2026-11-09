@@ -100,6 +100,11 @@ const markRead = asyncHandler(async (req, res) => {
     return ApiResponse.success(res, result, 'Marked as read.');
 });
 
+const hideThread = asyncHandler(async (req, res) => {
+    const result = await service.setThreadHidden(req.websiteClient.id, req.params.id, req.body);
+    return ApiResponse.success(res, result, result.hidden ? 'Chat hidden.' : 'Chat restored.');
+});
+
 const report = asyncHandler(async (req, res) => {
     const result = await service.reportWish(req.websiteClient.id, req.params.wishId, req.body);
     return ApiResponse.success(res, result, 'Thanks — the organizer will review this wish.');
@@ -112,5 +117,5 @@ const listReports = asyncHandler(async (req, res) => {
 
 module.exports = {
     list, getOne, create, update, replaceMedia, remove, like, unlike, block, unblock, getSettings, updateSettings,
-    getFilter, updateFilter, listComments, addComment, updateComment, removeComment, report, listReports, markRead,
+    getFilter, updateFilter, listComments, addComment, updateComment, removeComment, report, listReports, markRead, hideThread,
 };
