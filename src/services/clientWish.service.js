@@ -525,10 +525,14 @@ const ONLINE_MS = 3 * 60 * 1000;
 
 const threadKeyOf = (w) => (Number(w.author_client_id) ? `c:${Number(w.author_client_id)}` : ORG_THREAD);
 
-/** Which of [clientIds] used the app in the last few minutes (per-number presence, eventOrganizer.touchPresence). */
-const onlineClients = async (clientIds) => {
+/**
+ * When each of [clientIds] last used the app (per-number presence written on every signed-in request by
+ * eventOrganizer.touchPresence, at most once a minute). Map client id → Date; no entry = never seen.
+ * Online = seen in the last ONLINE_MS (2026-11-10: the chat header also shows "last seen" when offline).
+ */
+const lastSeenOf = async (clientIds) => {
     const ids = [...new Set(clientIds.map(Number).filter(Boolean))];
-    if (!ids.length) return new Set();
+    if (!ids.length) return new Map();
     const { nationalOf } = require('./eventOrganizer.service');
     const clients = await WebsiteClient.findAll({ where: { id: ids }, attributes: ['id', 'mobile', 'vendor_id'], raw: true });
     const keyOf = (vendor, mobile) => `${vendor}:${mobile}`;
@@ -537,18 +541,24 @@ const onlineClients = async (clientIds) => {
         const national = nationalOf(c.mobile);
         if (national && c.vendor_id) owners.set(keyOf(c.vendor_id, national), Number(c.id));
     }
-    if (!owners.size) return new Set();
+    if (!owners.size) return new Map();
     const rows = await ContactPersonLogin.findAll({
         where: {
             vendor_id: [...new Set(clients.map((c) => c.vendor_id).filter(Boolean))],
             mobile: [...new Set([...owners.keys()].map((k) => k.split(':')[1]))],
-            last_seen_at: { [Op.gte]: new Date(Date.now() - ONLINE_MS) },
+            last_seen_at: { [Op.ne]: null },
         },
-        attributes: ['vendor_id', 'mobile'],
+        attributes: ['vendor_id', 'mobile', 'last_seen_at'],
         raw: true,
     });
-    return new Set(rows.map((r) => owners.get(keyOf(r.vendor_id, r.mobile))).filter(Boolean));
+    const out = new Map();
+    for (const r of rows) {
+        const id = owners.get(keyOf(r.vendor_id, r.mobile));
+        if (id) out.set(id, new Date(r.last_seen_at));
+    }
+    return out;
 };
+const isOnlineAt = (seen) => !!seen && Date.now() - seen.getTime() < ONLINE_MS;
 
 /**
  * Organizer only: each wish's conversation replies (the organizer's comments and the writer's
@@ -564,7 +574,7 @@ const threadsFor = async (event, rows, wishes, readerId) => {
             ? EventWishComment.findAll({ where: { wish_id: ids }, order: [['created_at', 'ASC'], ['id', 'ASC']] })
             : [],
         EventWishRead.findAll({ where: { event_id: event.id, reader_client_id: readerId }, raw: true }),
-        onlineClients(authors).catch(() => new Set()),
+        lastSeenOf(authors).catch(() => new Map()),
     ]);
     const lastRead = new Map(reads.filter((r) => r.last_read_at).map((r) => [r.thread_key, new Date(r.last_read_at).getTime()]));
     const hiddenOf = new Map(reads.filter((r) => Number(r.is_hidden) === 1).map((r) => [r.thread_key, r]));
@@ -576,7 +586,9 @@ const threadsFor = async (event, rows, wishes, readerId) => {
             const hid = hiddenOf.get(key);
             threads[key] = {
                 unread: 0,
-                online: !!author && online.has(author),
+                online: !!author && isOnlineAt(online.get(author)),
+                /** When the participant last used the app (null = never). The header shows "last seen". */
+                last_seen_at: author && online.get(author) ? online.get(author).toISOString() : null,
                 last_read_at: lastRead.has(key) ? new Date(lastRead.get(key)).toISOString() : null,
                 /** Hide Chat: out of the main inbox (the Hidden tab lists it). */
                 hidden: !!hid,

@@ -1333,3 +1333,16 @@ the timeline frame strip needs CORS on the media bucket.
   writer edit clears it). Portal tsc + eslint clean.
 - Note: a script slip emptied initial_setup.sql locally during this change; restored from the last commit (d7e0fc2) at
   once and the one new line re-added — diff vs commit = 1 line.
+- **LIVE applied (2026-11-09, Jamal's request):** `apply-wish-threads.js --prod --apply` — edited_by_organizer_at on live event_v2 (re-check: already there). Backend + portal can be pushed.
+- **Wishes: standard canvas + smaller text (Jamal, 2026-11-09), portal only:** every Wishes panel (View / Edit / Approve / Manage Comments / Send Notification / Hide Chat / Participant Details / Block / Blocked Words / Post Wish) is back to the STANDARD module slide-in (round icon, title, subtitle, ✕ — like Guests / Family); the mockup header (eyebrow) is no longer used. Chat text one step smaller (list 12.5 / 11.5, bubbles 12.5, header 14, avatars 34 / 36 / 30, tighter bubbles). tsc + eslint clean.
+- **Design reference (Jamal, 2026-11-10):** `C:\Users\LK MEDIA\Downloads\20261109_Wed Wishes updated\Wed Wishes updated\` — dashboards, 01_1 per-wish panels (View / Edit / Approve / Hide / Send In-App / Manage Comments / Delete), 02_1 Participant Details tabs, View Full Profile, Block Participant.
+
+## Wed Wishes chat: Online / last seen from the backend (Jamal, 2026-11-10) - backend + portal, no DB change
+- Backend `clientWish.lastSeenOf` (was onlineClients): per participant the latest `contact_person_logins.last_seen_at`
+  for their number (written by eventOrganizer.touchPresence on EVERY signed-in request, max once a minute — app and web).
+  `threads[key].online` = seen in the last 3 min; new `threads[key].last_seen_at` (null = never used the app).
+- Portal: chat header + Participant Details show green "Online", grey "Offline · last seen 5 min ago / today at … /
+  yesterday at … / 02 Nov", or "Not on the app yet"; list keeps the green dot for online. `useEventWishes` refetches
+  every 30 s while the tab is open (new wishes, unread, presence without reload).
+- Tests: service 22/22 + presence local (just used → Online + last_seen; 10 min ago → Offline, last_seen kept).
+  tsc + eslint clean. Needs backend push (Render) + portal push (Vercel) — both were BEHIND on 2026-11-10.
