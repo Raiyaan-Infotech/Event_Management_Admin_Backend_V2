@@ -24,6 +24,8 @@ const liveStreamController = require('../controllers/clientLiveStream.controller
 const liveStreamService = require('../services/clientLiveStream.service');
 const socialLinkController = require('../controllers/clientSocialLink.controller');
 const socialLinkService = require('../services/clientSocialLink.service');
+const downloadController = require('../controllers/clientDownload.controller');
+const downloadService = require('../services/clientDownload.service');
 const familyController = require('../controllers/clientFamily.controller');
 const wishController = require('../controllers/clientWish.controller');
 const nearbyController = require('../controllers/clientNearby.controller');
@@ -953,6 +955,44 @@ router.post(
 router.get('/social-links/:linkId', socialLinkController.getOne);
 router.put('/social-links/:linkId', socialLinkController.update);
 router.delete('/social-links/:linkId', socialLinkController.remove);
+
+/**
+ * Downloads (2026-11-10). Files for participants to download. Reads: host + participants (what is
+ * meant for them); writes: host-only, in the service. The file is uploaded first (`/file`, 25 MB),
+ * then saved with the download. `/hit` = a participant downloads it (+1 on its count).
+ */
+const downloadUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: downloadService.MAX_FILE_BYTES },
+    fileFilter: (req, file, cb) => {
+        if (downloadService.acceptsFile(file.originalname)) return cb(null, true);
+        cb(new Error('Supported: PDF, DOCX, XLSX, PPTX, JPG, PNG, WEBP, ZIP, MP4.'), false);
+    },
+});
+
+router.get('/events/:id/downloads', downloadController.list);
+router.post('/events/:id/downloads', downloadController.create);
+router.post(
+    '/events/:id/downloads/file',
+    (req, res, next) => {
+        downloadUpload.single('file')(req, res, (err) => {
+            if (err) {
+                return res.status(400).json({
+                    success: false,
+                    message: err.code === 'LIMIT_FILE_SIZE'
+                        ? 'That file is larger than 25MB.'
+                        : err.message || 'That file could not be uploaded.',
+                });
+            }
+            next();
+        });
+    },
+    downloadController.uploadFile,
+);
+router.get('/downloads/:downloadId', downloadController.getOne);
+router.put('/downloads/:downloadId', downloadController.update);
+router.delete('/downloads/:downloadId', downloadController.remove);
+router.post('/downloads/:downloadId/hit', downloadController.hit);
 
 /**
  * The organizer's notifications from the mobile app (Home → Send

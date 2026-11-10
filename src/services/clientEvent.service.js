@@ -22,6 +22,7 @@ const galleryService = require('./clientGallery.service');
 const wishService = require('./clientWish.service');
 const liveStreamService = require('./clientLiveStream.service');
 const socialLinkService = require('./clientSocialLink.service');
+const downloadService = require('./clientDownload.service');
 
 /**
  * Events belonging to a signed-in website client.
@@ -1511,6 +1512,7 @@ const deleteEvent = async (clientId, eventId) => {
     await wishService.purgeEvent(event.id).catch(() => null);
     await liveStreamService.purgeEvent(event.id).catch(() => null);
     await socialLinkService.purgeEvent(event.id).catch(() => null);
+    await downloadService.purgeEvent(event.id).catch(() => null);
     return true;
 };
 

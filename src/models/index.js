@@ -176,6 +176,8 @@ db.EventLiveStreamType = require('./EventLiveStreamType')(sequelize, Sequelize);
 db.EventLiveStream = require('./EventLiveStream')(sequelize, Sequelize);
 db.EventSocialLink = require('./EventSocialLink')(sequelize, Sequelize);
 db.SocialPlatform = require('./SocialPlatform')(sequelize, Sequelize);
+db.EventDownload = require('./EventDownload')(sequelize, Sequelize);
+db.DownloadCategory = require('./DownloadCategory')(sequelize, Sequelize);
 db.EventNearbyCache = require('./EventNearbyCache')(sequelize, Sequelize);
 // Contact Person chat (2026-10-26).
 db.EventContactChat = require('./EventContactChat')(sequelize, Sequelize);

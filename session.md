@@ -1417,3 +1417,15 @@ the timeline frame strip needs CORS on the media bucket.
 - create accepts platform_key: empty preset row -> filled (same row); other platform -> new row with its key (one per platform per event, "already added" error); Others -> custom row (platform_name = display name, optional icon). Controller pick() passes platform_key. Tested on local DB.
 - Portal social-links-panel.tsx rebuilt: header + Add Social Link, tiles Total / Visible / Hidden (filter), search, status select, list (table) / grid view, row menu (View, Edit, Show/Hide, Move up/down, Delete). Add/Edit = ActionSheet: platform grid from the API (already-added greyed), Display Name, Profile/Page URL, Visibility switch. Platform locked on edit. Only links with a URL are listed.
 - Not done: admin screen to manage platforms; V2 app shows the new platforms (WhatsApp, Telegram...) with its generic link icon until it reads platform_icon.
+
+### 2026-11-10 - Downloads module (backend + portal)
+- Tables `download_categories` (seeded Invitation/Travel/Stay/Agenda/Info/Other, colour per chip) + `event_downloads` (title, category_key, file_url/name/type/size, description, visibility all|bride|groom, download_access all|confirmed, expires_at, show_in_app, download_count, sort_order). sql/20261110-event-downloads.sql + tools/apply-event-downloads.js. Menu `downloads` (#14) already existed local + prod.
+- APPLIED LOCAL. PRODUCTION NOT APPLIED (auto-mode blocked it) - run: node src/database/tools/apply-event-downloads.js --prod --apply BEFORE pushing the backend.
+- Models EventDownload, DownloadCategory; clientDownload.service/controller; routes GET/POST /events/:id/downloads, POST /events/:id/downloads/file (multer 25 MB, by extension), GET/PUT/DELETE /downloads/:id, POST /downloads/:id/hit (+1 for participants; host not counted). eventOrganizerAccess ITEM_ROUTES + event delete purge. Participants get only visible, unexpired files for their side; confirmed-only files come without file_url unless RSVP yes. Tested on local DB.
+- Portal downloads-panel.tsx to the mockup: tiles Total/Visible/Hidden/Total Downloads, notice, search + category + status filters, list/grid, row menu (View, Open, Edit, Show/Hide, Delete), Add/Edit ActionSheet (title, category chips from API, auto file type, drag-drop upload, description, visibility, download access, expiry date, show in app), details sheet, DeleteSheet. Tab `downloads` in event-tabs (menu slug downloads, Download icon) + event-detail.
+- V2 mobile app does not have the Downloads screen yet.
+
+### 2026-11-10 - Loader over main content; Social Link view as panel (portal)
+- global-loader.tsx: with a dialog/panel open, the loader no longer goes inside the panel; it is drawn fixed over #main-content's visible area, inserted just before the panel (above its backdrop, below the panel).
+- social-links-panel.tsx: View Details is now an ActionSheet (slide-in) with URL / Description / Settings sections; Delete uses DeleteSheet.
+
