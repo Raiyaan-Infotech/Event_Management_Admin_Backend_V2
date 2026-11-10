@@ -1358,3 +1358,29 @@ the timeline frame strip needs CORS on the media bucket.
   (name kept), `can_edit` = owner always - same rule as wishes (no "edited by organizer" label on comments; would need a DB
   column). Portal shows Edit on all rows; on the OLD backend a participant comment edit gets 403 -> push backend first.
   `node --check` + tsc + eslint clean; not seen in a browser.
+- **Slide-in panels smaller (Jamal, 2026-11-10), portal only:** the STANDARD module-kit `ActionSheet` (every module: Wishes,
+  Guests, Family, Participants, RSVPs, Groups, Agenda, Post Wish / FormPanel sheets) - title 19 -> 16 px, subtitle 12 px,
+  round icon 44 -> 36 px, header px-4 py-3, body p-4 with base text 12.5 px (was browser 14 px), footer px-4 py-3 with
+  36 px / 13 px buttons (were 40 px). Wishes panels (`wish-panels.tsx`) text one step down too (14 -> 13.5, 13.5 -> 13,
+  13 -> 12.5). tsc + eslint clean; not seen in a browser.
+
+## Wishes Settings = Jamal's mockup + Participant Display (2026-11-10) - backend + portal, NO DB change
+- Page (`wishes-panel.tsx` WishesSettingsPage): **Wish Visibility & Publishing** = Enable Wed Wishes Menu (the event's
+  `menu_ids` via useSetMenuShown, saved with Save; locked on for a Default menu, off when the plan lacks it), Allow Text /
+  Image / Video Wishes, Show Likes. **Moderation & Privacy** = Filter Blocked Words, Notify Organizer of New Wishes, Hide
+  Wishes for Blocked Participants; pink "Participant video uploading is disabled…" note when Allow Video is off.
+  **Participant Display** (new, full width) = Show Profile Photo, Name, Relationship, Bride / Groom Side, Wish To, Time.
+  Jamal chose "mockup only": Allow New Wishes, Wish Details Screen, Show Wish Photo / Video, Allow Comments, Hold Flagged,
+  Notify of Flagged and the Manage Blocked Words button are OFF the page (saved values kept; Blocked Words = header button).
+- Backend `clientWish.service` (settings live in `events.wish_settings` JSON - no migration): new keys allow_text,
+  allow_video (unset = follows allow_photo, the old single switch), relationship, side, audience, notify_new (default
+  off), hide_blocked (default off); `name` is now a real switch (off -> other participants see "Guest" on wishes AND
+  comments). Participant posts refused per kind (`assertKindAllowed`: text / image / video, also on media replace).
+  Wishes carry `relationship` + `side` (participant row; hidden from others when off). notify_new -> in-app `wish_new`
+  to the owner (not for a flagged wish, which already notifies). hide_blocked -> other participants' list + detail drop a
+  blocked writer's wishes. `audience` / relationship / side: the API sends the setting; the V2 APP does not read the new
+  ones yet (needs app work to hide the Wish To badge / show relationship + side).
+- Same day: conversation header ⓘ + Block icon buttons REMOVED - Participant Details and Block / Unblock are in the ⋯
+  menu (with Hide Chat, Remove Participant). GlobalLoader: with a dialog / slide-in open the loader now sits INSIDE that
+  panel (top-most) instead of full screen - every module.
+- node --check, settings unit check, tsc + eslint clean. Not seen in a browser.

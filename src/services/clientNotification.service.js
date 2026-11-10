@@ -44,6 +44,8 @@ const TYPE_CATEGORY = {
     wish_flagged: 'system',
     // Wed Wishes: a participant reported a post (2026-11-09).
     wish_reported: 'system',
+    // Wed Wishes: a participant posted a wish (Notify Organizer of New Wishes, 2026-11-10).
+    wish_new: 'system',
     // Plan storage reached 50% / 100% (notificationTrigger.triggerStorageAlert).
     storage_alert: 'system',
     // RSVP

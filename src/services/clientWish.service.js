@@ -71,11 +71,21 @@ const EVENT_ATTRS = [
 
 const SETTINGS_DEFAULTS = Object.freeze({
     allow_new: true,
-    /** Participants may attach an image or a video. */
+    /** Participants may post a text-only wish (2026-11-10). */
+    allow_text: true,
+    /** Participants may attach an image (a video too until 2026-11-10 — see allow_video). */
     allow_photo: true,
+    /** Participants may attach a video (2026-11-10). Unset = follows allow_photo (the old single switch). */
+    allow_video: true,
     details_screen: true,
     profile_photo: true,
+    /** Participants see the writer's name (2026-11-10; off = "Guest"). */
     name: true,
+    /** Participants see the writer's relationship and Bride / Groom side (2026-11-10). */
+    relationship: true,
+    side: true,
+    /** Participants see "Wish To" (Bride / Groom / Both) (2026-11-10). */
+    audience: true,
     /** Participants see a post's image / video. */
     wish_photo: true,
     time: true,
@@ -83,7 +93,14 @@ const SETTINGS_DEFAULTS = Object.freeze({
     allow_comments: true,
     /** Participants see like counts (2026-11-09). The organizer always does. */
     show_likes: true,
+    /** The organizer gets an in-app notice for every new participant wish (2026-11-10). */
+    notify_new: false,
+    /** A blocked participant's wishes are hidden from the other participants (2026-11-10). */
+    hide_blocked: false,
 });
+
+/** What other participants see instead of the writer's name when Show Name is off. */
+const HIDDEN_NAME = 'Guest';
 
 /** Why a participant is blocked / a post is reported (2026-11-09). */
 const REASONS = ['inappropriate', 'spam', 'harassment', 'other'];
@@ -110,12 +127,13 @@ const bool = (value, fallback) => (value === undefined || value === null
 
 const storedOf = (event) => parseJson((event?.toJSON ? event.toJSON() : (event || {})).wish_settings);
 
-/** Resolved settings for an event; `name` is always on (a wish needs a name). */
+/** Resolved settings for an event. */
 const settingsOf = (event) => {
     const stored = storedOf(event);
     const out = {};
     for (const [k, d] of Object.entries(SETTINGS_DEFAULTS)) out[k] = bool(stored[k], d);
-    out.name = true;
+    // Before 2026-11-10 one switch (allow_photo) covered photos AND videos.
+    if (stored.allow_video === undefined || stored.allow_video === null) out.allow_video = out.allow_photo;
     return out;
 };
 
@@ -222,7 +240,32 @@ const isBlocked = async (eventId, clientId) => !!(await EventWishBlock.findOne({
 
 const refuseBlocked = () => ApiError.forbidden('You can no longer send wishes for this event.');
 const refuseClosed = () => ApiError.forbidden('The organizer has closed wishes for this event.');
-const refuseNoMedia = () => ApiError.badRequest('Photos and videos are turned off for wishes on this event.');
+
+/** A participant's post of this kind is allowed by the organizer's settings (2026-11-10). */
+const assertKindAllowed = (settings, file, postType) => {
+    if (file) {
+        const video = String(file.mimetype || '').startsWith('video/');
+        if (video && !settings.allow_video) throw ApiError.badRequest('Video wishes are turned off for this event.');
+        if (!video && !settings.allow_photo) throw ApiError.badRequest('Image wishes are turned off for this event.');
+    } else if (postType === 'text' && !settings.allow_text) {
+        throw ApiError.badRequest('Text wishes are turned off for this event. Please add a photo or video.');
+    }
+};
+
+/** Tell the organizer a participant posted a wish (Notify Organizer of New Wishes; best effort). */
+const notifyNew = async (event, wish) => {
+    const snippet = Array.from(wish.message || '').slice(0, 120).join('');
+    const ownerId = Number(event.website_client_id);
+    if (!ownerId) return;
+    await notificationService.notify(ownerId, {
+        type: 'wish_new',
+        title: 'New wish',
+        body: `${wish.guest_name}${snippet ? `: ${snippet}` : ''}`,
+        eventId: event.id,
+        companyId: event.company_id ?? null,
+        meta: { wish_id: wish.id },
+    }).catch(() => null);
+};
 
 /** Trimmed text cut to [max] CHARACTERS (code points) — never half an emoji. */
 const str = (v, max) => {
@@ -396,12 +439,17 @@ const present = (row, { isOwner, viewerId, ctx, settings = SETTINGS_DEFAULTS }) 
     if (Number(w.is_hidden) === 1) status = 'hidden';
     if (isOwner && authorBlocked) status = 'blocked';
     const person = author ? ctx.people.get(author) : null;
+    // Participant Display (2026-11-10): what OTHER participants see about the writer.
+    const showName = whole || !author || settings.name;
     return {
         id: w.id,
         event_id: w.event_id,
         post_type: w.post_type || 'text',
         audience: w.audience || 'both',
-        guest_name: w.guest_name,
+        guest_name: showName ? w.guest_name : HIDDEN_NAME,
+        /** The writer's relationship / side from their participant row (null when hidden or unknown). */
+        relationship: person && (whole || settings.relationship) ? person.relationship : null,
+        side: person && (whole || settings.side) ? person.side : null,
         mobile: whole ? w.mobile : null,
         message: w.message,
         photo: showMedia ? w.photo : null,
@@ -452,7 +500,7 @@ const contextFor = async (eventId, rows, viewerId) => {
         authors.length
             ? EventParticipant.findAll({
                 where: { event_id: eventId, participant_client_id: authors },
-                attributes: ['id', 'participant_client_id', 'photo'],
+                attributes: ['id', 'participant_client_id', 'photo', 'relationship', 'rsvp_side'],
                 order: [['id', 'ASC']],
                 raw: true,
             })
@@ -499,7 +547,9 @@ const contextFor = async (eventId, rows, viewerId) => {
     for (const p of people) {
         const key = Number(p.participant_client_id);
         const seen = byClient.get(key);
-        if (!seen || (!seen.photo && p.photo)) byClient.set(key, { id: p.id, photo: p.photo || null });
+        if (!seen || (!seen.photo && p.photo)) {
+            byClient.set(key, { id: p.id, photo: p.photo || null, relationship: p.relationship || null, side: p.rsvp_side || null });
+        }
     }
     return {
         people: byClient,
@@ -659,14 +709,21 @@ const list = async (clientId, eventId) => {
     const { event, isOwner } = await resolveEvent(clientId, eventId);
     const where = { event_id: event.id };
     if (!isOwner) where[Op.or] = [{ is_hidden: 0 }, { author_client_id: clientId }];
-    const rows = await EventWish.findAll({ where, order: [['created_at', 'DESC'], ['id', 'DESC']] });
-    const ctx = await contextFor(event.id, rows, clientId);
+    const allRows = await EventWish.findAll({ where, order: [['created_at', 'DESC'], ['id', 'DESC']] });
+    const ctx = await contextFor(event.id, allRows, clientId);
     const blockedHere = !isOwner && ctx.blocked.has(Number(clientId));
     // Blocked with the menu hidden: Wed Wishes is not there for them at all.
     if (blockedHere && ctx.hiddenMenu.has(Number(clientId))) {
         throw ApiError.forbidden('Wed Wishes is not available for you on this event.');
     }
     const settings = settingsOf(event);
+    // Hide Wishes for Blocked Participants (2026-11-10): others no longer see a blocked writer's posts.
+    const rows = !isOwner && settings.hide_blocked
+        ? allRows.filter((r) => {
+            const author = Number(r.author_client_id);
+            return !author || author === Number(clientId) || !ctx.blocked.has(author);
+        })
+        : allRows;
     const wishes = rows.map((r) => present(r, { isOwner, viewerId: clientId, ctx, settings }));
 
     const result = {
@@ -700,8 +757,12 @@ const getOne = async (clientId, wishId) => {
     const { wish, event, isOwner } = await resolveWish(clientId, wishId);
     const mine = Number(wish.author_client_id) === Number(clientId);
     if (!isOwner && !mine && Number(wish.is_hidden) === 1) throw ApiError.notFound('That wish was not found.');
-    if (!isOwner && !mine && !settingsOf(event).details_screen) {
+    const settings = settingsOf(event);
+    if (!isOwner && !mine && !settings.details_screen) {
         throw ApiError.forbidden('Wish details are turned off for this event.');
+    }
+    if (!isOwner && !mine && settings.hide_blocked && wish.author_client_id && await isBlocked(event.id, wish.author_client_id)) {
+        throw ApiError.notFound('That wish was not found.');
     }
     return presentOne(wish, clientId, isOwner, event);
 };
@@ -717,11 +778,11 @@ const create = async (clientId, eventId, body = {}, file = null) => {
     if (!isOwner) {
         if (await isBlocked(event.id, clientId)) throw refuseBlocked();
         if (!settings.allow_new) throw refuseClosed();
-        if (file && !settings.allow_photo) throw refuseNoMedia();
     }
 
     const message = str(body.message, MAX_MESSAGE);
     const wantType = pick(body.post_type, POST_TYPES, file ? 'image' : 'text');
+    if (!isOwner) assertKindAllowed(settings, file, wantType);
     if (wantType !== 'text' && !file) throw ApiError.badRequest('Please choose a photo or video.');
     if (wantType === 'text' && !message) throw ApiError.badRequest('Please fill all mandatory fields.');
 
@@ -761,6 +822,8 @@ const create = async (clientId, eventId, body = {}, file = null) => {
         company_id: event.company_id ?? null,
     });
     if (checked.flagged && filter.notify) await notifyFlagged(event, row);
+    // A flagged wish already sent its own notice.
+    else if (!isOwner && settings.notify_new) await notifyNew(event, row);
     return presentOne(row, clientId, isOwner, event);
 };
 
@@ -843,7 +906,7 @@ const update = async (clientId, wishId, body = {}) => {
 const replaceMedia = async (clientId, wishId, file, body = {}) => {
     const { wish, event, isOwner } = await resolveWish(clientId, wishId);
     await assertCanEdit(wish, event, isOwner, clientId);
-    if (!isOwner && !settingsOf(event).allow_photo) throw refuseNoMedia();
+    if (!isOwner) assertKindAllowed(settingsOf(event), file, 'image');
 
     const before = wish.toJSON();
     const media = await storeMedia(event, file, body, before);
@@ -949,14 +1012,15 @@ const purgeEvent = async (eventId) => {
 
 const MAX_COMMENT = 500;
 
-const presentComment = (c, isOwner, viewerId) => {
+const presentComment = (c, isOwner, viewerId, settings = SETTINGS_DEFAULTS) => {
     const r = c.toJSON ? c.toJSON() : c;
     const author = Number(r.author_client_id) || null;
     const mine = !!author && author === Number(viewerId);
     return {
         id: r.id,
         wish_id: r.wish_id,
-        guest_name: r.guest_name,
+        // Show Name off (2026-11-10): other participants see "Guest" for a participant's comment.
+        guest_name: isOwner || mine || !author || settings.name ? r.guest_name : HIDDEN_NAME,
         message: r.message,
         /** An attached image (the organizer's photo reply, 2026-11-09). */
         photo: r.photo || null,
@@ -983,11 +1047,12 @@ const visibleWish = async (clientId, wishId) => {
 };
 
 const listComments = async (clientId, wishId) => {
-    const { wish, isOwner } = await visibleWish(clientId, wishId);
+    const { wish, event, isOwner } = await visibleWish(clientId, wishId);
     const where = { wish_id: wish.id };
     if (!isOwner) where[Op.or] = [{ is_hidden: 0 }, { author_client_id: clientId }];
     const rows = await EventWishComment.findAll({ where, order: [['created_at', 'ASC'], ['id', 'ASC']] });
-    return { wish_id: wish.id, comments: rows.map((c) => presentComment(c, isOwner, clientId)) };
+    const settings = settingsOf(event);
+    return { wish_id: wish.id, comments: rows.map((c) => presentComment(c, isOwner, clientId, settings)) };
 };
 
 const addComment = async (clientId, wishId, body = {}, file = null) => {
