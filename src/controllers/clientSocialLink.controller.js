@@ -5,7 +5,7 @@ const ApiResponse = require('../utils/apiResponse');
 /** Every editable field, destructured — a field missing here is silently dropped. */
 const pick = (body) => {
     const out = {};
-    for (const f of ['platform_name', 'title', 'url', 'description', 'icon_url',
+    for (const f of ['platform_key', 'platform_name', 'title', 'url', 'description', 'icon_url',
         'open_external', 'show_in_app', 'position']) {
         if (Object.prototype.hasOwnProperty.call(body, f)) out[f] = body[f];
     }

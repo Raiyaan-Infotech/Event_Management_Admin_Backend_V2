@@ -1384,3 +1384,36 @@ the timeline frame strip needs CORS on the media bucket.
   menu (with Hide Chat, Remove Participant). GlobalLoader: with a dialog / slide-in open the loader now sits INSIDE that
   panel (top-most) instead of full screen - every module.
 - node --check, settings unit check, tsc + eslint clean. Not seen in a browser.
+- **Wishes Settings → Blocked Participants card (Jamal, 2026-11-10):** full-width card under Participant Display - count pill,
+  search (name / note / relationship), reason filter (All / Inappropriate / Spam / Harassment / Other), one row per blocked
+  writer (photo, name, side • relationship · "Blocked 10 Nov 2026", note, reason pill, **Unblock** -> the usual Unblock panel).
+  Built from the wish list (one row per blocked writer's latest wish); someone whose wishes were ALL deleted is not listed.
+  Backend: `author_block` now also has `blocked_at` (event_wish_blocks.created_at; no DB change). tsc + eslint + node --check clean.
+- **Blocked Participants = a TILE, not a settings card (Jamal, 2026-11-10):** the Settings-page card is REMOVED. Wed Wishes
+  overview row now has a 6th tile **Blocked Participants** (count = counts.blocked_users); click = Conversations filtered to
+  blocked people (status "blocked", hidden chats included so the list matches the count). Unblock from the chat ⋯.
+
+## Contact = new event sidebar section, chat like Wed Wishes (Jamal, 2026-11-10) - PORTAL ONLY, SAMPLE DATA, backend later
+- `events/[id]/_components/contact-chat.tsx` (`ContactPanel`), tab `contact` in event-tabs.ts (TOP group: Dashboard · Event
+  Info · Contact; no app menu for it in V2), rendered in event-detail.tsx. Header "Contact" + "Sample data" pill + Preview
+  notice; tiles Conversations / Unread Messages / Awaiting Reply / Resolved / Online Now (click = filter); Conversations
+  (search, filter All / Awaiting your reply / Online now, tabs All / Unread / Resolved, unread badge, clock = awaiting,
+  check = resolved); conversation = participant left, organizer right (✓✓), day pills, ⋯ Mark as Resolved / Reopen, Mark as
+  Unread, Call; composer = quick replies, photo, emoji, Enter to send. Reuses Wishes chat parts (ChatAvatar, Presence,
+  DayPill, useFitHeight, listTime now exported from wishes-chat.tsx).
+- 5 sample conversations (Aditi, Rohan, Neha, Karan, Rahul) live in browser state: replies / resolve / unread work on screen,
+  NOT saved, gone on reload. Backend TODO (to discuss): list / send / read / resolve; probably the existing Contact Person
+  chat (contact_person_logins presence) - replace sampleThreads() + useState with a hook.
+- tsc + eslint clean; not seen in a browser.
+
+### 2026-11-10 - My Events card matches mockup (portal)
+- events/page.tsx EventRow: status pill gets an icon (check Published/Completed, page Draft, broadcast Live, ban Cancelled); category tag gets a heart, privacy tag a lock (Private) / globe (Public).
+- New line under the tags: 'RSVP: n Confirmed • n Pending' (or 'No responses yet') | 'Last updated: 10 Jan 2026, 10:24 AM' from pending_count/confirmed_count/updated_at (already sent by GET /client/events). Frontend only.
+
+
+### 2026-11-10 - Social Links rebuilt to mockup; platforms dynamic (backend + portal)
+- New table `social_platforms` (key, name, Iconify icon, color, url_placeholder, is_custom, sort_order, is_active) seeded with 9: Instagram, YouTube, Facebook, WhatsApp, X (Twitter), Telegram, LinkedIn, Website, Others. Migration sql/20261110-social-platforms.sql + tools/apply-social-platforms.js. APPLIED on local AND production (2026-11-10).
+- Model SocialPlatform. clientSocialLink.service: catalog() (60 s TtlCache, falls back to a built-in list if the table is missing); list returns `platforms`; every link gets platform_icon / platform_color; isPreset = only the 4 auto rows.
+- create accepts platform_key: empty preset row -> filled (same row); other platform -> new row with its key (one per platform per event, "already added" error); Others -> custom row (platform_name = display name, optional icon). Controller pick() passes platform_key. Tested on local DB.
+- Portal social-links-panel.tsx rebuilt: header + Add Social Link, tiles Total / Visible / Hidden (filter), search, status select, list (table) / grid view, row menu (View, Edit, Show/Hide, Move up/down, Delete). Add/Edit = ActionSheet: platform grid from the API (already-added greyed), Display Name, Profile/Page URL, Visibility switch. Platform locked on edit. Only links with a URL are listed.
+- Not done: admin screen to manage platforms; V2 app shows the new platforms (WhatsApp, Telegram...) with its generic link icon until it reads platform_icon.

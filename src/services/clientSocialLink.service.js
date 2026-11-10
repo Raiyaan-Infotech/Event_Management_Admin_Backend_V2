@@ -1,8 +1,9 @@
 const {
-    Sequelize, Event, EventMenu, EventParticipant, EventSocialLink, WebsiteClient,
+    Sequelize, Event, EventMenu, EventParticipant, EventSocialLink, SocialPlatform, WebsiteClient,
 } = require('../models');
 const ApiError = require('../utils/apiError');
 const mediaService = require('./media.service');
+const { TtlCache } = require('../utils/ttlCache');
 
 let sharp = null;
 try { sharp = require('sharp'); } catch (_) { sharp = null; }
@@ -31,6 +32,49 @@ const PRESETS = [
 const PRESET_KEYS = new Set(PRESETS.map((p) => p.key));
 const MENU_SLUG = 'social-links';
 
+/**
+ * The platforms of "Add Social Link" come from `social_platforms` (2026-11-10). This copy is
+ * used only while that table is not created yet, so a deploy before the migration still works.
+ */
+const FALLBACK_PLATFORMS = [
+    ['instagram', 'Instagram', 'mdi:instagram', '#E1306C', 'https://instagram.com/yourpage'],
+    ['youtube', 'YouTube', 'mdi:youtube', '#FF0000', 'https://youtube.com/@yourchannel'],
+    ['facebook', 'Facebook', 'mdi:facebook', '#1877F2', 'https://facebook.com/yourpage'],
+    ['whatsapp', 'WhatsApp', 'mdi:whatsapp', '#25D366', 'https://whatsapp.com/channel/...'],
+    ['x', 'X (Twitter)', 'ri:twitter-x-fill', '#111111', 'https://x.com/yourhandle'],
+    ['telegram', 'Telegram', 'ic:baseline-telegram', '#229ED9', 'https://t.me/yourchannel'],
+    ['linkedin', 'LinkedIn', 'mdi:linkedin', '#0A66C2', 'https://linkedin.com/in/yourname'],
+    ['website', 'Website', 'mdi:web', '#2563EB', 'https://yourwebsite.com'],
+    ['others', 'Others', 'mdi:link-variant', '#6B7280', 'https://', true],
+].map(([key, name, icon, color, placeholder, custom]) => ({
+    key, name, icon, color, url_placeholder: placeholder, is_custom: !!custom,
+}));
+
+/** Same for every event and changes only when the table is edited — kept a minute. */
+const platformCache = new TtlCache(60 * 1000);
+
+const catalog = () => platformCache.wrap('all', async () => {
+    try {
+        const rows = await SocialPlatform.findAll({
+            where: { is_active: true }, order: [['sort_order', 'ASC'], ['id', 'ASC']], raw: true,
+        });
+        return rows.map((r) => ({
+            key: r.platform_key,
+            name: r.name,
+            icon: r.icon,
+            color: r.color || null,
+            url_placeholder: r.url_placeholder || null,
+            is_custom: r.is_custom === true || r.is_custom === 1,
+        }));
+    } catch (e) {
+        const code = e?.original?.code ?? e?.parent?.code;
+        if (code === 'ER_NO_SUCH_TABLE') return FALLBACK_PLATFORMS;
+        throw e;
+    }
+});
+
+const byKey = (platforms) => new Map(platforms.filter((p) => !p.is_custom).map((p) => [p.key, p]));
+
 /** A custom icon is stored as a square PNG this many pixels a side. */
 const ICON_SIZE = 256;
 const MAX_ICON_BYTES = 1024 * 1024;
@@ -47,7 +91,8 @@ const clean = (raw, max) => {
 };
 const has = (body, f) => Object.prototype.hasOwnProperty.call(body, f);
 const bool = (v) => v === true || v === 1 || v === '1' || v === 'true';
-const isPreset = (row) => !!row.platform_key;
+/** The four rows every event has (cleared, never deleted). Other platform keys are normal links. */
+const isPreset = (row) => PRESET_KEYS.has(row.platform_key);
 
 const dropFile = (url, companyId) => (url
     ? mediaService.deleteByUrl(url, companyId || 1).catch(() => null)
@@ -117,14 +162,19 @@ const ensurePresets = async (event) => {
     return true;
 };
 
-const present = (row) => {
+const present = (row, platforms = new Map()) => {
     const r = row.toJSON ? row.toJSON() : row;
+    const platform = r.platform_key ? platforms.get(r.platform_key) : null;
     return {
         id: r.id,
         event_id: r.event_id,
-        /** instagram / facebook / x / youtube = preset; null = custom. */
+        /** A social_platforms key (instagram / whatsapp / …); null = custom (Others). */
         platform_key: r.platform_key || null,
-        is_preset: !!r.platform_key,
+        /** The four rows every event has: Remove clears them instead of deleting. */
+        is_preset: PRESET_KEYS.has(r.platform_key),
+        /** The platform's Iconify icon and colour (null for a custom link: it may have icon_url). */
+        platform_icon: platform?.icon || null,
+        platform_color: platform?.color || null,
         platform_name: r.platform_name,
         title: r.title,
         url: r.url || null,
@@ -158,20 +208,21 @@ const list = async (clientId, eventId) => {
     // The presets exist on every event after its first read, so the rows are
     // read beside the check rather than after it; only the one read that has
     // to create them reads the rows again.
-    const [created, firstRows, menu] = await Promise.all([
-        ensurePresets(event), rowsFor(event.id), menuState(event),
+    const [created, firstRows, menu, platforms] = await Promise.all([
+        ensurePresets(event), rowsFor(event.id), menuState(event), catalog(),
     ]);
     const rows = created ? await rowsFor(event.id) : firstRows;
-    const links = rows.map(present).filter((l) => isOwner || (l.url && l.show_in_app));
-    return { links, ...menu, icon_size: ICON_SIZE, can_edit: isOwner };
+    const keyed = byKey(platforms);
+    const links = rows.map((r) => present(r, keyed)).filter((l) => isOwner || (l.url && l.show_in_app));
+    return { links, platforms, ...menu, icon_size: ICON_SIZE, can_edit: isOwner };
 };
 
 const getOne = async (clientId, linkId) => {
     const row = await EventSocialLink.findByPk(Number(linkId) || 0);
     if (!row) throw ApiError.notFound('That social link was not found.');
-    const { isOwner } = await resolveEventForView(clientId, row.event_id);
+    const [{ isOwner }, platforms] = await Promise.all([resolveEventForView(clientId, row.event_id), catalog()]);
     if (!isOwner && (!row.url || !row.show_in_app)) throw ApiError.notFound('That social link was not found.');
-    return { link: present(row), can_edit: isOwner };
+    return { link: present(row, byKey(platforms)), can_edit: isOwner };
 };
 
 /**
@@ -211,12 +262,41 @@ const checkIcon = (raw) => {
     return url;
 };
 
-/** A new CUSTOM link. Presets already exist and are edited, never created. */
+/**
+ * Add a link (2026-11-10: "Add Social Link" picks a platform from social_platforms).
+ *   - a preset platform with no link yet → that preset row gets the link
+ *   - another listed platform → a new row with its key (one per platform per event)
+ *   - Others / no platform → a custom row: the organizer's name (and optional icon)
+ */
 const create = async (clientId, eventId, body = {}) => {
     const event = await resolveEvent(clientId, eventId);
-    await ensurePresets(event);
-    const platformName = clean(body.platform_name, 60);
+    const [, platforms] = await Promise.all([ensurePresets(event), catalog()]);
     const title = clean(body.title, 100);
+    const key = clean(body.platform_key, 30);
+    const platform = key ? platforms.find((p) => p.key === key) : null;
+    if (key && !platform) throw ApiError.badRequest('Please choose a platform.');
+    const keyed = platform && !platform.is_custom ? platform : null;
+
+    if (keyed) {
+        if (!title) throw ApiError.badRequest('Please fill all mandatory fields.');
+        const url = checkUrl(body.url);
+        const existing = await EventSocialLink.findOne({ where: { event_id: event.id, platform_key: keyed.key } });
+        if (existing && existing.url) {
+            throw ApiError.badRequest(`${keyed.name} is already added. Edit that link instead.`);
+        }
+        if (existing) {
+            // An empty preset: the new link fills it, so the event still has one row per preset.
+            const fill = {
+                title, url,
+                ...(has(body, 'description') ? { description: clean(body.description, 300) } : {}),
+                ...(has(body, 'open_external') ? { open_external: bool(body.open_external) } : {}),
+                ...(has(body, 'show_in_app') ? { show_in_app: bool(body.show_in_app) } : {}),
+            };
+            return update(clientId, existing.id, hasPosition(body) ? { ...fill, position: body.position } : fill);
+        }
+    }
+
+    const platformName = keyed ? keyed.name : (clean(body.platform_name, 60) || title);
     if (!platformName || !title) throw ApiError.badRequest('Please fill all mandatory fields.');
     const url = checkUrl(body.url);
 
@@ -224,12 +304,12 @@ const create = async (clientId, eventId, body = {}) => {
     const row = await EventSocialLink.create({
         event_id: event.id,
         website_client_id: clientId,
-        platform_key: null,
+        platform_key: keyed ? keyed.key : null,
         platform_name: platformName,
         title,
         url,
         description: clean(body.description, 300),
-        icon_url: checkIcon(body.icon_url),
+        icon_url: keyed ? null : checkIcon(body.icon_url),
         sort_order: Number.isFinite(Number(last)) ? Number(last) + 1 : 0,
         open_external: has(body, 'open_external') ? bool(body.open_external) : true,
         show_in_app: has(body, 'show_in_app') ? bool(body.show_in_app) : true,
@@ -237,8 +317,11 @@ const create = async (clientId, eventId, body = {}) => {
     });
     if (hasPosition(body)) await place(event.id, row.id, body.position);
     await row.reload();
-    return present(row);
+    return presentOne(row);
 };
+
+/** One link with its platform's icon. */
+const presentOne = async (row) => present(row, byKey(await catalog()));
 
 /**
  * Only the fields SENT change. A preset keeps its platform and icon — sending
@@ -246,7 +329,8 @@ const create = async (clientId, eventId, body = {}) => {
  */
 const update = async (clientId, linkId, body = {}) => {
     const row = await resolveLink(clientId, linkId);
-    const preset = isPreset(row);
+    // A link on a listed platform (Instagram, WhatsApp, …) keeps that platform and its icon.
+    const preset = !!row.platform_key;
 
     if (preset) {
         if (has(body, 'platform_name') && clean(body.platform_name, 60) !== row.platform_name) {
@@ -281,7 +365,7 @@ const update = async (clientId, linkId, body = {}) => {
         await place(row.event_id, row.id, body.position);
         await row.reload();
     }
-    return present(row);
+    return presentOne(row);
 };
 
 /** Custom: deleted (its icon too). Preset: the row stays, its link is cleared. */
@@ -290,7 +374,7 @@ const remove = async (clientId, linkId) => {
     if (isPreset(row)) {
         const name = PRESETS.find((p) => p.key === row.platform_key)?.name || row.platform_name;
         await row.update({ url: null, description: null, title: name, open_external: true, show_in_app: true });
-        return { removed: false, cleared: true, link: present(row) };
+        return { removed: false, cleared: true, link: await presentOne(row) };
     }
     const { icon_url: icon, company_id: companyId } = row;
     await row.destroy();
@@ -306,7 +390,9 @@ const reorder = async (clientId, eventId, body = {}) => {
     const known = new Set(rows.map((r) => r.id));
     const sent = [...new Set(body.ids.map(Number))].filter((id) => known.has(id));
     await saveOrder(event.id, [...sent, ...rows.map((r) => r.id).filter((id) => !sent.includes(id))]);
-    return { links: (await rowsFor(event.id)).map(present) };
+    const [rowsNow, platforms] = await Promise.all([rowsFor(event.id), catalog()]);
+    const keyed = byKey(platforms);
+    return { links: rowsNow.map((r) => present(r, keyed)) };
 };
 
 /**
