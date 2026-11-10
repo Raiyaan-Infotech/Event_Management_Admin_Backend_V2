@@ -29,6 +29,7 @@ const downloadService = require('../services/clientDownload.service');
 const familyController = require('../controllers/clientFamily.controller');
 const wishController = require('../controllers/clientWish.controller');
 const nearbyController = require('../controllers/clientNearby.controller');
+const nearbyPlaceController = require('../controllers/clientNearbyPlace.controller');
 const wishService = require('../services/clientWish.service');
 const organizerContactController = require('../controllers/clientOrganizerContact.controller');
 const agendaService = require('../services/clientAgenda.service');
@@ -1110,6 +1111,17 @@ router.get('/wishes/:wishId/reports', wishController.listReports);
 router.get('/events/:id/nearby-settings', nearbyController.getSettings);
 router.put('/events/:id/nearby-settings', nearbyController.updateSettings);
 router.get('/events/:id/nearby', nearbyController.list);
+
+/**
+ * Near By places (2026-11-10): the places the organizer chooses from Google Maps suggestions.
+ * Reads: host + participants (visible ones); writes + suggestions: host-only, in the service.
+ */
+router.get('/events/:id/nearby-places', nearbyPlaceController.list);
+router.get('/events/:id/nearby-places/suggestions', nearbyPlaceController.suggestions);
+router.post('/events/:id/nearby-places', nearbyPlaceController.add);
+router.put('/events/:id/nearby-places/reorder', nearbyPlaceController.reorder);
+router.put('/nearby-places/:placeId', nearbyPlaceController.update);
+router.delete('/nearby-places/:placeId', nearbyPlaceController.remove);
 
 // The app's read: the ACTIVE splash for one event, or null. Declared BEFORE
 // `/splash-screens/:id` — the same ordering trap as `/events/stats`, since
