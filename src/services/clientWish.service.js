@@ -505,7 +505,7 @@ const contextFor = async (eventId, rows, viewerId) => {
                 raw: true,
             })
             : [],
-        EventWishBlock.findAll({ where: { event_id: eventId }, attributes: ['author_client_id', 'hide_menu', 'reason', 'note'], raw: true }),
+        EventWishBlock.findAll({ where: { event_id: eventId }, attributes: ['author_client_id', 'hide_menu', 'reason', 'note', 'created_at'], raw: true }),
         ids.length
             ? EventWishLike.findAll({
                 where: { wish_id: ids },
@@ -558,7 +558,7 @@ const contextFor = async (eventId, rows, viewerId) => {
         likes: new Map(counts.map((c) => [Number(c.wish_id), Number(c.n)])),
         comments,
         reports: new Map(reportRows.map((r) => [Number(r.wish_id), Number(r.n)])),
-        blockInfo: new Map(blocks.map((b) => [Number(b.author_client_id), { reason: b.reason || null, note: b.note || null }])),
+        blockInfo: new Map(blocks.map((b) => [Number(b.author_client_id), { reason: b.reason || null, note: b.note || null, blocked_at: b.created_at || null }])),
         mine: new Set(mine.map((m) => Number(m.wish_id))),
     };
 };
