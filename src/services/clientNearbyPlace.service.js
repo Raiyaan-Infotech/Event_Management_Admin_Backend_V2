@@ -83,6 +83,41 @@ const publicCategories = (cats) => cats.map(({ key, name, icon, color, types }) 
 
 /** Ten minutes per (venue, search) — reopening the panel or flipping a sort costs nothing. */
 const suggestionCache = new TtlCache(10 * 60 * 1000);
+/** A venue address → its point on the map, kept a day (the address rarely changes). */
+const geocodeCache = new TtlCache(24 * 60 * 60 * 1000);
+
+/**
+ * Where Near By searches from — the EVENT's location (Jamal, 2026-11-10):
+ *   1. the venue pin (venue_lat / venue_lng)          source "pin"
+ *   2. the coordinates inside the venue's map link     source "map_link"   (both via venueOf)
+ *   3. the venue name + address looked up on Google    source "address"
+ * None of them → has_location false and the page asks for the pin.
+ */
+const locate = async (event) => {
+    const venue = venueOf(event);
+    if (venue.has_location) {
+        const pinned = event.venue_lat != null && Number(event.venue_lat) !== 0;
+        return { ...venue, source: pinned ? 'pin' : 'map_link' };
+    }
+    const text = [event.venue_name, event.venue_address].map((s) => String(s || '').trim()).filter(Boolean).join(', ');
+    if (!text || !apiKey()) return { ...venue, source: null };
+    const point = await geocodeCache.wrap(text.toLowerCase(), async () => {
+        try {
+            const res = await axios.post('https://places.googleapis.com/v1/places:searchText', { textQuery: text, maxResultCount: 1 }, {
+                timeout: 10000,
+                headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': apiKey(), 'X-Goog-FieldMask': 'places.location' },
+            });
+            const loc = res.data?.places?.[0]?.location;
+            // `false` (not null) so "not found" is remembered too and not asked again every open.
+            return loc && Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude) ? { lat: loc.latitude, lng: loc.longitude } : false;
+        } catch (e) {
+            logger.error(`[nearby-places] venue lookup failed: ${e.message}`);
+            return undefined; // not cached: try again next time
+        }
+    });
+    if (!point) return { ...venue, source: null };
+    return { ...venue, lat: point.lat, lng: point.lng, has_location: true, source: 'address' };
+};
 
 const resolveEventForView = async (clientId, rawId) => {
     const eventId = Number(rawId);
@@ -143,13 +178,13 @@ const rowsFor = (eventId) => EventNearbyPlace.findAll({ where: { event_id: event
 /** GET /events/:id/nearby-places — organizer: every place + totals; participant: the visible ones. */
 const list = async (clientId, eventId) => {
     const { event, isOwner } = await resolveEventForView(clientId, eventId);
-    const [rows, cats] = await Promise.all([rowsFor(event.id), categories()]);
+    const [rows, cats, venue] = await Promise.all([rowsFor(event.id), categories(), isOwner ? locate(event) : venueOf(event)]);
     const places = rows.map(present).filter((p) => isOwner || p.show_in_app);
     const visible = places.filter((p) => p.show_in_app).length;
     return {
         places,
         categories: publicCategories(cats),
-        venue: venueOf(event),
+        venue,
         ...(isOwner ? {
             counts: { total: places.length, visible, hidden: places.length - visible },
             options: { radii_km: RADII_KM, default_radius_km: DEFAULT_RADIUS_KM, sorts: SORTS },
@@ -218,9 +253,9 @@ const categoryFor = (types, cats, fallback) => {
  */
 const suggestions = async (clientId, eventId, query = {}) => {
     const event = await resolveEvent(clientId, eventId);
-    const venue = venueOf(event);
-    if (!venue.has_location) throw ApiError.badRequest('Please set the venue location on the map first (Venue → map pin).');
     if (!apiKey()) throw new ApiError(503, 'Google Maps suggestions are not set up on the server yet.');
+    const venue = await locate(event);
+    if (!venue.has_location) throw ApiError.badRequest('We could not find the event location. Please set the venue pin on the map (Venue).');
 
     const cats = await categories();
     const radius = RADII_KM.includes(Number(query.radius_km)) ? Number(query.radius_km) : DEFAULT_RADIUS_KM;
@@ -314,7 +349,7 @@ const add = async (clientId, eventId, body = {}) => {
     if (!items.length) throw ApiError.badRequest('Please choose at least one place.');
     if (items.length > MAX_SAVE) throw ApiError.badRequest(`You can add up to ${MAX_SAVE} places at a time.`);
     const cats = await categories();
-    const venue = venueOf(event);
+    const venue = await locate(event);
     const existing = new Set((await EventNearbyPlace.findAll({
         where: { event_id: event.id }, attributes: ['google_place_id'], raw: true,
     })).map((r) => r.google_place_id).filter(Boolean));
@@ -419,4 +454,6 @@ const purgeEvent = async (eventId) => {
 
 module.exports = {
     list, suggestions, add, update, remove, reorder, purgeEvent,
+    // For tests.
+    _internal: { locate },
 };

@@ -1431,7 +1431,16 @@ the timeline frame strip needs CORS on the media bucket.
 
 
 ### 2026-11-10 - Near By places (backend + portal)
-- Tables `nearby_categories` (10 tiles: Hotel, Restaurant, Hospital, Parking, ATM/Bank, Fuel Station, Temple, Shopping, Tourist Spot, Other; Iconify icon, colour, Google place types) + `event_nearby_places` (saved place: google_place_id unique per event, name, description, category, address, lat/lng, distance_km, rating, map_url, photo_url, show_in_app, sort_order). sql/20261110-event-nearby-places.sql + tools/apply-event-nearby-places.js. Menu `near-by` (#10) already existed. APPLIED LOCAL only - production: node src/database/tools/apply-event-nearby-places.js --prod --apply BEFORE pushing.
+- Tables `nearby_categories` (10 tiles: Hotel, Restaurant, Hospital, Parking, ATM/Bank, Fuel Station, Temple, Shopping, Tourist Spot, Other; Iconify icon, colour, Google place types) + `event_nearby_places` (saved place: google_place_id unique per event, name, description, category, address, lat/lng, distance_km, rating, map_url, photo_url, show_in_app, sort_order). sql/20261110-event-nearby-places.sql + tools/apply-event-nearby-places.js. Menu `near-by` (#10) already existed. APPLIED LOCAL and PRODUCTION (2026-11-10).
 - clientNearbyPlace.service/controller; routes GET/POST /events/:id/nearby-places, GET /events/:id/nearby-places/suggestions (?categories=&q=&radius_km=&sort=), PUT /events/:id/nearby-places/reorder, PUT/DELETE /nearby-places/:id. Google Places API (New) called server-side only (same GOOGLE_MAPS_API_KEY as V1; Render reads Places_API too), suggestions cached 10 min; photos copied into storage on save (googleusercontent only). Older auto Near By (nearby_settings/cache) untouched.
 - Tested local: suggestions by tile + text search, save, duplicate skipped, list counts. Google returns NO photos for this key (even Taj Mahal) -> places show their category icon; enable Places photos on the Google project to get pictures.
 - Portal nearby-panel.tsx to mockup: tiles Total/Visible/Hidden, search + category + status, list/grid, row menu (View Details, Edit, Show/Hide, Move Up/Down, Delete), Add Nearby Place sheet (Google search box, category tiles from API, Near venue, radius, sort, suggestions with Add/Selected, Selected Nearby Places strip, Save Nearby Places (n)), Edit sheet, Details sheet, DeleteSheet. Tab `nearby` (menu near-by, MapPinned icon).
+
+### 2026-11-10 - Loader position fix (portal)
+- global-loader.tsx: with a right-side panel open, the loader box now ends at the panel's left edge (was full content width, so the spinner sat half under the panel). Centred dialogs keep the full content width. Applies to every module.
+
+
+### 2026-11-10 - Near By uses the event location (pin -> map link -> address)
+- clientNearbyPlace.service locate(event): venue pin, else coords in the venue map link, else venue name + address looked up on Google (Text Search, cached 24 h). list/suggestions/add use it; venue.source = pin | map_link | address. Tested all three.
+- Portal nearby-panel: 'Near <venue name>' pill (tooltip = where the location came from) on the page and in Add Nearby Place; note when it came from the address; 'Event location not found' only when all three fail.
+
