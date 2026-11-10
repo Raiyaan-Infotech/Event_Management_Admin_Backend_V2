@@ -1346,3 +1346,15 @@ the timeline frame strip needs CORS on the media bucket.
   every 30 s while the tab is open (new wishes, unread, presence without reload).
 - Tests: service 22/22 + presence local (just used → Online + last_seen; 10 min ago → Offline, last_seen kept).
   tsc + eslint clean. Needs backend push (Render) + portal push (Vercel) — both were BEHIND on 2026-11-10.
+- **Block Participant = Jamal's design (2026-11-10), portal only, no backend change:** standard slide-in (Ban icon) → person
+  card + Active pill, pink warning "This participant will no longer be able to post wishes or interact in this event.",
+  **Reason for Block \*** dropdown (no default; button off until chosen), **Note (Optional)** 0/300, Cancel / Block
+  Participant. REMOVED: reason radio list, "Hide their existing wishes" switch (blocking no longer hides their wishes),
+  bottom info note. Unblock: person card (Blocked pill) + "Why they were blocked" + Unblock. tsc + eslint clean.
+- **Participant Details → Comments = Jamal's mockup (2026-11-10) - backend + portal, no DB change:** **Filter** button on the
+  Comments card (Written by: Everyone / Participants / Event Organizer; On wish type: All / Text / Image / Video; "Filter (n)",
+  Clear filter) - the All / Visible / Hidden chips + counts follow it. Time shown as "02 Nov • 10:30 AM". **Edit Message on
+  EVERY comment** (was only the organizer's own). Backend `clientWish.updateComment`: the event owner may reword any comment
+  (name kept), `can_edit` = owner always - same rule as wishes (no "edited by organizer" label on comments; would need a DB
+  column). Portal shows Edit on all rows; on the OLD backend a participant comment edit gets 403 -> push backend first.
+  `node --check` + tsc + eslint clean; not seen in a browser.

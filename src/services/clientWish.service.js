@@ -967,8 +967,8 @@ const presentComment = (c, isOwner, viewerId) => {
         is_flagged: isOwner ? Number(r.is_flagged) === 1 : false,
         added_by_organizer: !author,
         is_mine: mine,
-        // Same rule as wishes: the organizer words only their own comments.
-        can_edit: (isOwner && !author) || mine,
+        // Same rule as wishes (2026-11-10): the organizer may reword any comment; others only their own.
+        can_edit: isOwner || mine,
         can_delete: isOwner || mine,
         created_at: r.created_at,
     };
@@ -1041,15 +1041,15 @@ const resolveComment = async (clientId, commentId) => {
     return { comment, ...access };
 };
 
-/** Edit the text (its writer; the organizer for their own), hide / show and review (organizer). */
+/** Edit the text (its writer, or the organizer for any comment), hide / show and review (organizer). */
 const updateComment = async (clientId, commentId, body = {}) => {
     const { comment, event, isOwner } = await resolveComment(clientId, commentId);
     const has = (f) => Object.prototype.hasOwnProperty.call(body, f);
     const mine = Number(comment.author_client_id) === Number(clientId);
     const data = {};
     if (has('message')) {
-        const own = (isOwner && !comment.author_client_id) || mine;
-        if (!own) throw ApiError.forbidden(isOwner ? "The organizer cannot edit a participant's comment." : 'Only the writer can edit this comment.');
+        // The event owner may reword a participant's comment too (2026-11-10, same as wishes); the name stays.
+        if (!isOwner && !mine) throw ApiError.forbidden('Only the writer can edit this comment.');
         if (!isOwner && await isBlocked(event.id, clientId)) throw refuseBlocked();
         const message = str(body.message, MAX_COMMENT);
         if (!message) throw ApiError.badRequest('Please write a comment.');
