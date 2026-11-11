@@ -1505,3 +1505,9 @@ the timeline frame strip needs CORS on the media bucket.
 - Not tested on live: a participant writing FROM THE APP (needs a participant login on a phone). That path passed locally. App photo display needs an app build.
 - Seeder contact-chats-demo.seeder.js APPLIED on live event #37 (Jamal asked): Aditi (awaiting, 2 unread), Karan (resolved, 2 inquiries), Neha (never answered, 3 unread + auto reply), Rahul (blocked until event ends); Rohan left free for New Message tests. Old removed test chats deleted. Re-run the same command to reset the inbox.
 - Live check after seeding: 13/13 pass (new step 2b: tiles = API, opening unread clears it, Awaiting / Blocked filters). Rahul Sharma's avatar shows an empty circle (his participant photo URL does not load — data, not the Contact page).
+
+### 2026-11-11 - Contact: "Replying to" = dropdown + quote (backend + portal + app) - DB CHANGE, LIVE
+- Jamal: the Reply panel's "Replying to" was a read-only box; now a dropdown of the participant's messages (newest first, newest picked). The pick is saved as event_contact_chat_messages.reply_to_id (only a participant message of the same chat) and shown as a quote above the team reply in the portal chat AND the app (needs an app build).
+- Column added via apply-contact-inquiries.js (same SQL file): applied LOCAL + LIVE, then backend pushed. Message sender names for participants now use the event guest-list name (was the account name).
+- Seeder contact-chats-demo: --name "<event>" (must match one) and --skip "a,b" (real accounts). Applied on live #36 "Jamal And Fahmi" (skipped ismail g, Jamal1) and re-applied on #37.
+- Live check: 14/14 incl. new step 6b (pick an older message, send, quote saved + shown).
