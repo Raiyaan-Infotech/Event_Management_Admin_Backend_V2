@@ -10,6 +10,8 @@ module.exports = (sequelize, DataTypes) => sequelize.define(
         /** An attached image (2026-11-11); body may then be empty. */
         photo: { type: DataTypes.STRING(500), allowNull: true },
         size_bytes: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false, defaultValue: 0 },
+        /** Replying to: the participant message this team reply quotes (same chat). */
+        reply_to_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
         // The offline auto reply (sent by the server, not a person).
         is_auto: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     },

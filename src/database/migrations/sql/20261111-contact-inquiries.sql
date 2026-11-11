@@ -6,7 +6,7 @@
 --   · Block form: reason, note, duration (until the event ends / permanent).
 --   · Remove form: reason.
 --   · Reply time: awaiting_since + reply totals → "Awaiting Reply" and "Avg. Reply Time".
---   · A photo on a message.
+--   · A photo on a message, and the message a team reply quotes (Replying to, added later the same day).
 -- Applied by src/database/tools/apply-contact-inquiries.js (re-runnable, back-fills old chats).
 
 CREATE TABLE IF NOT EXISTS `event_contact_inquiries` (
@@ -39,4 +39,5 @@ ALTER TABLE `event_contact_chats`
 
 ALTER TABLE `event_contact_chat_messages`
   ADD COLUMN `photo` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'an attached image' AFTER `body`,
-  ADD COLUMN `size_bytes` bigint unsigned NOT NULL DEFAULT '0' AFTER `photo`;
+  ADD COLUMN `size_bytes` bigint unsigned NOT NULL DEFAULT '0' AFTER `photo`,
+  ADD COLUMN `reply_to_id` int unsigned DEFAULT NULL COMMENT 'the participant message a team reply quotes (Replying to)' AFTER `size_bytes`;

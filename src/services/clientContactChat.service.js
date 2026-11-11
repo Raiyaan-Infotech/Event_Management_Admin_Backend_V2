@@ -103,21 +103,39 @@ const clientNames = async (ids) => {
  * their behalf, 2026-11-11); the auto reply (sender 0) too.
  */
 const shapeMessages = async (rows, viewerId, event = null) => {
-    const names = await clientNames(rows.map((m) => m.sender_client_id));
-    return rows.map((m) => {
-        const own = names.get(Number(m.sender_client_id))?.name || null;
-        return {
-            id: m.id,
-            side: m.sender_side,
-            mine: Number(m.sender_client_id) === Number(viewerId),
-            sender_name: m.sender_side === 'team' ? event?.organizer || own || 'Contact Person' : own,
-            body: m.body,
-            photo: m.photo || null,
-            is_auto: Boolean(m.is_auto),
-            // raw rows carry the attribute name (createdAt), not the column name.
-            created_at: m.created_at ?? m.createdAt ?? null,
-        };
-    });
+    // Replying to: the quoted messages (one query; a quote of a deleted message is dropped).
+    const quoteIds = [...new Set(rows.map((m) => Number(m.reply_to_id)).filter(Boolean))];
+    const quoted = quoteIds.length
+        ? await EventContactChatMessage.findAll({ where: { id: quoteIds }, attributes: ['id', 'sender_side', 'sender_client_id', 'body', 'photo'], raw: true })
+        : [];
+    const all = [...rows, ...quoted];
+    const names = await clientNames(all.map((m) => m.sender_client_id));
+    // A participant is named as on this event's guest list (same as the inbox), else their account name.
+    const guestIds = [...new Set(all.filter((m) => m.sender_side === 'participant').map((m) => Number(m.sender_client_id)))];
+    const guests = event && guestIds.length ? await participantsOf(event.id, guestIds) : new Map();
+    const nameOf = (m) => {
+        const own = guests.get(Number(m.sender_client_id))?.name || names.get(Number(m.sender_client_id))?.name || null;
+        return m.sender_side === 'team' ? event?.organizer || own || 'Contact Person' : own;
+    };
+    const quoteOf = new Map(quoted.map((q) => [Number(q.id), {
+        id: q.id,
+        side: q.sender_side,
+        sender_name: nameOf(q),
+        body: q.body.length > 140 ? `${q.body.slice(0, 137)}...` : q.body,
+        photo: Boolean(q.photo),
+    }]));
+    return rows.map((m) => ({
+        id: m.id,
+        side: m.sender_side,
+        mine: Number(m.sender_client_id) === Number(viewerId),
+        sender_name: nameOf(m),
+        body: m.body,
+        photo: m.photo || null,
+        reply_to: quoteOf.get(Number(m.reply_to_id)) || null,
+        is_auto: Boolean(m.is_auto),
+        // raw rows carry the attribute name (createdAt), not the column name.
+        created_at: m.created_at ?? m.createdAt ?? null,
+    }));
 };
 
 /**
@@ -350,8 +368,17 @@ const getTeamMessages = async (clientId, eventId, chatId, senderId) => {
 };
 
 /** A team message into [chat] (text and / or photo); answers whatever was waiting. */
-const postTeamMessage = async (event, chat, senderId, rawBody, file) => {
+const postTeamMessage = async (event, chat, senderId, rawBody, file, rawReplyTo = null) => {
     const body = cleanBody(rawBody, Boolean(file));
+    // Replying to: only a participant message of THIS chat.
+    let replyTo = null;
+    if (Number(rawReplyTo)) {
+        const q = await EventContactChatMessage.findOne({
+            where: { id: Number(rawReplyTo), chat_id: chat.id, sender_side: 'participant' }, attributes: ['id'],
+        });
+        if (!q) throw ApiError.badRequest('That message is not in this conversation.');
+        replyTo = q.id;
+    }
     const media = await storePhoto(event, file);
     const msg = await EventContactChatMessage.create({
         chat_id: chat.id,
@@ -360,6 +387,7 @@ const postTeamMessage = async (event, chat, senderId, rawBody, file) => {
         body,
         photo: media?.photo || null,
         size_bytes: media?.size_bytes || 0,
+        reply_to_id: replyTo,
     });
     const now = new Date();
     const waited = chat.awaiting_since ? Math.max(0, Math.round((now - new Date(chat.awaiting_since)) / 1000)) : null;
@@ -384,9 +412,9 @@ const postTeamMessage = async (event, chat, senderId, rawBody, file) => {
     return (await shapeMessages([msg.get({ plain: true })], senderId, event))[0];
 };
 
-const sendTeamMessage = async (clientId, eventId, chatId, senderId, rawBody, file = null) => {
+const sendTeamMessage = async (clientId, eventId, chatId, senderId, rawBody, file = null, replyTo = null) => {
     const { event, chat } = await teamChat(clientId, eventId, chatId);
-    return postTeamMessage(event, chat, senderId, rawBody, file);
+    return postTeamMessage(event, chat, senderId, rawBody, file, replyTo);
 };
 
 /** New Message: the participants of the event the team can write to (app users only). */

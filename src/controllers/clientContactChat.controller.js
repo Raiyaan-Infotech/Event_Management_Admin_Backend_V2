@@ -26,7 +26,7 @@ const messages = asyncHandler(async (req, res) => {
 
 const reply = asyncHandler(async (req, res) => {
     const message = await service.sendTeamMessage(
-        ownerId(req), req.params.id, req.params.chatId, senderId(req), req.body?.body, req.file || null,
+        ownerId(req), req.params.id, req.params.chatId, senderId(req), req.body?.body, req.file || null, req.body?.reply_to_id,
     );
     return ApiResponse.created(res, { message }, 'Message sent');
 });
