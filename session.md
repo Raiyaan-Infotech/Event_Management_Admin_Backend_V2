@@ -1527,3 +1527,13 @@ the timeline frame strip needs CORS on the media bucket.
 - New endpoints: PATCH /live-streams/:id/status, POST /live-streams/:id/duplicate, /share (in-app notification to all app participants), /view. Category save accepts display_order (1 = first). Cover max 5 MB (was 2).
 - Notifications: live_stream_scheduled (on create) and live_stream_live (Go Live), only with Notify Participants on.
 - Portal live-panel.tsx rebuilt; e2e/module-check/modules/live.cjs rewritten for the new flow.
+
+### 2026-11-11 - Live Streaming: Category active status & "Turn on a category first" fix (backend + portal)
+- Cause: When `is_active` was missing/undefined or `null`, the client treated the category as inactive (`!g.type.is_active` was true). This marked newly created/existing categories as "Inactive" and blocked "+ Create Live Stream" with toast "Turn on a category first." Furthermore, there was no quick action to activate the category.
+- Backend (`clientLiveStream.service.js`): `presentType` now uses `r.is_active == null ? true : truthy(r.is_active)` so unset/null rows default to active (`true`), and `apply-live-stream-upgrade.js` gained `--activate-all` and backfills NULL `is_active` to 1.
+- Portal (`live-panel.tsx`):
+  - Added `isTypeActive(t)`: categories are active by default unless explicitly `false`, `0`, or `'0'`.
+  - Added "Turn On Category" / "Turn Off Category" toggle button directly in the category's `⋯` actions menu using `saveType`.
+  - "+ Create Live Stream" (`addStream`): if no categories are active, it immediately opens the category sheet to turn it on instead of a dead-end toast.
+  - Stream sheet (`StreamSheet`): `offered` categories list uses `isTypeActive(t)`.
+  - Category sheet (`CategorySheet`): `active` initial state uses `isTypeActive(type)`.

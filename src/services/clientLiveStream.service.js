@@ -158,7 +158,7 @@ const presentType = (r, counts = {}, firstCover = null) => ({
     description: r.description || null,
     /** A type has no picture of its own; this is its first stream's cover. */
     cover_url: firstCover || null,
-    is_active: r.is_active === undefined ? true : (r.is_active === true || r.is_active === 1),
+    is_active: r.is_active == null ? true : truthy(r.is_active),
     default_visibility: r.default_visibility || 'public',
     notes: r.notes || null,
     sort_order: r.sort_order,

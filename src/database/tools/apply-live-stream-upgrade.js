@@ -67,6 +67,16 @@ const modifies = [...raw.matchAll(/^-- (ALTER TABLE `([a-z_]+)` MODIFY `([a-z_]+
         const there = await tableThere('event_live_stream_views');
         console.log(there ? '  = event_live_stream_views   already there' : `  + event_live_stream_views   ${APPLY ? 'creating' : 'WOULD CREATE'}`);
         if (!there && APPLY) await conn.query(createTable);
+        const [nullTypes] = await conn.query('SELECT count(*) AS c FROM event_live_stream_types WHERE is_active IS NULL');
+        const nullCount = nullTypes[0]?.c || 0;
+        console.log(`  * event_live_stream_types NULL is_active: ${nullCount} ${APPLY && nullCount > 0 ? '(setting to 1)' : ''}`);
+        if (APPLY && nullCount > 0) {
+            await conn.query('UPDATE event_live_stream_types SET is_active = 1 WHERE is_active IS NULL');
+        }
+        if (args.includes('--activate-all')) {
+            console.log(`  * activating all stream categories ${APPLY ? '(APPLY)' : '(WOULD ACTIVATE)'}`);
+            if (APPLY) await conn.query('UPDATE event_live_stream_types SET is_active = 1');
+        }
         console.log(APPLY ? '\nDone.\n' : '\nRe-run with --apply to write it.\n');
     } finally {
         await conn.end();
