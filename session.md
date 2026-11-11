@@ -1511,3 +1511,9 @@ the timeline frame strip needs CORS on the media bucket.
 - Column added via apply-contact-inquiries.js (same SQL file): applied LOCAL + LIVE, then backend pushed. Message sender names for participants now use the event guest-list name (was the account name).
 - Seeder contact-chats-demo: --name "<event>" (must match one) and --skip "a,b" (real accounts). Applied on live #36 "Jamal And Fahmi" (skipped ismail g, Jamal1) and re-applied on #37.
 - Live check: 14/14 incl. new step 6b (pick an older message, send, quote saved + shown).
+
+### 2026-11-11 - Contact: sharp corners + multi-select New Message; slide-in scroll fix (portal only, 3142508, LIVE)
+- Contact module: cards/boxes rounded-xl/2xl -> rounded-lg (theme 6px); its panels dropped `large` (floating rounded sheet) for the standard docked slide-in like other modules.
+- New Message: checkbox list + "Select all (n)" + removable chips; button reads "Send to N". useStartContactChat now takes participantIds[] and posts one request per person (no backend change); one toast, partial failures reported.
+- Bug: Upload Media (Create Video) on short screens squashed the "Selected Files" card (overflow-hidden flex child shrank) so the video row + Trim & Music were cut off and nothing scrolled. Fix in module-kit ActionSheet: body children `shrink-0` -> every module's slide-in scrolls instead of squashing. Verified live at 1366x640.
+- Live check contact 14/15 (2b only failed because the earlier run had read the unread chats); seeder re-applied on #37 afterwards.
