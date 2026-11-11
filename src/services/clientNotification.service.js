@@ -40,6 +40,11 @@ const TYPE_CATEGORY = {
     event_notification: 'message',
     // The event's contact person replied in the participant's chat.
     contact_chat_reply: 'message',
+    // Contact Messages (2026-11-11): a participant wrote to the event team (the owner's bell),
+    // and the team resolved / closed the participant's conversation (the participant's bell).
+    contact_chat_message: 'message',
+    contact_chat_resolved: 'message',
+    contact_chat_closed: 'message',
     // Wed Wishes: the content filter caught a blocked word in a post.
     wish_flagged: 'system',
     // Wed Wishes: a participant reported a post (2026-11-09).

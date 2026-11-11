@@ -7,6 +7,9 @@ module.exports = (sequelize, DataTypes) => sequelize.define(
         sender_side: { type: DataTypes.ENUM('participant', 'team'), allowNull: false },
         sender_client_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
         body: { type: DataTypes.TEXT, allowNull: false },
+        /** An attached image (2026-11-11); body may then be empty. */
+        photo: { type: DataTypes.STRING(500), allowNull: true },
+        size_bytes: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false, defaultValue: 0 },
         // The offline auto reply (sent by the server, not a person).
         is_auto: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     },

@@ -1444,3 +1444,59 @@ the timeline frame strip needs CORS on the media bucket.
 - clientNearbyPlace.service locate(event): venue pin, else coords in the venue map link, else venue name + address looked up on Google (Text Search, cached 24 h). list/suggestions/add use it; venue.source = pin | map_link | address. Tested all three.
 - Portal nearby-panel: 'Near <venue name>' pill (tooltip = where the location came from) on the page and in Add Nearby Place; note when it came from the address; 'Event location not found' only when all three fail.
 
+
+### 2026-11-10 - Loader covers main + panel together (portal)
+- global-loader.tsx: with a dialog/panel open, one fixed loader from the content scroll box (under the top bar, right of the sidebar) to the window's right/bottom edge, above the panel (z-60, pointer-events-none so a click can't close the panel). Top bar + sidebar stay uncovered. No panel open: unchanged (covers #main-content).
+
+
+- global-loader.tsx: panel-open loader now starts at the sticky top bar's bottom edge (the page scrolls as a whole, so after scrolling the content box top went above the window and the loader covered the top bar).
+
+
+### 2026-11-11 - Loader with a panel open = everything except the sidebar; Near By location line removed (portal)
+- global-loader.tsx: with a dialog/panel open, one fixed loader from the sidebar's right edge to the window's right/bottom, top 0 (covers top bar, content and the whole panel; sidebar clear), z-60, pointer-events-none. Panels themselves unchanged (a 'panel below the top bar' try was reverted on request).
+- nearby-panel.tsx: the 'Places are found around the event location' line is removed; only the 'Event location not found' warning remains.
+- Checked in a real browser (Playwright on local portal + backend, write requests delayed 5 s): Social Links save with the panel open, Near By page. Test links removed afterwards.
+
+
+### 2026-11-11 - Module testing checklist + /test-module (portal repo)
+- docs/MODULE_TESTING.md: the 11 checks every module passes (page loads, loading state, error message, add, saving state = button spinner + loader over all but the sidebar, edit, view slide-in, hide, delete, clean up, no errors).
+- e2e/module-check/ (run.cjs, lib.cjs, modules/social-links|downloads|nearby.cjs): npm run test:module -- <module|all> [--local] [--event id]. Live by default (QA account from .env.qa-test, event #37); saves held 4 s to photograph the saving state; screenshots + report.json in Documents\EventInvite_Portal_Test\<date>_<module>.
+- .claude/skills/test-module/SKILL.md = the /test-module short command.
+- First run on live: social-links 11/11, downloads 12/12, nearby 12/12 pass; all test data cleaned.
+
+
+### 2026-11-11 - Add Nearby Place panel = mockup; manual Vercel deploy
+- nearby-panel.tsx AddNearbySheet rebuilt to Jamal's design: large rounded panel, bold section labels with info icons, all 10 category tiles incl. Other (focuses the search box), 'Near venue' pill, address line with pin, selected suggestion = filled 'Add to Event', Selected Nearby Places box. Follow-up (local, NOT pushed yet): Near venue / Radius / Sort By on one row.
+- Vercel did NOT auto-build push f01dd5a (GitHub status stuck 'pending'). Deployed manually: fresh clone of main (no .env.local) -> vercel deploy --prod (project eventmanagementclientv2). Live checked with the QA account: new panel shown.
+
+
+### 2026-11-11 - Module checks for Agenda, Family, Live Streaming, Media, Wed Wishes (live)
+- New e2e/module-check/modules: agenda, family, live, media, wishes. lib: saving state recorded as its own step (flow continues), k.note() for design findings, k.isSlideIn(); run.cjs clears old screenshots per run.
+- Live results (event #37, all test data removed): Agenda 10/12, Family 10/12, Live Streaming 11/15, Media 12/15, Wed Wishes 14/15. Every add/edit/hide/delete WORKS.
+- Gaps found vs docs/MODULE_TESTING.md (design, not breakage): no spinner on Save (Agenda, Family, Live, Media folder); delete is a small popup, not the DeleteSheet (all five); Live Streaming Add/Edit/View are centre popups, not slide-in panels.
+
+### 2026-11-11 - Module gaps fixed (portal, NOT pushed yet)
+- Jamal confirmed: delete = CENTRE POPUP everywhere (his 2026-11-09 choice; my checklist had wrongly said slide-in DeleteSheet).
+- module-kit DeletePopup (sheets.tsx): title, one line, Cancel + red Delete with spinner, locked while busy. Used in Agenda, Family, Media (folder / folders / files), Live Streaming, Social Links, Downloads, Near By (the last three were DeleteSheet). Wishes reply / wish / remove participant already popups with spinner.
+- Save spinners: Agenda (Save/Update Session), Family (Save/Update Member), Media (Save Folder), Live Streaming (Add/Save).
+- Live Streaming Add/Edit + View: centre Dialogs -> ActionSheet slide-in panels.
+- Media toasts: "Category added/updated/removed" -> "Folder added / updated / deleted — its files moved to Media".
+- Tests: lib.confirmDelete() checks popup + spinner (step 9b); docs/MODULE_TESTING.md rows 7 + 9 updated.
+
+### 2026-11-11 - Guests / RSVPs / Participants tested on live + fixed (portal, fixes NOT pushed yet)
+- Re-test after the first batch of fixes: all 8 earlier modules 113/113 pass on live.
+- New checks: e2e/module-check/modules/guests.cjs (makes a guest group if none), rsvps.cjs (test guest via API with a first "maybe" answer; Hidden tab for hidden rows), participants.cjs (full form add, block/unblock, hide). lib: api() retries once on ECONNRESET.
+- Live results before fixes: Guests 13/16, RSVPs 13/15, Participants 13/15 — everything works; gaps = no Save spinner + slide-in delete.
+- BUG fixed: RSVP "Status: Not Invited" filter always empty — rsvps-view now sends show_uninvited when status = not_invited.
+- Fixes: DeletePopup for Delete Guest, Delete Response (RSVP), Delete Participant; spinners on Save Guest / Save Changes, RSVP "Mark as …", Participant Add/Update + Edit Save Changes.
+- Not a bug (test fix): RSVP Hide tick starts ticked by design.
+
+### 2026-11-11 - Contact Messages = Jamal's 8 screens, REAL backend (backend + portal + app) - DB CHANGE, NOT pushed
+- Designs: Downloads\EventInvite_Contact_Person_All_8_Screens (inbox, action menu, reply, resolve, block, remove, contact person details, participant details).
+- Flow: participant (app: Event > Contact Person > Chat) -> event_contact_chats -> portal Contact page; the OWNER now replies / resolves / blocks from the portal (Jamal's choice; before only the contact person could reply). Team replies show the contact person's name to the participant.
+- INQUIRY = one question round (Jamal chose "A, no titles"): first participant message, or first after Resolved / Removed, opens one; Resolve closes it.
+- DB: sql/20261111-contact-inquiries.sql + tools/apply-contact-inquiries.js: table event_contact_inquiries; event_contact_chats + awaiting_since, reply_count, reply_seconds, block_reason/note/duration(event_end|permanent)/blocked_at, remove_reason/removed_at; messages + photo, size_bytes. Back-fills old chats. APPLIED LOCAL ONLY. Prod: run --prod --apply BEFORE pushing the backend.
+- Backend clientContactChat.service rewritten: list (stats, contact, performance avg reply time, options), recipients + POST /events/:id/contact-chats (New Message), GET .../:chatId/details (profile, inquiry summary, inquiries, activity), PATCH status with resolve/block/remove forms (+ notify participant = auto note in chat + bell), unblock/reopen, photo on messages (multer `photo`, JPG/PNG/WEBP <= 5 MB), "until event ends" blocks lift by themselves, owner bell contact_chat_message once per waiting spell. Contact Online = contact person OR owner seen recently.
+- Tested on local DB: 22/22 service checks + 11/11 HTTP checks (in-process app on :5099); test data removed.
+- Portal contact-chat.tsx rebuilt to the screens (sample data gone), hooks in use-event-engagement.ts (inbox polls 15 s, open chat 5 s). Contact Settings button left out (no design). Remove Conversation is the design's slide-in panel (reason + notify), not DeletePopup. tsc + eslint clean; NOT seen in a browser yet.
+- App: contact chat bubbles show photos (ContactChatMessage.photo). dart analyze clean. Participants still send text only.

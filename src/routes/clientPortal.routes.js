@@ -387,12 +387,37 @@ router.put('/events/:id/contact-responsibilities', organizerContactController.up
 // Contact Person chat (2026-10-26): the team's Participant Chats, and a
 // participant's own chat with the event team.
 const contactChatController = require('../controllers/clientContactChat.controller');
+const CONTACT_PHOTO_BYTES = 5 * 1024 * 1024;
+const contactPhotoUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: CONTACT_PHOTO_BYTES },
+    fileFilter: (req, file, cb) => {
+        if (require('../services/clientContactChat.service').PHOTO_MIMES.includes(file.mimetype)) return cb(null, true);
+        return cb(new Error('Please choose a JPG, PNG or WEBP image.'));
+    },
+});
+/** Optional `photo` on a chat message (2026-11-11) — plain JSON passes straight through. */
+const contactPhoto = (req, res, next) => {
+    contactPhotoUpload.single('photo')(req, res, (err) => {
+        if (err) {
+            return res.status(400).json({
+                success: false,
+                message: err.code === 'LIMIT_FILE_SIZE' ? 'That photo is larger than 5MB.' : err.message || 'That photo could not be uploaded.',
+            });
+        }
+        return next();
+    });
+};
 router.get('/events/:id/contact-chats', contactChatController.list);
+// Contact Messages (2026-11-11): New Message (participants to write to + start a chat).
+router.get('/events/:id/contact-chats/recipients', contactChatController.recipients);
+router.post('/events/:id/contact-chats', contactPhoto, contactChatController.start);
 router.get('/events/:id/contact-chats/:chatId/messages', contactChatController.messages);
-router.post('/events/:id/contact-chats/:chatId/messages', contactChatController.reply);
+router.post('/events/:id/contact-chats/:chatId/messages', contactPhoto, contactChatController.reply);
+router.get('/events/:id/contact-chats/:chatId/details', contactChatController.details);
 router.patch('/events/:id/contact-chats/:chatId', contactChatController.status);
 router.get('/events/:id/my-contact-chat', contactChatController.myChat);
-router.post('/events/:id/my-contact-chat/messages', contactChatController.sendMine);
+router.post('/events/:id/my-contact-chat/messages', contactPhoto, contactChatController.sendMine);
 
 router.get('/events/:id/notification-templates', eventNotificationTemplateController.listApplicable);
 router.patch('/events/:id/notification-templates/:templateId', eventNotificationTemplateController.toggle);

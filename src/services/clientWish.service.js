@@ -1266,4 +1266,7 @@ module.exports = {
     listReports,
     markThreadRead,
     setThreadHidden,
+    // Presence, shared with the Contact Messages chat (2026-11-11).
+    lastSeenOf,
+    isOnlineAt,
 };
