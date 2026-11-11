@@ -12,7 +12,15 @@ module.exports = (sequelize) => {
         event_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
         website_client_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
         name: { type: DataTypes.STRING(120), allowNull: false },
-        description: { type: DataTypes.STRING(200), allowNull: true },
+        description: { type: DataTypes.STRING(300), allowNull: true },
+        // Off = kept with its streams, but not offered when creating a stream.
+        is_active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+        default_visibility: {
+            type: DataTypes.ENUM('public', 'participants', 'guests', 'invite_link', 'unlisted', 'private'),
+            allowNull: false,
+            defaultValue: 'public',
+        },
+        notes: { type: DataTypes.STRING(500), allowNull: true },
         sort_order: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
         company_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     }, {

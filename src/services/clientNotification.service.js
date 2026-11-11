@@ -45,6 +45,9 @@ const TYPE_CATEGORY = {
     contact_chat_message: 'message',
     contact_chat_resolved: 'message',
     contact_chat_closed: 'message',
+    // Live Streaming (2026-11-11): a stream was scheduled / went live (the participants' bell).
+    live_stream_scheduled: 'message',
+    live_stream_live: 'message',
     // Wed Wishes: the content filter caught a blocked word in a post.
     wish_flagged: 'system',
     // Wed Wishes: a participant reported a post (2026-11-09).

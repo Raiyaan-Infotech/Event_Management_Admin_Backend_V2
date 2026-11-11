@@ -16,16 +16,32 @@ module.exports = (sequelize) => {
         type_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
         title: { type: DataTypes.STRING(150), allowNull: false },
         platform: {
-            type: DataTypes.ENUM('youtube', 'facebook', 'instagram', 'zoom', 'google_meet', 'other'),
+            type: DataTypes.ENUM('youtube', 'facebook', 'instagram', 'zoom', 'google_meet', 'teams', 'custom_rtmp', 'embedded', 'other'),
             allowNull: false,
             defaultValue: 'youtube',
         },
         stream_url: { type: DataTypes.STRING(500), allowNull: false },
+        // Encoder address — the organizer's only, never sent to participants.
+        rtmp_url: { type: DataTypes.STRING(500), allowNull: true },
+        visibility: {
+            type: DataTypes.ENUM('public', 'participants', 'guests', 'invite_link', 'unlisted', 'private'),
+            allowNull: false,
+            defaultValue: 'public',
+        },
         stream_date: { type: DataTypes.DATEONLY, allowNull: false },
         stream_time: { type: DataTypes.TIME, allowNull: false },
+        end_time: { type: DataTypes.TIME, allowNull: true },
+        // What the organizer set. The status SHOWN is worked out from this + the schedule (service: statusOf).
+        status: { type: DataTypes.ENUM('scheduled', 'live', 'ended'), allowNull: false, defaultValue: 'scheduled' },
+        started_at: { type: DataTypes.DATE, allowNull: true },
+        ended_at: { type: DataTypes.DATE, allowNull: true },
         description: { type: DataTypes.STRING(500), allowNull: true },
+        notes: { type: DataTypes.STRING(500), allowNull: true },
         cover_image: { type: DataTypes.STRING(500), allowNull: true },
         is_enabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+        auto_go_live: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+        notify_participants: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+        views_count: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 0 },
         sort_order: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
         company_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     }, {

@@ -1517,3 +1517,13 @@ the timeline frame strip needs CORS on the media bucket.
 - New Message: checkbox list + "Select all (n)" + removable chips; button reads "Send to N". useStartContactChat now takes participantIds[] and posts one request per person (no backend change); one toast, partial failures reported.
 - Bug: Upload Media (Create Video) on short screens squashed the "Selected Files" card (overflow-hidden flex child shrank) so the video row + Trim & Music were cut off and nothing scrolled. Fix in module-kit ActionSheet: body children `shrink-0` -> every module's slide-in scrolls instead of squashing. Verified live at 1366x640.
 - Live check contact 14/15 (2b only failed because the earlier run had read the unread chats); seeder re-applied on #37 afterwards.
+
+### 2026-11-11 - Live Streaming = "Live Stream Updated" screens (backend + portal + app) - DB CHANGE, LIVE
+- Designs: Downloads\Live Stream Updated (8 images). Jamal's corrected flow: 1 Overview, 2 Create Category, 3 Create Live Stream = ONE right-side form (3A platform dropdown, 3B visibility dropdown), 4 Review & Create, 5 View Live Stream, 6 Share Stream.
+- Jamal chose "real data only" for the View page: likes / comments / reactions / live chat from the mockup are NOT built (no data source). Viewers are real: POST /client/live-streams/:id/view when a participant taps Watch Live (app), event_live_stream_views + views_count.
+- Migration 20261111-live-stream-upgrade.sql via tools/apply-live-stream-upgrade.js: applied LOCAL + LIVE before the backend push. Types: is_active, default_visibility, notes, description 300. Streams: rtmp_url, visibility (6), end_time, status, started_at, ended_at, notes, auto_go_live, notify_participants, views_count, platform enum + teams / custom_rtmp / embedded. New table event_live_stream_views.
+- Status shown = statusOf(): organizer's Go Live / End Stream wins; else with auto_go_live the schedule decides in the event's time zone (default Asia/Kolkata). No cron. `set_status` = stored value, `status` = shown.
+- Participants: private never visible, unlisted only by id; notes + rtmp_url never sent to them. "Show Stream in Event Page" = is_enabled (old column, the app's switch still works).
+- New endpoints: PATCH /live-streams/:id/status, POST /live-streams/:id/duplicate, /share (in-app notification to all app participants), /view. Category save accepts display_order (1 = first). Cover max 5 MB (was 2).
+- Notifications: live_stream_scheduled (on create) and live_stream_live (Go Live), only with Notify Participants on.
+- Portal live-panel.tsx rebuilt; e2e/module-check/modules/live.cjs rewritten for the new flow.

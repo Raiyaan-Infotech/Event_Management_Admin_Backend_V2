@@ -2083,7 +2083,10 @@ CREATE TABLE IF NOT EXISTS `event_live_stream_types` (
   `event_id` int unsigned NOT NULL,
   `website_client_id` int unsigned NOT NULL COMMENT 'the event owner',
   `name` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` varchar(300) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1' COMMENT '0 = not offered for new streams',
+  `default_visibility` enum('public','participants','guests','invite_link','unlisted','private') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'public',
+  `notes` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `sort_order` int NOT NULL DEFAULT '0',
   `company_id` int unsigned DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -2100,13 +2103,23 @@ CREATE TABLE IF NOT EXISTS `event_live_streams` (
   `website_client_id` int unsigned NOT NULL COMMENT 'the event owner',
   `type_id` int unsigned DEFAULT NULL,
   `title` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `platform` enum('youtube','facebook','instagram','zoom','google_meet','other') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'youtube',
+  `platform` enum('youtube','facebook','instagram','zoom','google_meet','teams','custom_rtmp','embedded','other') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'youtube',
   `stream_url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `rtmp_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'encoder address, organizer only',
+  `visibility` enum('public','participants','guests','invite_link','unlisted','private') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'public',
   `stream_date` date NOT NULL,
   `stream_time` time NOT NULL,
+  `end_time` time DEFAULT NULL,
+  `status` enum('scheduled','live','ended') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'scheduled',
+  `started_at` datetime DEFAULT NULL,
+  `ended_at` datetime DEFAULT NULL,
   `description` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'organizer notes, never shown to participants',
   `cover_image` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_enabled` tinyint(1) NOT NULL DEFAULT '1' COMMENT '0 = hidden from participants (Disable)',
+  `auto_go_live` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Live from the start time without a click',
+  `notify_participants` tinyint(1) NOT NULL DEFAULT '1',
+  `views_count` int unsigned NOT NULL DEFAULT '0',
   `sort_order` int NOT NULL DEFAULT '0',
   `company_id` int unsigned DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -2116,6 +2129,20 @@ CREATE TABLE IF NOT EXISTS `event_live_streams` (
   CONSTRAINT `fk_live_stream_event` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_live_stream_type` FOREIGN KEY (`type_id`) REFERENCES `event_live_stream_types` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `event_live_stream_views` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `stream_id` int unsigned NOT NULL,
+  `event_id` int unsigned NOT NULL,
+  `website_client_id` int unsigned NOT NULL COMMENT 'the participant who opened the stream',
+  `views` int unsigned NOT NULL DEFAULT '1',
+  `first_viewed_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_viewed_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_live_view_stream_client` (`stream_id`, `website_client_id`),
+  KEY `idx_live_view_event` (`event_id`),
+  CONSTRAINT `fk_live_view_stream` FOREIGN KEY (`stream_id`) REFERENCES `event_live_streams` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Who opened a live stream';
 
 -- Table structure for `event_social_links` (Social Links, 2026-10-20)
 CREATE TABLE IF NOT EXISTS `event_social_links` (

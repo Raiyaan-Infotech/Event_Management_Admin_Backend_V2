@@ -940,6 +940,10 @@ router.post(
 );
 router.get('/live-streams/:streamId', liveStreamController.getOne);
 router.put('/live-streams/:streamId', liveStreamController.update);
+router.patch('/live-streams/:streamId/status', liveStreamController.setStatus);
+router.post('/live-streams/:streamId/duplicate', liveStreamController.duplicate);
+router.post('/live-streams/:streamId/share', liveStreamController.share);
+router.post('/live-streams/:streamId/view', liveStreamController.recordView);
 router.delete('/live-streams/:streamId', liveStreamController.remove);
 
 /**
