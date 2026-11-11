@@ -15,6 +15,8 @@
  *   node src/database/seeders/contact-chats-demo.seeder.js --event 86 --apply       local
  *   node src/database/seeders/contact-chats-demo.seeder.js --prod                   dry run, production
  *   node src/database/seeders/contact-chats-demo.seeder.js --prod --apply           production (QA event 37)
+ *   node src/database/seeders/contact-chats-demo.seeder.js --name "Jamal" --prod    find the event by name (must match one)
+ *   ... --skip "ismail g,Jamal1"                                                     leave these participants out (real accounts)
  *
  * Needs tools/apply-contact-inquiries.js applied. Use it on test events only.
  */
@@ -25,7 +27,10 @@ const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
 const PROD = args.includes('--prod');
 const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
-const EVENT_ID = Number(opt('--event', 37));
+const NAME = opt('--name', null);
+/** --skip "ismail g,Jamal1": participants (by name) never given sample messages — real people's accounts. */
+const SKIP = String(opt('--skip', '')).split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+let EVENT_ID = Number(opt('--event', 37));
 if (PROD) require('dotenv').config({ path: path.join(__dirname, '..', '..', '..', '.env.production'), override: true });
 
 const { Sequelize, sequelize, Event, EventParticipant, EventContactChat } = require('../../models');
@@ -96,6 +101,12 @@ const SCENARIOS = [
     const at = (h) => new Date(Date.now() - h * H);
     console.log(`\n${PROD ? 'PRODUCTION' : 'LOCAL'}  ${process.env.DB_NAME} @ ${process.env.DB_HOST}  event #${EVENT_ID}  ${APPLY ? '(APPLY)' : '(dry run)'}\n`);
     try {
+        if (NAME) {
+            const found = await Event.findAll({ where: { name: { [Op.like]: `%${NAME}%` } }, attributes: ['id', 'name', 'start_date'], raw: true });
+            found.forEach((e) => console.log(`  ? #${e.id}  ${e.name}  ${e.start_date || ''}`));
+            if (found.length !== 1) throw new Error(`${found.length} events match "${NAME}" — use --event <id>.`);
+            EVENT_ID = Number(found[0].id);
+        }
         const event = await Event.findByPk(EVENT_ID, { attributes: ['id', 'name', 'organizer'] });
         if (!event) throw new Error(`Event #${EVENT_ID} not found.`);
         const rows = await EventParticipant.findAll({
@@ -104,7 +115,9 @@ const SCENARIOS = [
             order: [['name', 'ASC'], ['id', 'ASC']],
             raw: true,
         });
-        const people = [...new Map(rows.map((r) => [Number(r.participant_client_id), r])).values()];
+        const people = [...new Map(rows.map((r) => [Number(r.participant_client_id), r])).values()]
+            .filter((p) => !SKIP.includes(String(p.name).trim().toLowerCase()));
+        if (SKIP.length) console.log(`  skipping: ${SKIP.join(', ')}`);
         console.log(`  "${event.name}" — contact person: ${event.organizer || '(none)'} — ${people.length} app participants`);
         if (people.length < SCENARIOS.length) throw new Error(`Needs at least ${SCENARIOS.length} app participants on the event.`);
         const picked = people.slice(0, SCENARIOS.length);
