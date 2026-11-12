@@ -1542,3 +1542,18 @@ the timeline frame strip needs CORS on the media bucket.
 - `npm run test:module -- live` on live: 1/14. The page crashes ("reading 'tone'"): the live API still returns the OLD stream shape (no status / visibility, categories without is_active) - Render did not deploy 0ecff1d although it is on GitHub. 3e88eef (category is_active fix) still unpushed.
 - Portal guard: StatusBadge falls back to Scheduled when status is missing (no more white-screen crash).
 - Jamal: keep only Public and Participants Only. LIVE_VISIBILITIES + backend VISIBILITIES cut to those two; old values (guests / invite_link / unlisted / private) open and copy as Participants Only (never widened to Public); participant-side guards for old private / unlisted rows unchanged. No DB change (column keeps its old values). live.cjs expects 2 options. tsc + eslint clean.
+- LIVE re-test after Jamal pushed backend d5b295b + portal 1130c95 (Render now serves the new stream shape): `npm run test:module -- live` 16/16 pass (category, error message, saving state, add, edit, view + Go Live / End, share, duplicate, hide, delete popup + spinner, clean-up, no errors). Visibility dropdown shows 2 choices. All QA test data removed. Screenshots: Documents\EventInvite_Portal_Test\2026-11-12_live.
+
+### 2026-11-12 - Settings buttons with a label + Contact Settings (portal only, NOT pushed)
+- Contact page header: Contact Person | **Contact Settings** | New Message. Contact Settings = right-side panel with the Contact Person form (same form as event Settings > Contact Person: name, photo, role, mobile, WhatsApp, email, address, preferred time, languages, about). No new backend - there are no contact-chat settings in the backend.
+- Icon-only ⚙ buttons replaced with labelled outline buttons: Family -> "Family Settings", Participants -> "Participant Settings" (Wed Wishes already had "Wishes Settings"). No other module had a ⚙ button.
+- Contact Person form Save Changes now shows a spinner. tsc + eslint clean.
+
+### 2026-11-12 - Media module check on live
+- `npm run test:module -- media` (QA account, event #37): 15/15 pass (empty-name error, saving state, add folder, upload image, file Details panel, delete image + popup spinner, edit folder, delete folder, clean-up, no errors). Test folder + image removed. Screenshots: Documents\EventInvite_Portal_Test\2026-11-12_media.
+- Not covered by this check: video / short upload, Create Album / Video / Short, multi-select actions, Move / Rename / Download.
+
+### 2026-11-12 - Media extended check (media-extra.cjs) on live + Rename bug fixed (backend, NOT pushed)
+- New e2e/module-check/modules/media-extra.cjs + fixtures/ (qa-video.mp4 640x360 5 s, qa-short.mp4 360x640 5 s, qa-music.mp3, made with ffmpeg-static): 3 images at once, Create Video (sidebar), Create Short (sidebar, empty-submit error), Rename, Download, Move, Multi-select Copy + Select All bulk Delete, Create Album (error, 2 images + MP3, save) -> Play -> Edit -> Delete. Plan limits checked: QA plan = 7 photos / 2 videos (shorts count; copies count) - a full plan shows "reached its limit of 2 videos" / "Copying would go over your plan's 7 photos".
+- Live result: 19/20. All test data removed (event #37 back to Media + QA Album folders, 3 photos, 1 short).
+- BUG: Rename of an IMAGE said "Renamed" (PUT 200 "Updated.") but nothing was saved - clientGallery.service updateItem only took `title` for videos. Fixed: title saved for every item (empty -> falls back to file name). No DB change (title column exists). Re-run media-extra after the backend push - E4 should pass.

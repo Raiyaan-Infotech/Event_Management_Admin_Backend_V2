@@ -1064,8 +1064,10 @@ const updateItem = async (clientId, itemId, body = {}) => {
 
     if (body.caption !== undefined) item.caption = cleanText(body.caption, 300);
     // A short's / video's details, edited after upload (Jamal, 2026-10-24).
-    // A short keeps a title — it is what its card shows.
-    if (item.type === 'video' && body.title !== undefined) {
+    // A short keeps a title — it is what its card shows. Images take one too: the portal's
+    // Rename (2026-11-12 fix — it was ignored for images while the reply said "Updated").
+    // An empty title on an image / video falls back to its file name.
+    if (body.title !== undefined) {
         const title = cleanText(body.title, 150);
         if (!title && item.is_short) throw ApiError.badRequest('Please enter a title for the short.');
         item.title = title;
