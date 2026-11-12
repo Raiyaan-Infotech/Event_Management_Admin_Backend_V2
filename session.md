@@ -1565,3 +1565,4 @@ the timeline frame strip needs CORS on the media bucket.
 - No live album had the name saved as intro (QA account has none; the app does not show slideshow albums).
 - media-extra.cjs: E10 checks the preview with empty / typed intro text + the saved intro_text; E12b deletes the cover photo and checks the album cover still loads. Live: **24/24 pass**, test data removed.
 - Open (Jamal to decide): Cover Image auto-filled with the first added photo; album card shows "Slideshow album" when there is no description.
+- Follow-up (Jamal agreed with my suggestion): album card shows no "Slideshow album" when there is no description; a NEW album's cover is the first slide until the organizer picks one (hint "First photo used as cover — change it any time."), it follows reorder / remove; Change Photo / Use as Cover fixes it. Portal 4b66813. media-extra live: 24/24 (checks the hint, the cover following a Move Down, no card subtitle).
