@@ -1,5 +1,5 @@
 const {
-    Sequelize, EventGalleryItem, EventGalleryCategory, Event, EventParticipant, WebsiteClient, EventWish, EventWishComment,
+    Sequelize, EventGalleryItem, EventGalleryCategory, EventGalleryAlbum, Event, EventParticipant, WebsiteClient, EventWish, EventWishComment,
 } = require('../models');
 const { Op } = Sequelize;
 const ApiError = require('../utils/apiError');
@@ -976,8 +976,13 @@ const uploadItem = async (clientId, eventId, file, body = {}, short = null) => {
  * (a Copy to Folder copy) still uses the same file.
  */
 const dropItemFiles = async (item) => {
-    const shared = await EventGalleryItem.count({ where: { url: item.url, id: { [Op.ne]: item.id } } });
-    if (shared) return;
+    // A copy shares the file; an album's cover can be this photo's file too ("Use as Cover", or the
+    // first slide picked as cover) - deleting it would break that album's cover (2026-11-12).
+    const [shared, asCover] = await Promise.all([
+        EventGalleryItem.count({ where: { url: item.url, id: { [Op.ne]: item.id } } }),
+        EventGalleryAlbum.count({ where: { cover_image: item.url } }),
+    ]);
+    if (shared || asCover) return;
     await dropFile(item.url, item.company_id);
     // Its own thumbnail / poster (older photo rows have none, or the same URL).
     if (item.thumbnail_url && item.thumbnail_url !== item.url) {
