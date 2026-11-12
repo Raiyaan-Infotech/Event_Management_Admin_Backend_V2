@@ -45,7 +45,7 @@ const list = asyncHandler(async (req, res) => {
 
 /** The four dashboard tiles. */
 const stats = asyncHandler(async (req, res) => {
-    const data = await clientEventService.getDashboardStats(req.websiteClient.id);
+    const data = await clientEventService.getDashboardStats(req.websiteClient.id, req.query);
     return ApiResponse.success(res, data, 'Dashboard stats retrieved');
 });
 

@@ -1163,6 +1163,17 @@ const listEvents = async (clientId, query = {}) => {
     // erroring or, worse, matching nothing and reading as "you have no events".
     if (PRIVACY_VALUES.includes(privacy)) where.privacy = privacy;
 
+    // Date range (dashboard "Events Overview"): events whose days touch [from, to].
+    // A one-day event may fill only start_date. Bad dates are ignored, like the filters above.
+    const from = /^\d{4}-\d{2}-\d{2}$/.test(String(query.from || '')) ? String(query.from) : null;
+    const to = /^\d{4}-\d{2}-\d{2}$/.test(String(query.to || '')) ? String(query.to) : null;
+    if (from || to) {
+        const range = [];
+        if (to) range.push(Sequelize.literal(`COALESCE(\`Event\`.\`start_date\`, \`Event\`.\`end_date\`) <= ${sequelize.escape(to)}`));
+        if (from) range.push(Sequelize.literal(`COALESCE(\`Event\`.\`end_date\`, \`Event\`.\`start_date\`) >= ${sequelize.escape(from)}`));
+        where[Op.and] = [...(where[Op.and] || []), ...range];
+    }
+
     if (search) {
         where[Op.or] = [
             { name: { [Op.like]: `%${search}%` } },
@@ -1218,6 +1229,11 @@ const listEvents = async (clientId, query = {}) => {
                     (SELECT COUNT(*) FROM event_participants p
                       WHERE p.event_id = e.id AND p.deleted_at IS NULL
                         AND p.response_type IN ('none', 'maybe')) AS pending_count,
+                    (SELECT COUNT(*) FROM event_participants p
+                      WHERE p.event_id = e.id AND p.deleted_at IS NULL
+                        AND p.response_type = 'no') AS declined_count,
+                    (SELECT COALESCE(SUM(d.download_count), 0) FROM event_downloads d
+                      WHERE d.event_id = e.id) AS downloads_count,
                     (SELECT COUNT(*) FROM event_messages m
                       WHERE m.event_id = e.id AND m.deleted_at IS NULL
                         AND m.kind = 'invite' AND m.status IN ('sent', 'delivered')) AS messages_count
@@ -1242,6 +1258,8 @@ const listEvents = async (clientId, query = {}) => {
         row.confirmed_count = Number(c?.confirmed_count) || 0;
         row.pending_count = Number(c?.pending_count) || 0;
         row.messages_count = Number(c?.messages_count) || 0;
+        row.declined_count = Number(c?.declined_count) || 0;
+        row.downloads_count = Number(c?.downloads_count) || 0;
         return row;
     });
 
@@ -1264,7 +1282,7 @@ const listEvents = async (clientId, query = {}) => {
  * indistinguishable from a tile whose real answer is 0. The flag lets the UI
  * say which it is instead of guessing.
  */
-const getDashboardStats = async (clientId) => {
+const getDashboardStats = async (clientId, query = {}) => {
     const events = await Event.findAll({
         where: { website_client_id: clientId },
         attributes: ['id', 'status', 'start_date', 'end_date'],
@@ -1312,7 +1330,48 @@ const getDashboardStats = async (clientId) => {
         };
     }
 
+    // Dashboard (2026-11-13 design): Messages = invitations that actually left (same as the
+    // event rows), Downloads = every file download across the events, and a per-month
+    // count of events + guests for the chosen year (by the event's start date).
+    const year = /^\d{4}$/.test(String(query.year || '')) ? Number(query.year) : new Date().getFullYear();
+    const byMonth = Array.from({ length: 12 }, (_, i) => ({ month: i + 1, events: 0, guests: 0 }));
+    let totalMessages = 0;
+    let totalDownloads = 0;
+    if (events.length) {
+        const ids = events.map((e) => e.id);
+        const [[t], months] = await Promise.all([
+            sequelize.query(
+                `SELECT
+                    (SELECT COUNT(*) FROM event_messages m
+                      WHERE m.deleted_at IS NULL AND m.event_id IN (:ids)
+                        AND m.kind = 'invite' AND m.status IN ('sent', 'delivered')) AS messages,
+                    (SELECT COALESCE(SUM(d.download_count), 0) FROM event_downloads d
+                      WHERE d.event_id IN (:ids)) AS downloads`,
+                { replacements: { ids }, type: Sequelize.QueryTypes.SELECT },
+            ).then((r) => [r]),
+            sequelize.query(
+                `SELECT MONTH(e.start_date) AS month, COUNT(*) AS events,
+                        SUM((SELECT COUNT(*) FROM event_participants p
+                              WHERE p.event_id = e.id AND p.deleted_at IS NULL)) AS guests
+                   FROM events e
+                  WHERE e.id IN (:ids) AND e.deleted_at IS NULL AND YEAR(e.start_date) = :year
+                  GROUP BY MONTH(e.start_date)`,
+                { replacements: { ids, year }, type: Sequelize.QueryTypes.SELECT },
+            ),
+        ]);
+        totalMessages = Number(t?.[0]?.messages) || 0;
+        totalDownloads = Number(t?.[0]?.downloads) || 0;
+        for (const m of months) {
+            const slot = byMonth[Number(m.month) - 1];
+            if (slot) { slot.events = Number(m.events) || 0; slot.guests = Number(m.guests) || 0; }
+        }
+    }
+
     return {
+        total_messages: totalMessages,
+        total_downloads: totalDownloads,
+        year,
+        events_by_month: byMonth,
         total_events: counts.total,
         // Everything a guest could see. Live, upcoming and completed alike are
         // published; only a draft and a cancellation are not.
