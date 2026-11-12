@@ -1,4 +1,4 @@
-﻿# Event Invit V2 â€” Session Log
+# Event Invit V2 â€” Session Log
 
 Started 2026-10-30. This is the V2 log. Everything before V2 (Sessions 1â€“58 and the
 Oct 2026 app work) is in [docs/session_V1_history.md](docs/session_V1_history.md) â€” grep
@@ -1537,3 +1537,8 @@ the timeline frame strip needs CORS on the media bucket.
   - "+ Create Live Stream" (`addStream`): if no categories are active, it immediately opens the category sheet to turn it on instead of a dead-end toast.
   - Stream sheet (`StreamSheet`): `offered` categories list uses `isTypeActive(t)`.
   - Category sheet (`CategorySheet`): `active` initial state uses `isTypeActive(type)`.
+
+### 2026-11-12 - Live Streaming live test FAILED: Render never deployed 0ecff1d; Visibility = Public / Participants only (portal + backend, NOT pushed)
+- `npm run test:module -- live` on live: 1/14. The page crashes ("reading 'tone'"): the live API still returns the OLD stream shape (no status / visibility, categories without is_active) - Render did not deploy 0ecff1d although it is on GitHub. 3e88eef (category is_active fix) still unpushed.
+- Portal guard: StatusBadge falls back to Scheduled when status is missing (no more white-screen crash).
+- Jamal: keep only Public and Participants Only. LIVE_VISIBILITIES + backend VISIBILITIES cut to those two; old values (guests / invite_link / unlisted / private) open and copy as Participants Only (never widened to Public); participant-side guards for old private / unlisted rows unchanged. No DB change (column keeps its old values). live.cjs expects 2 options. tsc + eslint clean.

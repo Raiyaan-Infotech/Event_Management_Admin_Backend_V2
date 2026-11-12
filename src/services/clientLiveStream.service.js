@@ -31,7 +31,10 @@ const { Op } = Sequelize;
  */
 
 const PLATFORMS = ['youtube', 'facebook', 'instagram', 'zoom', 'google_meet', 'teams', 'custom_rtmp', 'embedded', 'other'];
-const VISIBILITIES = ['public', 'participants', 'guests', 'invite_link', 'unlisted', 'private'];
+// Jamal (2026-11-12): only Public and Participants Only can be chosen. Older rows with another value stay readable.
+const VISIBILITIES = ['public', 'participants'];
+/** An old value (guests / invite_link / unlisted / private) is shown and copied as Participants Only - never widened to Public. */
+const asVisibility = (v) => (v == null || v === '' ? 'public' : VISIBILITIES.includes(v) ? v : 'participants');
 const STATUSES = ['scheduled', 'live', 'ended'];
 const DEFAULT_TIMEZONE = 'Asia/Kolkata';
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -159,7 +162,7 @@ const presentType = (r, counts = {}, firstCover = null) => ({
     /** A type has no picture of its own; this is its first stream's cover. */
     cover_url: firstCover || null,
     is_active: r.is_active == null ? true : truthy(r.is_active),
-    default_visibility: r.default_visibility || 'public',
+    default_visibility: asVisibility(r.default_visibility),
     notes: r.notes || null,
     sort_order: r.sort_order,
     stream_count: counts.total || 0,
@@ -355,7 +358,7 @@ const present = (row, typeName = null, { timezone = null, owner = true } = {}) =
         stream_date: s.stream_date,
         stream_time: hhmm(s.stream_time),
         end_time: hhmm(s.end_time),
-        visibility: s.visibility || 'public',
+        visibility: asVisibility(s.visibility),
         /** What is shown: the organizer's Go Live / End Stream, else the schedule. */
         status: statusOf(s, timezone),
         started_at: s.started_at || null,
@@ -602,7 +605,7 @@ const create = async (clientId, eventId, body = {}) => {
     const typeId = await requireType(event.id, body.type_id);
     if (!has(data, 'visibility')) {
         const type = await EventLiveStreamType.findByPk(typeId, { attributes: ['default_visibility'] });
-        data.visibility = type?.default_visibility || 'public';
+        data.visibility = asVisibility(type?.default_visibility);
     }
     const last = await EventLiveStream.max('sort_order', { where: { event_id: event.id } });
     const row = await EventLiveStream.create({
@@ -653,7 +656,7 @@ const duplicate = async (clientId, streamId) => {
         platform: s.platform,
         stream_url: s.stream_url,
         rtmp_url: s.rtmp_url,
-        visibility: s.visibility,
+        visibility: asVisibility(s.visibility),
         stream_date: s.stream_date,
         stream_time: s.stream_time,
         end_time: s.end_time,
