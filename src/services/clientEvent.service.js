@@ -24,6 +24,7 @@ const liveStreamService = require('./clientLiveStream.service');
 const socialLinkService = require('./clientSocialLink.service');
 const downloadService = require('./clientDownload.service');
 const nearbyPlaceService = require('./clientNearbyPlace.service');
+const eventAvailability = require('./eventAvailability.service');
 
 /**
  * Events belonging to a signed-in website client.
@@ -533,6 +534,13 @@ const createEvent = async (clientId, body) => {
     if (!client) throw ApiError.notFound('Account not found.');
 
     const { data, plan } = await normalise(clientId, body, { partial: false });
+
+    // Event Availability: the dates must be configured and not full (only when enforced).
+    await eventAvailability.assertEventDatesBookable({
+        categoryId: data.event_category_id ?? null,
+        startDate: data.start_date,
+        endDate: data.end_date,
+    });
 
     // Plan limit — see LIMIT_FIELDS in subscriptionPlan.service.js. Checked
     // against the client's CURRENT plan (same one `normalise` just validated the
@@ -1531,6 +1539,16 @@ const updateEvent = async (clientId, eventId, body) => {
     if (!event) return null;
 
     const { data } = await normalise(clientId, body, { partial: true });
+
+    // Event Availability: re-checked only when the dates or the category actually change.
+    const nextStart = data.start_date ?? event.start_date;
+    const nextEnd = data.end_date ?? event.end_date;
+    const nextCat = data.event_category_id !== undefined ? data.event_category_id : event.event_category_id;
+    if (nextStart !== event.start_date || (nextEnd || null) !== (event.end_date || null) || nextCat !== event.event_category_id) {
+        await eventAvailability.assertEventDatesBookable({
+            categoryId: nextCat ?? null, startDate: nextStart, endDate: nextEnd, excludeEventId: event.id,
+        });
+    }
 
     // Editing does NOT reissue the QR: it is bound to the event id, a scan reads
     // the live event, and a code already printed or shared must keep matching.

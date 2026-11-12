@@ -348,6 +348,9 @@ router.get('/events/wishlist', eventController.wishlist);
 router.post('/events/:id/wishlist', eventController.addToWishlist);
 router.delete('/events/:id/wishlist', eventController.removeFromWishlist);
 
+// Event Availability calendar (railway-style): status of each date for event creation.
+router.get('/availability', require('../controllers/eventAvailability.controller').clientCalendar);
+
 router.get('/events', eventController.list);
 router.post('/events', eventController.create);
 router.get('/events/:id', eventController.getById);

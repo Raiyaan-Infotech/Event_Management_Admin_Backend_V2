@@ -54,6 +54,8 @@ const errorHandler = (err, req, res, next) => {
     return res.status(err.statusCode).json({
       success: false,
       message: err.message,
+      // Structured details some errors carry (e.g. the events blocking an availability change).
+      ...(Array.isArray(err.errors) && err.errors.length ? { errors: err.errors } : {}),
     });
   }
 

@@ -109,6 +109,8 @@ app.use('/api/v1/menus', require('./routes/menu.routes'));
 // Menu Management
 app.use('/api/v1/event-categories', require('./routes/eventCategory.routes'));
 app.use('/api/v1/event-menus', require('./routes/eventMenu.routes'));
+// Event Availability - daily event limits per date (super admin).
+app.use('/api/v1/event-availability', require('./routes/eventAvailability.routes'));
 app.use('/api/v1/notification-categories', require('./routes/notificationCategory.routes'));
 app.use('/api/v1/notification-templates', require('./routes/notificationTemplate.routes'));
 // The two dropdowns on the mobile app's guest registration form, per category.
