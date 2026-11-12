@@ -499,6 +499,11 @@ const setStatus = async (clientId, eventId, chatId, input = {}) => {
         const reason = str(input.reason, 60);
         if (!reason) throw ApiError.badRequest('Please choose a reason for the block.');
         const duration = input.duration === 'permanent' ? 'permanent' : 'event_end';
+        // A finished event: an "until the event ends" block would be lifted on the next read (2026-11-12).
+        const end = eventEnd(event);
+        if (duration === 'event_end' && end && end <= new Date()) {
+            throw ApiError.badRequest('This event has ended. Choose a permanent block instead.');
+        }
         await chat.update({ status, block_reason: reason, block_note: str(input.note, 500), block_duration: duration, blocked_at: now, team_unread: 0, awaiting_since: null });
     } else if (status === 'removed') {
         const inquiry = await openInquiryOf(chat.id);
