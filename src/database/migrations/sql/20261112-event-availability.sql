@@ -7,8 +7,7 @@
 -- availability_configs    the default rule: a category (NULL = every category), a date range and a
 --                         daily max. Only ACTIVE + PUBLISHED configs count. Two active published configs
 --                         may not cover the same category on the same date (checked in the service).
---                         A date no config covers is "not configured" — clients cannot book it
---                         (only while EVENT_AVAILABILITY_ENFORCED=true).
+--                         A date no config covers is "not configured" — clients cannot book it.
 -- availability_overrides  every per-date change, made on the Special Limits Override page OR from the
 --                         daily list's action menu (Edit Limit, Increase Limit, Mark Fully Booked,
 --                         Disable Date, Delete). Belongs to one config.

@@ -15,8 +15,7 @@
  * AvailabilityOverride row. The daily list is not stored — it is worked out from config + overrides +
  * the real event count each time.
  *
- * Client-side enforcement is OFF until EVENT_AVAILABILITY_ENFORCED=true, so live clients are not
- * blocked before the super admin has created any config.
+ * Always enforced: a client can only create an event on a configured, open date.
  */
 const { Sequelize, AvailabilityConfig, AvailabilityOverride, Event, EventCategory, WebsiteClient } = require('../models');
 const ApiError = require('../utils/apiError');
@@ -712,8 +711,6 @@ const bulkOverrides = async (body = {}, userId) => {
 
 // ── client side ────────────────────────────────────────────────────────────────────────────────
 
-const enforced = () => String(process.env.EVENT_AVAILABILITY_ENFORCED || '').toLowerCase() === 'true';
-
 /** The live config for one category on one date: the exact category first, then an all-categories one. */
 const configForDay = (configs, categoryId, d) => {
     const covering = configs.filter((c) => c.start_date <= d && c.end_date >= d
@@ -741,15 +738,15 @@ const clientCalendar = async (query = {}) => {
             allow_single_date: !!c.allow_single_date, allow_multi_date: !!c.allow_multi_date,
         };
     });
-    return { enforced: enforced(), range: { from, to }, days };
+    return { range: { from, to }, days };
 };
 
 /**
  * Called by clientEvent.service on create, and on update when the dates or category change.
- * Throws the message the client portal shows. Does nothing until EVENT_AVAILABILITY_ENFORCED=true.
+ * Throws the message the client portal shows.
  */
 const assertEventDatesBookable = async ({ categoryId = null, startDate, endDate, excludeEventId = null }) => {
-    if (!enforced() || !startDate) return;
+    if (!startDate) return;
     const from = startDate;
     const to = endDate && endDate > startDate ? endDate : startDate;
     const dates = eachDay(from, to);
@@ -779,5 +776,5 @@ module.exports = {
     // overrides
     listOverrides, getOverride, createOverride, updateOverride, setOverrideStatus, deleteOverride, bulkOverrides,
     // client
-    clientCalendar, assertEventDatesBookable, enforced,
+    clientCalendar, assertEventDatesBookable,
 };
