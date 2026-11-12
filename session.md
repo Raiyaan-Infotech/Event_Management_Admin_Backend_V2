@@ -1588,3 +1588,14 @@ the timeline frame strip needs CORS on the media bucket.
 - errorHandler now also returns `errors` when an ApiError carries them (the booked-events list).
 - Local rule test (service level, temp events removed): 33/33 pass.
 - Next: apply prod tables + push (Jamal's OK), then the 3 Super Admin screens in Event_Management_Admin_Frontend (V2).
+
+### 2026-11-13 - Event Availability LIVE (backend + Super Admin screens)
+- Jamal: no env switch - event dates are ALWAYS checked (74222ad). Prod tables applied (apply-event-availability.js --prod --apply) BEFORE the push. Backend 2a0ad71 + 74222ad pushed.
+- Super Admin (Event_Management_Admin_Frontend V2, d027fa5): sidebar "Event Availability" -> Daily Booking (/admin/event-availability), Availability Configs (/configs, + /configs/[id] edit), Special Limits Override (/overrides), Create Config (/create). Hook src/hooks/use-event-availability.ts; components in event-availability/_components (shared, day-sheets, daily-content, config-form, configs-content, overrides-content).
+  - Daily list: 4 stat cards, filter (from/to/category/status/search), ⋯ menu: View Details, Edit Limit, View Booked Events, Increase Limit, Mark Fully Booked, Disable Date (Enable Date / Open for Booking when set), Delete Config (centre popup). Duplicate removed (both menus). Save Draft / Publish only on the config form.
+  - Refusals (limit below booked) show the booked events in the panel (errors[] from the API).
+  - Editing an override starts as "Set Custom Limit" (increase / reduce are labels worked out from the number).
+  - Not in the designs, added: Availability Configs list (edit / switch off / delete); holiday dates input when Exclude Public Holidays is on. "Minimum Required Slots" and the Organizer filter left out (limit is for all clients).
+- Local browser test 22/22. LIVE browser test (superadmin login, temp config "QA LIVE TEST" removed after): 21/22 - the 1 miss was timing (live Save ~4 s, list refresh ~2 s later; traced: row shows the new limit). Screenshots Documents\EventInvite_Portal_Test6-11-13_event-availability(_live).
+- ⚠ NOW LIVE: there is NO config on production, so clients cannot create events / change dates until the super admin creates configs.
+- Next: client-portal railway-style calendar (GET /api/v1/client/availability is ready) - Jamal to explain the client flow.
