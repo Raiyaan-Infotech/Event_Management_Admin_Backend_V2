@@ -719,24 +719,39 @@ const configForDay = (configs, categoryId, d) => {
 };
 
 /**
- * The client portal calendar: one entry per date.
+ * The client portal calendar (Jamal 2026-11-13): one entry per date, TOTAL slots across every live
+ * config that covers it (no category picker). Dates no config covers are `not_configured` (the
+ * portal hides them). `my_events` = this client's OWN events on the date — never other clients'.
  * status  available | low | full | disabled | not_configured
+ *
+ * The category is still checked when the event is saved (assertEventDatesBookable).
  */
-const clientCalendar = async (query = {}) => {
+const clientCalendar = async (query = {}, clientId = null) => {
     const { from, to } = rangeFromQuery(query);
-    const categoryId = query.event_category_id ? Number(query.event_category_id) : null;
-    const configs = (await liveConfigs(from, to, { categoryId })).map(parseHolidays);
+    const configs = (await liveConfigs(from, to)).map(parseHolidays);
     const overrides = await loadOverrides(configs.map((c) => c.id), from, to);
     const events = await loadEvents(from, to);
+    const mine = clientId ? events.filter((e) => e.website_client_id === Number(clientId)) : [];
+
     const days = eachDay(from, to).map((d) => {
-        const c = configForDay(configs, categoryId, d);
-        if (!c) return { date: d, day: dayName(d), status: 'not_configured', daily_max: 0, booked: 0, balance: 0 };
-        const x = computeDay(c, d, overrides, events);
-        if (x.status === 'removed') return { date: d, day: dayName(d), status: 'not_configured', daily_max: 0, booked: 0, balance: 0 };
-        return {
-            date: d, day: x.day, status: x.status, daily_max: x.daily_max, booked: x.booked, balance: x.balance,
-            allow_single_date: !!c.allow_single_date, allow_multi_date: !!c.allow_multi_date,
-        };
+        const parts = configs
+            .filter((c) => c.start_date <= d && c.end_date >= d)
+            .map((c) => computeDay(c, d, overrides, events))
+            .filter((x) => x.status !== 'removed');
+        const myEvents = mine.filter((e) => eventCovers(e, d))
+            .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')))
+            .map((e) => ({ id: e.id, name: e.name, start_time: e.start_time, status: e.status }));
+        if (!parts.length) return { date: d, day: dayName(d), status: 'not_configured', daily_max: 0, booked: 0, balance: 0, my_events: myEvents };
+
+        const open = parts.filter((x) => x.status !== 'disabled');
+        const dailyMax = open.reduce((n, x) => n + x.daily_max, 0);
+        const booked = parts.reduce((n, x) => n + x.booked, 0);
+        const balance = open.reduce((n, x) => n + x.balance, 0);
+        let status;
+        if (!open.length) status = 'disabled';
+        else if (balance <= 0) status = 'full';
+        else status = balance <= LOW_BALANCE ? 'low' : 'available';
+        return { date: d, day: dayName(d), status, daily_max: dailyMax, booked, balance, my_events: myEvents };
     });
     return { range: { from, to }, days };
 };

@@ -48,7 +48,7 @@ const bulkOverrides = asyncHandler(async (req, res) => {
 });
 
 // Client portal calendar
-const clientCalendar = asyncHandler(async (req, res) => ApiResponse.success(res, await service.clientCalendar(req.query)));
+const clientCalendar = asyncHandler(async (req, res) => ApiResponse.success(res, await service.clientCalendar(req.query, req.websiteClient?.id)));
 
 module.exports = {
     listConfigs, getConfig, createConfig, updateConfig, setConfigStatus, deleteConfig,
