@@ -1599,3 +1599,10 @@ the timeline frame strip needs CORS on the media bucket.
 - Local browser test 22/22. LIVE browser test (superadmin login, temp config "QA LIVE TEST" removed after): 21/22 - the 1 miss was timing (live Save ~4 s, list refresh ~2 s later; traced: row shows the new limit). Screenshots Documents\EventInvite_Portal_Test6-11-13_event-availability(_live).
 - ⚠ NOW LIVE: there is NO config on production, so clients cannot create events / change dates until the super admin creates configs.
 - Next: client-portal railway-style calendar (GET /api/v1/client/availability is ready) - Jamal to explain the client flow.
+
+### 2026-11-13 - Organizer home dashboard redesign (LIVE)
+- Design: Downloads\Create Event Updated\Create Event Updated\Organizer\01.png (02_1 / 02_2 calendar + 03 date-first Create Event NOT built yet - waiting for Jamal's answers 2-7: category picker, not-configured look, slot hold, multi-day end date, 6-step wizard, move-event from the ⋯ menu).
+- Agreed: the calendar's "Existing Events" lists only THIS client's events; C / B counts are all clients (shared limit).
+- Backend a07a77d: GET /client/events accepts from / to (date range) and returns declined_count + downloads_count per row; GET /client/events/stats?year= adds total_messages (invitations sent), total_downloads, year, events_by_month [{month, events, guests}]. Render did not auto-deploy it - Jamal deployed manually.
+- Portal 419c5cc + 5941c8d: /dashboard = header (name + photo, Create New Event, Event Availability - DISABLED until the calendar exists), 7 tiles, Guest Responses + Event Status donuts, Events by Month bars (Events / Guests count), Events Overview table (year range / All Dates, search, status filter, RSVPs C|P|D, messages, downloads, response rate = (confirmed + declined) / guests) + ⋯ menu (View Details, Edit, Manage Guests, View RSVPs, Send Message, Event Availability (disabled), Analytics, Duplicate, Download QR, Publish (drafts), Share, Delete popup).
+- e2e/module-check/modules/home-dashboard.cjs (`npm run test:module -- home-dashboard`): live 10/10 (tiles + rows = API).
