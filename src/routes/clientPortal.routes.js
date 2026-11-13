@@ -359,6 +359,7 @@ router.post('/availability/requests', (req, res, next) => availabilityAttachment
     return next();
 }), require('../controllers/eventAvailability.controller').createClientRequest);
 router.get('/availability/requests', require('../controllers/eventAvailability.controller').listClientRequests);
+router.get('/availability/requests/:id', require('../controllers/eventAvailability.controller').getClientRequest);
 
 router.get('/events', eventController.list);
 router.post('/events', eventController.create);

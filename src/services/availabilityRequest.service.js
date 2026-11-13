@@ -128,6 +128,19 @@ const listForClient = async (clientId) => {
     return rows.map(present);
 };
 
+/**
+ * One of the client's own requests + the live availability of its dates (the Tracking / Approved /
+ * Rejected pages). `days` are the general totals; the client's own exception is in `decision`.
+ */
+const getForClient = async (clientId, id) => {
+    const row = await AvailabilityRequest.findOne({ where: { id, website_client_id: clientId } });
+    if (!row) throw ApiError.notFound('Request not found.');
+    const out = present(row);
+    const cal = await clientCalendar({ from: out.start_date, to: out.end_date }, null);
+    out.days = cal.days.map((d) => ({ date: d.date, day: d.day, status: d.status, daily_max: d.daily_max, booked: d.booked, balance: d.balance }));
+    return out;
+};
+
 /* ── super admin: Allocation Requests ──────────────────────────────────────────────────────────── */
 
 const REJECT_CATEGORIES = ['No capacity available', 'Date blocked by admin', 'Incomplete information', 'Duplicate request', 'Other'];
@@ -246,6 +259,6 @@ const reject = async (id, body = {}, userId = null) => {
 };
 
 module.exports = {
-    createRequest, listForClient, present, ATTACH_BYTES, ATTACH_MIMES,
+    createRequest, listForClient, getForClient, present, ATTACH_BYTES, ATTACH_MIMES,
     listAdmin, getAdmin, approve, reject, REJECT_CATEGORIES, EXPIRY_HOURS,
 };

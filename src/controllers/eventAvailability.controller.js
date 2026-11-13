@@ -52,6 +52,7 @@ const requestService = require('../services/availabilityRequest.service');
 const createClientRequest = asyncHandler(async (req, res) => ApiResponse.success(
     res, await requestService.createRequest(req.websiteClient.id, req.body, req.file), 'Support request submitted', 201));
 const listClientRequests = asyncHandler(async (req, res) => ApiResponse.success(res, await requestService.listForClient(req.websiteClient.id)));
+const getClientRequest = asyncHandler(async (req, res) => ApiResponse.success(res, await requestService.getForClient(req.websiteClient.id, req.params.id)));
 
 // Super admin: Allocation Requests
 const listRequests = asyncHandler(async (req, res) => ApiResponse.success(res, await requestService.listAdmin(req.query)));
@@ -66,6 +67,6 @@ module.exports = {
     listConfigs, getConfig, createConfig, updateConfig, setConfigStatus, deleteConfig,
     daily, dayDetails, dayAction,
     listOverrides, getOverride, createOverride, updateOverride, setOverrideStatus, deleteOverride, bulkOverrides,
-    clientCalendar, createClientRequest, listClientRequests,
+    clientCalendar, createClientRequest, listClientRequests, getClientRequest,
     listRequests, getRequest, approveRequest, rejectRequest,
 };
