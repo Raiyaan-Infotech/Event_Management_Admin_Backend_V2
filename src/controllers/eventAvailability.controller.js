@@ -47,6 +47,12 @@ const bulkOverrides = asyncHandler(async (req, res) => {
     return ApiResponse.success(res, result, msg);
 });
 
+// Client portal: support / allocation requests for unavailable dates
+const requestService = require('../services/availabilityRequest.service');
+const createClientRequest = asyncHandler(async (req, res) => ApiResponse.success(
+    res, await requestService.createRequest(req.websiteClient.id, req.body, req.file), 'Support request submitted', 201));
+const listClientRequests = asyncHandler(async (req, res) => ApiResponse.success(res, await requestService.listForClient(req.websiteClient.id)));
+
 // Client portal calendar
 const clientCalendar = asyncHandler(async (req, res) => ApiResponse.success(res, await service.clientCalendar(req.query, req.websiteClient?.id)));
 
@@ -54,5 +60,5 @@ module.exports = {
     listConfigs, getConfig, createConfig, updateConfig, setConfigStatus, deleteConfig,
     daily, dayDetails, dayAction,
     listOverrides, getOverride, createOverride, updateOverride, setOverrideStatus, deleteOverride, bulkOverrides,
-    clientCalendar,
+    clientCalendar, createClientRequest, listClientRequests,
 };

@@ -350,6 +350,15 @@ router.delete('/events/:id/wishlist', eventController.removeFromWishlist);
 
 // Event Availability calendar (railway-style): status of each date for event creation.
 router.get('/availability', require('../controllers/eventAvailability.controller').clientCalendar);
+// Contact Support for unavailable dates (call back / email + optional PDF/JPG/PNG up to 5 MB).
+const availabilityAttachment = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+router.post('/availability/requests', (req, res, next) => availabilityAttachment.single('attachment')(req, res, (err) => {
+    if (err) {
+        return res.status(400).json({ success: false, message: err.code === 'LIMIT_FILE_SIZE' ? 'The attachment is larger than 5 MB.' : 'The attachment could not be uploaded.' });
+    }
+    return next();
+}), require('../controllers/eventAvailability.controller').createClientRequest);
+router.get('/availability/requests', require('../controllers/eventAvailability.controller').listClientRequests);
 
 router.get('/events', eventController.list);
 router.post('/events', eventController.create);

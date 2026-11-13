@@ -185,6 +185,7 @@ db.EventNearbyCache = require('./EventNearbyCache')(sequelize, Sequelize);
 // Event Availability (2026-11-12) - daily event limits set by the super admin.
 db.AvailabilityConfig = require('./AvailabilityConfig')(sequelize, Sequelize);
 db.AvailabilityOverride = require('./AvailabilityOverride')(sequelize, Sequelize);
+db.AvailabilityRequest = require('./AvailabilityRequest')(sequelize, Sequelize);
 // Contact Person chat (2026-10-26).
 db.EventContactChat = require('./EventContactChat')(sequelize, Sequelize);
 db.EventContactChatMessage = require('./EventContactChatMessage')(sequelize, Sequelize);
