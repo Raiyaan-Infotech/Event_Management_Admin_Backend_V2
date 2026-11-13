@@ -53,6 +53,12 @@ const createClientRequest = asyncHandler(async (req, res) => ApiResponse.success
     res, await requestService.createRequest(req.websiteClient.id, req.body, req.file), 'Support request submitted', 201));
 const listClientRequests = asyncHandler(async (req, res) => ApiResponse.success(res, await requestService.listForClient(req.websiteClient.id)));
 
+// Super admin: Allocation Requests
+const listRequests = asyncHandler(async (req, res) => ApiResponse.success(res, await requestService.listAdmin(req.query)));
+const getRequest = asyncHandler(async (req, res) => ApiResponse.success(res, await requestService.getAdmin(req.params.id)));
+const approveRequest = asyncHandler(async (req, res) => ApiResponse.success(res, await requestService.approve(req.params.id, req.body, req.user.id), 'Request approved'));
+const rejectRequest = asyncHandler(async (req, res) => ApiResponse.success(res, await requestService.reject(req.params.id, req.body, req.user.id), 'Request rejected'));
+
 // Client portal calendar
 const clientCalendar = asyncHandler(async (req, res) => ApiResponse.success(res, await service.clientCalendar(req.query, req.websiteClient?.id)));
 
@@ -61,4 +67,5 @@ module.exports = {
     daily, dayDetails, dayAction,
     listOverrides, getOverride, createOverride, updateOverride, setOverrideStatus, deleteOverride, bulkOverrides,
     clientCalendar, createClientRequest, listClientRequests,
+    listRequests, getRequest, approveRequest, rejectRequest,
 };

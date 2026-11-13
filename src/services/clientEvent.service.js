@@ -536,10 +536,11 @@ const createEvent = async (clientId, body) => {
     const { data, plan } = await normalise(clientId, body, { partial: false });
 
     // Event Availability: the dates must be configured and not full (only when enforced).
-    await eventAvailability.assertEventDatesBookable({
+    const availability = await eventAvailability.assertEventDatesBookable({
         categoryId: data.event_category_id ?? null,
         startDate: data.start_date,
         endDate: data.end_date,
+        clientId: client.id,
     });
 
     // Plan limit — see LIMIT_FIELDS in subscriptionPlan.service.js. Checked
@@ -593,6 +594,9 @@ const createEvent = async (clientId, body) => {
 
     // The organizer's number decides who else may manage the event.
     if (created.contact_phone) await require('./eventOrganizer.service').syncEvent(created);
+
+    // An approved allocation exception this booking used is spent now (one event per approval).
+    await eventAvailability.markExceptionsUsed(availability.usedRequestIds, created.id);
 
     return getEventById(clientId, created.id);
 };
@@ -1604,9 +1608,10 @@ const updateEvent = async (clientId, eventId, body) => {
     const nextEnd = data.end_date ?? event.end_date;
     const nextCat = data.event_category_id !== undefined ? data.event_category_id : event.event_category_id;
     if (nextStart !== event.start_date || (nextEnd || null) !== (event.end_date || null) || nextCat !== event.event_category_id) {
-        await eventAvailability.assertEventDatesBookable({
-            categoryId: nextCat ?? null, startDate: nextStart, endDate: nextEnd, excludeEventId: event.id,
+        const availability = await eventAvailability.assertEventDatesBookable({
+            categoryId: nextCat ?? null, startDate: nextStart, endDate: nextEnd, excludeEventId: event.id, clientId,
         });
+        await eventAvailability.markExceptionsUsed(availability.usedRequestIds, event.id);
     }
 
     // Editing does NOT reissue the QR: it is bound to the event id, a scan reads

@@ -6,7 +6,8 @@
  * Request a Call Back or Email Support; the request is stored with a ticket number and lands in the
  * super admin's Allocation Requests (review → one-time exception approve, or reject — next build).
  */
-const { AvailabilityRequest, WebsiteClient } = require('../models');
+const { Sequelize, AvailabilityRequest, WebsiteClient, User } = require('../models');
+const { Op } = Sequelize;
 const ApiError = require('../utils/apiError');
 const mediaService = require('./media.service');
 const { clientCalendar } = require('./eventAvailability.service');
@@ -44,6 +45,8 @@ const present = (r) => {
         attachment_name: p.attachment_name,
         status: p.status,
         decision_reason: p.decision_reason,
+        decision: (() => { if (typeof p.decision !== 'string') return p.decision || null; try { return JSON.parse(p.decision); } catch { return null; } })(),
+        decided_at: p.decided_at,
         created_at: p.created_at,
     };
 };
@@ -125,4 +128,124 @@ const listForClient = async (clientId) => {
     return rows.map(present);
 };
 
-module.exports = { createRequest, listForClient, present, ATTACH_BYTES, ATTACH_MIMES };
+/* ── super admin: Allocation Requests ──────────────────────────────────────────────────────────── */
+
+const REJECT_CATEGORIES = ['No capacity available', 'Date blocked by admin', 'Incomplete information', 'Duplicate request', 'Other'];
+const EXPIRY_HOURS = [24, 48, 72];
+
+const parseJson = (v) => {
+    if (typeof v !== 'string') return v || null;
+    try { return JSON.parse(v); } catch { return null; }
+};
+
+const withClient = async (rows) => {
+    const ids = [...new Set(rows.map((r) => r.website_client_id))];
+    const clients = ids.length
+        ? await WebsiteClient.findAll({ where: { id: ids }, attributes: ['id', 'name', 'email', 'mobile', 'dial_code', 'company_name'], paranoid: false, raw: true })
+        : [];
+    const byId = new Map(clients.map((c) => [c.id, c]));
+    return rows.map((r) => {
+        const c = byId.get(r.website_client_id) || {};
+        const mobile = c.mobile ? `${c.dial_code ? `${c.dial_code} ` : ''}${c.mobile}` : null;
+        return { ...present(r), client: { id: r.website_client_id, name: c.name || null, email: c.email || null, mobile, company_name: c.company_name || null } };
+    });
+};
+
+const listAdmin = async (query = {}) => {
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
+    const where = {};
+    if (['pending', 'approved', 'rejected'].includes(query.status)) where.status = query.status;
+    const created = {};
+    if (DATE_ONLY.test(String(query.from || ''))) created[Op.gte] = `${query.from} 00:00:00`;
+    if (DATE_ONLY.test(String(query.to || ''))) created[Op.lte] = `${query.to} 23:59:59`;
+    if (Object.getOwnPropertySymbols(created).length) where.created_at = created;
+    const q = String(query.search || '').trim();
+    if (q) {
+        const clientIds = (await WebsiteClient.findAll({ where: { name: { [Op.like]: `%${q}%` } }, attributes: ['id'], raw: true, paranoid: false })).map((c) => c.id);
+        where[Op.or] = [
+            { ticket_no: { [Op.like]: `%${q}%` } },
+            { contact_name: { [Op.like]: `%${q}%` } },
+            { subject: { [Op.like]: `%${q}%` } },
+            ...(clientIds.length ? [{ website_client_id: clientIds }] : []),
+        ];
+    }
+    const { rows, count } = await AvailabilityRequest.findAndCountAll({ where, order: [['created_at', 'DESC']], limit, offset: (page - 1) * limit, raw: true });
+    const [total, pending, approved, rejected] = await Promise.all([
+        AvailabilityRequest.count(),
+        AvailabilityRequest.count({ where: { status: 'pending' } }),
+        AvailabilityRequest.count({ where: { status: 'approved' } }),
+        AvailabilityRequest.count({ where: { status: 'rejected' } }),
+    ]);
+    return {
+        stats: { total, pending, approved, rejected },
+        data: await withClient(rows),
+        pagination: { page, limit, total: count, totalPages: Math.ceil(count / limit) || 1 },
+    };
+};
+
+const loadRow = async (id) => {
+    const r = await AvailabilityRequest.findByPk(id);
+    if (!r) throw ApiError.notFound('Request not found.');
+    return r;
+};
+
+const getAdmin = async (id) => {
+    const r = await loadRow(id);
+    const [out] = await withClient([r.get({ plain: true })]);
+    // Live availability of the requested range (totals, as every client sees them).
+    const cal = await clientCalendar({ from: out.start_date, to: out.end_date }, null);
+    out.days = cal.days.map((d) => ({ date: d.date, day: d.day, status: d.status, daily_max: d.daily_max, booked: d.booked, balance: d.balance }));
+    out.decided_by_name = null;
+    if (r.decided_by) {
+        const u = await User.findByPk(r.decided_by, { attributes: ['full_name'], paranoid: false }).catch(() => null);
+        out.decided_by_name = u?.full_name || null;
+    }
+    return out;
+};
+
+/** Approve with a one-time, request-specific exception. The general daily limit is NOT changed. */
+const approve = async (id, body = {}, userId = null) => {
+    const r = await loadRow(id);
+    if (r.status !== 'pending') throw ApiError.badRequest(`This request is already ${r.status}.`);
+    const unavailable = parseJson(r.unavailable_dates) || [];
+    let dates = Array.isArray(body.dates) && body.dates.length ? body.dates.filter((d) => DATE_ONLY.test(d)) : unavailable.map((u) => u.date);
+    dates = dates.filter((d) => d >= r.start_date && d <= r.end_date);
+    if (!dates.length) throw ApiError.badRequest('Choose at least one date for the exception.');
+    const slots = Number(body.exception_slots ?? 1);
+    if (!Number.isInteger(slots) || slots < 1 || slots > 10) throw ApiError.badRequest('Exception slots must be between 1 and 10.');
+    const hours = Number(body.expiry_hours ?? 48);
+    if (!EXPIRY_HOURS.includes(hours)) throw ApiError.badRequest('Choose the reservation expiry.');
+    if (!(body.capacity_checked === true || body.capacity_checked === 'true')) throw ApiError.badRequest('Please confirm the operational capacity check.');
+    const reason = text(body.reason, 500);
+    if (!reason) throw ApiError.badRequest('Please enter the admin reason / notes.');
+    const now = new Date();
+    await r.update({
+        status: 'approved',
+        decision_reason: reason,
+        decision: {
+            dates, exception_slots: slots, expiry_hours: hours,
+            expires_at: new Date(now.getTime() + hours * 3600000).toISOString(),
+            capacity_checked: true, scope: 'request',
+        },
+        decided_by: userId,
+        decided_at: now,
+    });
+    return getAdmin(r.id);
+};
+
+const reject = async (id, body = {}, userId = null) => {
+    const r = await loadRow(id);
+    if (r.status !== 'pending') throw ApiError.badRequest(`This request is already ${r.status}.`);
+    const category = REJECT_CATEGORIES.includes(body.category) ? body.category : null;
+    if (!category) throw ApiError.badRequest('Please choose the rejection category.');
+    const reason = text(body.reason, 500);
+    if (!reason) throw ApiError.badRequest('Please enter the rejection reason.');
+    await r.update({ status: 'rejected', decision_reason: reason, decision: { category }, decided_by: userId, decided_at: new Date() });
+    return getAdmin(r.id);
+};
+
+module.exports = {
+    createRequest, listForClient, present, ATTACH_BYTES, ATTACH_MIMES,
+    listAdmin, getAdmin, approve, reject, REJECT_CATEGORIES, EXPIRY_HOURS,
+};

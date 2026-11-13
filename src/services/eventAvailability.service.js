@@ -732,6 +732,7 @@ const clientCalendar = async (query = {}, clientId = null) => {
     const overrides = await loadOverrides(configs.map((c) => c.id), from, to);
     const events = await loadEvents(from, to);
     const mine = clientId ? events.filter((e) => e.website_client_id === Number(clientId)) : [];
+    const exceptions = await clientExceptions(clientId, from, to);
 
     const days = eachDay(from, to).map((d) => {
         const parts = configs
@@ -741,6 +742,11 @@ const clientCalendar = async (query = {}, clientId = null) => {
         const myEvents = mine.filter((e) => eventCovers(e, d))
             .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')))
             .map((e) => ({ id: e.id, name: e.name, start_time: e.start_time, status: e.status }));
+        // A date the super admin reserved for this client's approved request: bookable for them only.
+        if (exceptions.some((e) => e.dates.includes(d))) {
+            const booked = parts.reduce((n, x) => n + x.booked, 0);
+            return { date: d, day: dayName(d), status: 'available', reserved: true, daily_max: booked + 1, booked, balance: 1, my_events: myEvents };
+        }
         if (!parts.length) return { date: d, day: dayName(d), status: 'not_configured', daily_max: 0, booked: 0, balance: 0, my_events: myEvents };
 
         const open = parts.filter((x) => x.status !== 'disabled');
@@ -760,16 +766,44 @@ const clientCalendar = async (query = {}, clientId = null) => {
  * Called by clientEvent.service on create, and on update when the dates or category change.
  * Throws the message the client portal shows.
  */
-const assertEventDatesBookable = async ({ categoryId = null, startDate, endDate, excludeEventId = null }) => {
-    if (!startDate) return;
+/**
+ * Approved one-time exceptions of THIS client (Allocation Requests, 2026-11-13): a date the super admin
+ * reserved for the client's request is bookable for them even when it is full / not open for others.
+ * Valid until it expires or an event has used it.
+ */
+const clientExceptions = async (clientId, from, to) => {
+    if (!clientId) return [];
+    const { AvailabilityRequest } = require('../models');
+    const rows = await AvailabilityRequest.findAll({
+        where: { website_client_id: clientId, status: 'approved', start_date: { [Op.lte]: to }, end_date: { [Op.gte]: from } },
+        raw: true,
+    });
+    const now = Date.now();
+    return rows.map((r) => {
+        let d = r.decision;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch { d = null; } }
+        return { id: r.id, dates: Array.isArray(d?.dates) ? d.dates : [], expires: d?.expires_at ? Date.parse(d.expires_at) : 0, used: !!d?.used_event_id };
+    }).filter((x) => !x.used && x.expires > now && x.dates.length);
+};
+
+/**
+ * Returns { usedRequestIds } — the approved exceptions this booking relies on, so the caller can mark
+ * them used once the event is saved.
+ */
+const assertEventDatesBookable = async ({ categoryId = null, startDate, endDate, excludeEventId = null, clientId = null }) => {
+    if (!startDate) return { usedRequestIds: [] };
     const from = startDate;
     const to = endDate && endDate > startDate ? endDate : startDate;
     const dates = eachDay(from, to);
     const configs = (await liveConfigs(from, to, { categoryId })).map(parseHolidays);
     const overrides = await loadOverrides(configs.map((c) => c.id), from, to);
     const events = await loadEvents(from, to, { excludeEventId });
+    const exceptions = await clientExceptions(clientId, from, to);
+    const used = new Set();
 
     for (const d of dates) {
+        const ex = exceptions.find((e) => e.dates.includes(d));
+        if (ex) { used.add(ex.id); continue; }
         const c = configForDay(configs, categoryId, d);
         const x = c ? computeDay(c, d, overrides, events) : null;
         if (!c || x.status === 'removed') {
@@ -779,6 +813,20 @@ const assertEventDatesBookable = async ({ categoryId = null, startDate, endDate,
         if (dates.length === 1 && !c.allow_single_date) throw ApiError.badRequest(`Single-day events are not allowed on ${pretty(d)}. Please choose more than one date.`);
         if (x.status === 'disabled') throw ApiError.badRequest(`${pretty(d)} is not available for booking. Please choose another date.`);
         if (x.status === 'full') throw ApiError.badRequest(`${pretty(d)} is fully booked. Please choose another date.`);
+    }
+    return { usedRequestIds: [...used] };
+};
+
+/** Mark approved exceptions as used by an event (one event per approval). */
+const markExceptionsUsed = async (requestIds, eventId) => {
+    if (!requestIds?.length) return;
+    const { AvailabilityRequest } = require('../models');
+    for (const id of requestIds) {
+        const r = await AvailabilityRequest.findByPk(id);
+        if (!r) continue;
+        let d = r.decision;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch { d = {}; } }
+        await r.update({ decision: { ...(d || {}), used_event_id: eventId, used_at: new Date().toISOString() } });
     }
 };
 
@@ -791,5 +839,5 @@ module.exports = {
     // overrides
     listOverrides, getOverride, createOverride, updateOverride, setOverrideStatus, deleteOverride, bulkOverrides,
     // client
-    clientCalendar, assertEventDatesBookable,
+    clientCalendar, assertEventDatesBookable, markExceptionsUsed, clientExceptions,
 };

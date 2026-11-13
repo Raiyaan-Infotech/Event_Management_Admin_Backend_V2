@@ -28,6 +28,12 @@ router.put('/overrides/:id', edit, c.updateOverride);
 router.patch('/overrides/:id/status', edit, c.setOverrideStatus);
 router.delete('/overrides/:id', edit, c.deleteOverride);
 
+// Allocation requests (client Contact Support -> review -> one-time exception or reject)
+router.get('/requests', view, c.listRequests);
+router.get('/requests/:id', view, c.getRequest);
+router.post('/requests/:id/approve', edit, c.approveRequest);
+router.post('/requests/:id/reject', edit, c.rejectRequest);
+
 // Configs
 router.get('/configs', view, c.listConfigs);
 router.get('/configs/:id', view, c.getConfig);
