@@ -360,6 +360,7 @@ router.post('/availability/requests', (req, res, next) => availabilityAttachment
 }), require('../controllers/eventAvailability.controller').createClientRequest);
 router.get('/availability/requests', require('../controllers/eventAvailability.controller').listClientRequests);
 router.get('/availability/requests/:id', require('../controllers/eventAvailability.controller').getClientRequest);
+router.post('/availability/requests/:id/cancel', require('../controllers/eventAvailability.controller').cancelClientRequest);
 
 router.get('/events', eventController.list);
 router.post('/events', eventController.create);

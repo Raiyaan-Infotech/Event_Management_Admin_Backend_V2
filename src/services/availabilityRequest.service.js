@@ -51,6 +51,30 @@ const present = (r) => {
     };
 };
 
+/** The client's newest pending request whose unavailable days overlap `dates`, with the shared days. */
+const findOpenConflict = async (clientId, dates) => {
+    if (!dates.length) return null;
+    const rows = await AvailabilityRequest.findAll({
+        where: { website_client_id: clientId, status: 'pending', start_date: { [Op.lte]: dates[dates.length - 1] }, end_date: { [Op.gte]: dates[0] } },
+        order: [['created_at', 'DESC']],
+    });
+    for (const row of rows) {
+        const own = (present(row).unavailable_dates || []).map((u) => u.date);
+        const shared = dates.filter((d) => own.includes(d));
+        if (shared.length) return { row, dates: shared };
+    }
+    return null;
+};
+
+/** The client withdraws one of their own pending requests. It stays in the admin list as Cancelled. */
+const cancelForClient = async (clientId, id) => {
+    const row = await AvailabilityRequest.findOne({ where: { id, website_client_id: clientId } });
+    if (!row) throw ApiError.notFound('Request not found.');
+    if (row.status !== 'pending') throw ApiError.badRequest(`This request is already ${row.status}.`);
+    await row.update({ status: 'cancelled', decision: { cancelled_by: 'client' }, decided_at: new Date() });
+    return present(row);
+};
+
 /**
  * body: booking_type, start_date, end_date, contact_method (call | email), contact_name, message,
  *       call → contact_mobile + preferred_call_time; email → contact_email + subject (+ optional file).
@@ -74,6 +98,15 @@ const createRequest = async (clientId, body = {}, file = null) => {
         .map((d) => ({ date: d.date, status: d.status }));
     if (!unavailable.length) {
         throw ApiError.badRequest('All the selected dates are available — you can continue and create the event.');
+    }
+
+    // One open ticket per unavailable date: a pending request that already covers one of these
+    // unavailable days must be cancelled by the client first ("Existing Support Request Found").
+    const existing = await findOpenConflict(client.id, unavailable.map((u) => u.date));
+    if (existing) {
+        const err = ApiError.conflict('You already have a support request for an unavailable date in this range. Cancel it first to raise a new one.');
+        err.errors = [{ code: 'EXISTING_REQUEST', existing: present(existing.row), conflict_dates: existing.dates }];
+        throw err;
     }
 
     const method = body.contact_method === 'email' ? 'email' : body.contact_method === 'call' ? 'call' : null;
@@ -168,7 +201,7 @@ const listAdmin = async (query = {}) => {
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
     const where = {};
-    if (['pending', 'approved', 'rejected'].includes(query.status)) where.status = query.status;
+    if (['pending', 'approved', 'rejected', 'cancelled'].includes(query.status)) where.status = query.status;
     const created = {};
     if (DATE_ONLY.test(String(query.from || ''))) created[Op.gte] = `${query.from} 00:00:00`;
     if (DATE_ONLY.test(String(query.to || ''))) created[Op.lte] = `${query.to} 23:59:59`;
@@ -184,14 +217,15 @@ const listAdmin = async (query = {}) => {
         ];
     }
     const { rows, count } = await AvailabilityRequest.findAndCountAll({ where, order: [['created_at', 'DESC']], limit, offset: (page - 1) * limit, raw: true });
-    const [total, pending, approved, rejected] = await Promise.all([
+    const [total, pending, approved, rejected, cancelled] = await Promise.all([
         AvailabilityRequest.count(),
         AvailabilityRequest.count({ where: { status: 'pending' } }),
         AvailabilityRequest.count({ where: { status: 'approved' } }),
         AvailabilityRequest.count({ where: { status: 'rejected' } }),
+        AvailabilityRequest.count({ where: { status: 'cancelled' } }),
     ]);
     return {
-        stats: { total, pending, approved, rejected },
+        stats: { total, pending, approved, rejected, cancelled },
         data: await withClient(rows),
         pagination: { page, limit, total: count, totalPages: Math.ceil(count / limit) || 1 },
     };
@@ -259,6 +293,6 @@ const reject = async (id, body = {}, userId = null) => {
 };
 
 module.exports = {
-    createRequest, listForClient, getForClient, present, ATTACH_BYTES, ATTACH_MIMES,
+    createRequest, listForClient, getForClient, cancelForClient, present, ATTACH_BYTES, ATTACH_MIMES,
     listAdmin, getAdmin, approve, reject, REJECT_CATEGORIES, EXPIRY_HOURS,
 };
