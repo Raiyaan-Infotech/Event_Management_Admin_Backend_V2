@@ -102,7 +102,9 @@ const list = async (req, eventId, query = {}) => {
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Math.min(200, Math.max(1, Number(query.limit) || 8));
 
-    const where = baseWhere(event.id);
+    // The list = only participants who were verified or marked present (Jamal, 2026-11-16).
+    // The stat cards still count the whole event.
+    const where = { ...baseWhere(event.id), [Op.and]: [{ [Op.or]: [{ verified_at: { [Op.ne]: null } }, { checked_in_at: { [Op.ne]: null } }] }] };
     const attendance = String(query.attendance || 'all');
     if (attendance === 'attended') where.checked_in_at = { [Op.ne]: null };
     else if (attendance === 'not_attended') where.checked_in_at = null;
