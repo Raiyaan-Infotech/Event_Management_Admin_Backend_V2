@@ -1616,3 +1616,46 @@ the timeline frame strip needs CORS on the media bucket.
 - ⚠ Backend commit 80ff66b (client reads one request) is local only - git push needs a GitHub sign-in on this PC. Then Render Manual Deploy (auto-deploy does not work for V2).
 - ⚠ Live test config #9 "QA CALENDAR TEST" (1-15 Dec 2026) still on production - Jamal to delete or OK deleting. Real configs: #6 November (1-30 Nov, 3/day, 13 Nov override 5).
 - Live checks so far: Multi Date partial, Contact Support panel, validation, Single Date Book Event pass. NOT yet live: submit ticket, admin approve / reject, client booking after approval, client Allocation Requests pages.
+
+### 2026-11-16 - Mockup library organised
+- Every November design that was only in Downloads copied into `Documents\Event_Invite_Mobile_Screens\{Client_Portal,Admin_Portal}\<Module>` (dated subfolders where a module already had older designs, e.g. `Guest6-11_Updated`). New zips: file them the same way. QR Code designs (20261116) -> `Client_Portal\QR_Code\{Event_Attendance,File_Downloads}`.
+
+### 2026-11-16 - Event Availability live E2E test + deck
+- Live run (QA account + super admin, temp config 04-16 Jan 2027, removed after): 56/56 scenarios (config, every daily action, overrides, calendar single / multi, Contact Support call back + email, existing-request cancel flow, approve + reject, client tracking / approved / rejected). Deck: `Documents\EventInvite_Portal_Test6-11-16_event-availability-e2e\Event_Availability_E2E_Design_vs_Live.pptx` (52 slides, design vs live, findings) + scripts.
+- Findings: (1) deleting a config does NOT cancel an approved one-time exception (date stays open for that client until expiry) - NOT fixed; (2) plan limit not checked on the calendar - fixed; (3) popup dates in UTC - fixed; (4) ticket year = requested date year (EAR-2027-...) - Jamal to decide; (5) no retry on load error - fixed; (6) admin theme vs pink design - Jamal: forget it; (7) not built: Export List (admin inbox), support phone / email on client Rejected page (need real contact).
+- Test tickets EAR-2027-1010/1011/1012 left on live (QA account). Config #9 "QA CALENDAR TEST" still on live.
+
+### 2026-11-16 - Client portal fixes (LIVE)
+- Calendar: plan event limit reached -> banner + "Event Limit Reached" instead of Book Event / Continue / Contact Support (shared `useEventLimit()` with EventLimitGate).
+- Support popups: Submitted On / Canceled Date shown in local time (prettyDate converts full timestamps; plain dates unchanged).
+- Retry: query-provider retried no ApiError below 500, which included status 0 (dropped connection) - now only 4xx are skipped (APP-WIDE); calendar no longer sets retry:false; Retry button on "Could not load availability".
+- Dashboard header Event Availability button removed. Top bar New Event hidden on Check Event Availability (+ Create / Edit as before).
+- Sidebar = exactly six (Jamal): Dashboard, My Events, Reports (Analytics page), Subscription (Billing page), Profile, Settings. Other pages stay reachable from their links.
+- Vercel missed one push (958fdb4) - an empty commit re-triggered it.
+
+### 2026-11-16 - Super Admin portal (NOT committed)
+- Daily Booking redesigned to Jamal's mockup layout in the ADMIN theme colours (Jamal: no pink): 4 stat cards (Configured, Fully Booked, Available, Total Bookings), one filter row (Date Range, Event Category, Applies To = All Organizers only, Status, Search, Reset, Create Config), numbered pager, 8 per page.
+- Allocation Requests menu: items one line, left aligned. Special Limits Override: info card removed; row view / edit icons removed (in the menu).
+- ⚠ Not committed: the admin repo already had ~182 uncommitted files from before (15 Nov shell work). Jamal to decide: commit that first, or commit only these files.
+
+### 2026-11-16 - QR Code -> Event Attendance (backend + portal, LIVE)
+- Flow (from V1 code): the ORGANIZER scans the PARTICIPANT's personal QR (My QR in the app). V1 Mark Present saved checked_in_at; V1 Verify Entry saved NOTHING. V2 app is participants-only, so no organizer scanner in the V2 app today. The portal page is a LIST of what was saved (Jamal: no scanner in the portal - a portal scanner was built and reverted).
+- DB (prod applied before push): event_participants.check_in_source (event_qr | manual | self_link), check_in_note, verified_at / verified_by_client_id / verified_by_name / verify_method (qr | manual) / verify_note. sql/20261116-participant-attendance.sql, tools/apply-participant-attendance.js.
+- API: GET /client/events/:id/attendance (stats for the whole event; list = only participants verified OR checked in), GET .../:pid (+ history), POST .../:pid/verify, POST .../:pid/mark, POST .../attendance/bulk. Organizer scan check-in now works for every event (was private only), refuses blocked, records source event_qr; lookup returns verified fields - the app's Verify Entry must call POST .../verify to save the time when the scanner exists again.
+- Portal: workspace sidebar REPORT -> QR Code -> Event Attendance. Stat tiles, Event Attendance / Verified Participants tabs, filters, Scan Source / Verification / Attendance / Scan Time, bulk Mark as Verified / Mark Attendance / Send Notification / Export, menu View Details / Verify / Mark Attendance / Edit / Send Notification / Remove (no eye icon; Session QR and red-lined items left out).
+- Tests: local service 17/17 + scan 7/7; live browser 8/8.
+
+### 2026-11-16 - QR Code -> File Downloads (backend + portal, LIVE)
+- New table event_download_logs = one row per download (event, file, participant, device, platform, status completed | failed, failed_reason, source app | sample, downloaded_at). sql/20261116-event-download-logs.sql, tools/apply-event-download-logs.js (prod applied before push).
+- POST /client/downloads/:id/hit now logs the participant's download (body.status='failed' + failed_reason = logged, not counted); host opens not logged. The V2 app's Downloads screens are still sample-data only - when they become real they just call /hit and the list fills.
+- API: GET /client/events/:id/download-logs (stats total / unique / most downloaded / failed; filters search, date range, file type, status, relationship), GET .../participants/:pid (history), DELETE .../participants/:pid (off the list).
+- Portal: QR Code -> File Downloads. Menu (red lines applied): View Details, View Scan History, Block Participant, Remove Participant (centre popup). No Access Source column (no QR points).
+- Tests: local 9/9; local browser 8/8; live browser 8/8 (QA event #37).
+
+### 2026-11-16 - Sample data on live (all removable)
+- Seeders: `seeders/attendance-sample.seeder.js` (--event, existing participants, marks '[sample]', --add-participants N for an empty event, --clear) and `seeders/download-logs-sample.seeder.js` (existing files + participants, source='sample', --clear). Both dry-run unless --apply.
+- Applied: attendance #37 (QA) + #36 (Jamal And Fahmi); downloads #37 (9) + #36 (13). Two QA test PDFs added to #37's Downloads ("QA Event Brochure", "QA Session Agenda").
+- #39 "Jamal ANd Fahmi 2" has no participants - adding sample participants on live was blocked pending Jamal's explicit OK.
+
+### Open after 2026-11-16
+- Approved exception survives config delete (bug). Ticket year rule. Export List + Rejected-page support contact. jsQR not installed (only needed if a browser scanner comes back). Admin portal commits. Organizer scanner in the V2 app (or not) so verify / attendance get real scans.
