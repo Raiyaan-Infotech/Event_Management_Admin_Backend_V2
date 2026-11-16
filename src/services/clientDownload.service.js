@@ -274,16 +274,19 @@ const remove = async (clientId, id) => {
  * A participant downloads the file: +1 on its count, and the URL back. The host's own opens are not
  * counted. Refused when the file is not meant for them or they may not open it.
  */
-const hit = async (clientId, id) => {
+const hit = async (clientId, id, { userAgent, body = {} } = {}) => {
     const row = await EventDownload.findByPk(Number(id) || 0);
     if (!row) throw ApiError.notFound('That download was not found.');
     const { isOwner, member } = await resolveEventForView(clientId, row.event_id);
     if (!isOwner) {
         if (!seenBy(row, member)) throw ApiError.notFound('That download was not found.');
         if (!openBy(row, member)) throw ApiError.forbidden('Only guests who confirmed their RSVP can download this file.');
-        await EventDownload.increment('download_count', { by: 1, where: { id: row.id } });
+        // File Downloads list (2026-11-16): one row per download — who, when, device, completed / failed.
+        // A failed download is logged but not counted.
+        await require('./clientDownloadLog.service').record({ row, member, clientId, userAgent, body });
+        if (body.status !== 'failed') await EventDownload.increment('download_count', { by: 1, where: { id: row.id } });
     }
-    return { url: row.file_url, file_name: row.file_name, counted: !isOwner };
+    return { url: row.file_url, file_name: row.file_name, counted: !isOwner && body.status !== 'failed' };
 };
 
 /** Store an uploaded file (25 MB, the FILE_TYPES list). Returns what the download row needs. */

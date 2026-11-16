@@ -74,6 +74,11 @@ router.post('/events/:id/attendance/bulk', attendanceController.bulk);
 router.get('/events/:id/attendance/:participantId', attendanceController.getOne);
 router.post('/events/:id/attendance/:participantId/verify', attendanceController.verify);
 router.post('/events/:id/attendance/:participantId/mark', attendanceController.mark);
+// Files Downloaded (client portal → QR Code, 2026-11-16): who downloaded which file (event_download_logs).
+const downloadLogController = require('../controllers/clientDownloadLog.controller');
+router.get('/events/:id/download-logs', downloadLogController.list);
+router.get('/events/:id/download-logs/participants/:participantId', downloadLogController.participantHistory);
+router.delete('/events/:id/download-logs/participants/:participantId', downloadLogController.removeParticipant);
 
 // Self-service account management. No id parameter anywhere: each acts on the
 // session's own client, so none of them can be aimed at another account.

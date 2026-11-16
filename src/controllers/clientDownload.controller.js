@@ -38,7 +38,7 @@ const remove = asyncHandler(async (req, res) => {
 });
 
 const hit = asyncHandler(async (req, res) => {
-    const result = await service.hit(req.websiteClient.id, req.params.downloadId);
+    const result = await service.hit(req.websiteClient.id, req.params.downloadId, { userAgent: req.get('user-agent'), body: req.body || {} });
     return ApiResponse.success(res, result, 'Download ready.');
 });
 

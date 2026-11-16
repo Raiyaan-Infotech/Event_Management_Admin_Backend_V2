@@ -178,6 +178,7 @@ db.EventLiveStreamView = require('./EventLiveStreamView')(sequelize, Sequelize);
 db.EventSocialLink = require('./EventSocialLink')(sequelize, Sequelize);
 db.SocialPlatform = require('./SocialPlatform')(sequelize, Sequelize);
 db.EventDownload = require('./EventDownload')(sequelize, Sequelize);
+db.EventDownloadLog = require('./EventDownloadLog')(sequelize, Sequelize);
 db.DownloadCategory = require('./DownloadCategory')(sequelize, Sequelize);
 db.EventNearbyPlace = require('./EventNearbyPlace')(sequelize, Sequelize);
 db.NearbyCategory = require('./NearbyCategory')(sequelize, Sequelize);
