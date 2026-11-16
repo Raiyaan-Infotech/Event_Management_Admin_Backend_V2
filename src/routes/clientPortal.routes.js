@@ -66,6 +66,14 @@ router.put('/favourites/:id', qrScanController.setFavourite);
 // the organizer / contact person act as the owner.
 router.post('/events/:id/scan/participant', qrScanController.lookupParticipant);
 router.post('/events/:id/participants/:participantId/check-in', qrScanController.checkIn);
+// Event Attendance (client portal → QR Code, 2026-11-16): the list of check-ins + Verify /
+// Mark Attendance by the organizer. /events/:id/… → organizer / contact person act as owner.
+const attendanceController = require('../controllers/clientAttendance.controller');
+router.get('/events/:id/attendance', attendanceController.list);
+router.post('/events/:id/attendance/bulk', attendanceController.bulk);
+router.get('/events/:id/attendance/:participantId', attendanceController.getOne);
+router.post('/events/:id/attendance/:participantId/verify', attendanceController.verify);
+router.post('/events/:id/attendance/:participantId/mark', attendanceController.mark);
 
 // Self-service account management. No id parameter anywhere: each acts on the
 // session's own client, so none of them can be aimed at another account.

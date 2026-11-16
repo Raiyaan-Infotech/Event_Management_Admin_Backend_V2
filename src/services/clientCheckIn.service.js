@@ -129,6 +129,8 @@ const checkIn = async (req, eventId, participantId) => {
         checked_in_at: new Date(),
         checked_in_by_client_id: Number(by?.id) || null,
         checked_in_by_name: by?.name || null,
+        // Event Attendance list (2026-11-16): this check-in came from scanning the participant's QR.
+        check_in_source: 'event_qr',
     });
     return { already: false, participant: await present(p, event, client) };
 };

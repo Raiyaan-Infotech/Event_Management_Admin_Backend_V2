@@ -189,6 +189,18 @@ module.exports = (sequelize) => {
         hide_note: { type: DataTypes.STRING(500), allowNull: true },
         checked_in_by_client_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
         checked_in_by_name: { type: DataTypes.STRING(200), allowNull: true },
+
+        // ── Event Attendance (client portal QR Code, 2026-11-16) ──
+        /** How the check-in happened: 'event_qr' (scanned) | 'manual' (Mark Attendance in the portal) | 'self_link'. */
+        check_in_source: { type: DataTypes.STRING(20), allowNull: true },
+        check_in_note: { type: DataTypes.STRING(500), allowNull: true },
+        /** Verify Participant now saves a status (before: view only). NULL = Pending. */
+        verified_at: { type: DataTypes.DATE, allowNull: true },
+        verified_by_client_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+        verified_by_name: { type: DataTypes.STRING(200), allowNull: true },
+        /** 'qr' (QR code verification) | 'manual' (ID / document checked by hand). */
+        verify_method: { type: DataTypes.STRING(20), allowNull: true },
+        verify_note: { type: DataTypes.STRING(500), allowNull: true },
     }, {
         tableName: 'event_participants',
         timestamps: true,
