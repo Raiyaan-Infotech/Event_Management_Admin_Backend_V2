@@ -60,6 +60,10 @@ const present = async (p, event, client) => {
         meal: food?.name || p.dietary_preference || null,
         checked_in_at: p.checked_in_at,
         checked_in_by_name: p.checked_in_by_name,
+        // Event Attendance (2026-11-16): the scanner shows whether they are verified already.
+        verified_at: p.verified_at || null,
+        verified_by_name: p.verified_by_name || null,
+        verify_method: p.verify_method || null,
         event: {
             id: event.id,
             name: event.name,
@@ -103,16 +107,15 @@ const lookup = async (req, eventId, rawToken) => {
 };
 
 /**
- * POST /client/events/:id/participants/:pid/check-in — Mark Attendance.
- * Private events only. Checking in twice keeps the first time.
+ * POST /client/events/:id/participants/:pid/check-in — Mark Attendance (the Attendance scanner).
+ * Every event (Event Attendance, Jamal 2026-11-16 — it was private events only). Checking in
+ * twice keeps the first time.
  */
 const checkIn = async (req, eventId, participantId) => {
     const event = await ownEvent(req, eventId);
-    if (event.privacy !== 'private') {
-        throw ApiError.badRequest('Attendance is marked only for private events.');
-    }
     const p = await EventParticipant.findOne({ where: { id: Number(participantId) || 0, event_id: event.id } });
     if (!p) throw ApiError.notFound('Participant not found.');
+    if (p.is_blocked) throw ApiError.badRequest('This participant is blocked. Unblock them in Participants first.');
 
     const client = p.participant_client_id
         ? await WebsiteClient.findByPk(p.participant_client_id, {
