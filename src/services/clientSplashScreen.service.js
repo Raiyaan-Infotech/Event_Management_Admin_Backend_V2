@@ -1,4 +1,4 @@
-const { Sequelize, SplashScreen, Event, EventParticipant, WebsiteClient, Decoration } = require('../models');
+const { Sequelize, SplashScreen, Event, EventParticipant, WebsiteClient, Decoration, FrameStyle } = require('../models');
 const { Op } = Sequelize;
 const mediaService = require('./media.service');
 const clientEventService = require('./clientEvent.service');
@@ -375,16 +375,27 @@ const getDecorationsAndFrames = async (companyId = null) => {
         where[Op.or] = [{ company_id: companyId }, { company_id: null }];
     }
 
-    const decorations = await Decoration.findAll({
-        where,
-        attributes: ['id', 'name', 'type', 'file_url', 'file_format'],
-        order: [['sort_order', 'ASC'], ['id', 'ASC']],
-        raw: true,
-    });
+    // The admin's Frame Styles (Admin → Templates → Frame Styles): the splash
+    // page's Border / Frame Style choices (Jamal, 2026-11-17). Published and
+    // switched on only, with artwork.
+    const [decorations, frames] = await Promise.all([
+        Decoration.findAll({
+            where,
+            attributes: ['id', 'name', 'type', 'file_url', 'file_format'],
+            order: [['sort_order', 'ASC'], ['id', 'ASC']],
+            raw: true,
+        }),
+        FrameStyle.findAll({
+            where: { ...where, status: 'published', file_url: { [Op.ne]: null } },
+            attributes: ['id', 'name', 'file_url', 'template_category_id', 'supported_layouts'],
+            order: [['sort_order', 'ASC'], ['id', 'ASC']],
+            raw: true,
+        }),
+    ]);
 
     return {
         decorations,
-        frames: [],
+        frames,
         all: decorations,
     };
 };
