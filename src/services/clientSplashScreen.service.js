@@ -377,7 +377,10 @@ const getDecorationsAndFrames = async (companyId = null) => {
 
     // The admin's Frame Styles (Admin → Templates → Frame Styles): the splash
     // page's Border / Frame Style choices (Jamal, 2026-11-17). Published and
-    // switched on only, with artwork.
+    // switched on only, with artwork. NOT narrowed to the client's company: the
+    // frames are the platform admin's catalogue (company 1), the same ones every
+    // client's invitation templates draw — filtering by the client's own company
+    // returned none at all on live.
     const [decorations, frames] = await Promise.all([
         Decoration.findAll({
             where,
@@ -386,7 +389,7 @@ const getDecorationsAndFrames = async (companyId = null) => {
             raw: true,
         }),
         FrameStyle.findAll({
-            where: { ...where, status: 'published', file_url: { [Op.ne]: null } },
+            where: { is_active: 1, status: 'published', file_url: { [Op.ne]: null } },
             attributes: ['id', 'name', 'file_url', 'template_category_id', 'supported_layouts'],
             order: [['sort_order', 'ASC'], ['id', 'ASC']],
             raw: true,
