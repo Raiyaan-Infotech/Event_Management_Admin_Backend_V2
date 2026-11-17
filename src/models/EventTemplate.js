@@ -278,6 +278,29 @@ module.exports = (sequelize) => {
             type: DataTypes.JSON,
             allowNull: true,
         },
+        /**
+         * Step 2's Event Logo (Jamal, 2026-11-17): a SAMPLE logo / monogram the
+         * admin uploads, and where it sits on the card. An event shows its own
+         * `events.logo_image` in this place when the host uploaded one, the
+         * sample otherwise. Null = this template has no logo slot.
+         * Added by apply-template-logo.js.
+         */
+        logo_image: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+        },
+        /** One of POSITIONS (top-left … bottom-right). */
+        logo_position: {
+            type: DataTypes.STRING(20),
+            allowNull: false,
+            defaultValue: 'top',
+        },
+        /** Percentage of the standard logo size (60-200). */
+        logo_size: {
+            type: DataTypes.SMALLINT.UNSIGNED,
+            allowNull: false,
+            defaultValue: 100,
+        },
 
         /* ── step 3  Content & Components ────────────────────────────────── */
         components: {

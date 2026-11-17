@@ -46,6 +46,7 @@ const WRITABLE_FIELDS = [
     'overlay_opacity', 'orientation', 'dimension', 'primary_font',
     'secondary_font', 'border_style', 'frame_style_id', 'decoration_ids',
     'primary_font_size', 'secondary_font_size', 'frame_color', 'decoration_color',
+    'logo_image', 'logo_position', 'logo_size',
     // step 3
     'components', 'component_order',
     // step 4
@@ -368,6 +369,13 @@ const pickWritable = (data = {}) => {
         const n = parseInt(payload[key], 10);
         payload[key] = Number.isNaN(n) ? 100 : Math.min(Math.max(n, 60), 160);
     }
+    // Event Logo: a sample image, where it sits, and its size (60-200%).
+    if (payload.logo_position !== undefined) {
+        payload.logo_position = oneOf(payload.logo_position, POSITIONS, 'top');
+    }
+    if (payload.logo_size !== undefined) {
+        payload.logo_size = clampInt(payload.logo_size, 60, 200, 100);
+    }
     if (payload.image_size !== undefined) {
         // 10-400%. Below 10 the design is invisible and reads as a broken
         // upload; above 400 a single pixel fills the card.
@@ -389,7 +397,7 @@ const pickWritable = (data = {}) => {
     if (payload.orientation !== undefined) {
         payload.orientation = oneOf(payload.orientation, ORIENTATIONS, 'portrait');
     }
-    for (const key of ['background_image', 'thumbnail', 'dimension', 'primary_font', 'secondary_font', 'border_style']) {
+    for (const key of ['background_image', 'logo_image', 'thumbnail', 'dimension', 'primary_font', 'secondary_font', 'border_style']) {
         if (payload[key] !== undefined) payload[key] = String(payload[key] ?? '').trim() || null;
     }
 

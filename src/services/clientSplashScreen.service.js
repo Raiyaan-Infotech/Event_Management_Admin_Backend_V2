@@ -198,6 +198,11 @@ const listSplashScreens = async (clientId, query = {}) => {
     const search = String(query.search || '').trim();
 
     const where = { website_client_id: clientId };
+    // The portal's Splash Screen page reads its event's row whatever its status:
+    // a splash switched off is saved as `draft`, which /for-event (the app's
+    // read) rightly does not serve.
+    const eventId = Number(query.event_id);
+    if (eventId) where.event_id = eventId;
     if (search) {
         where[Op.or] = [
             { name: { [Op.like]: `%${search}%` } },

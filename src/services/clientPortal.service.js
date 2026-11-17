@@ -129,6 +129,8 @@ const TEMPLATE_ATTRS = [
     'orientation', 'dimension',
     'primary_font', 'secondary_font', 'border_style',
     'primary_font_size', 'secondary_font_size', 'frame_color', 'decoration_color',
+    // The template's sample Event Logo and where it sits (2026-11-17).
+    'logo_image', 'logo_position', 'logo_size',
     // Without these two the portal cannot draw the frame or the decorations at
     // all — it was rendering a bare colour where the admin's own preview showed
     // an arch, a toran and a mosque silhouette, and the two previews of the SAME

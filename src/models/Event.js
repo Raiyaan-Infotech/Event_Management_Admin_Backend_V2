@@ -152,6 +152,14 @@ module.exports = (sequelize) => {
             invitation_image: { type: DataTypes.STRING(500), allowNull: true },
 
             /**
+             * The host's own event logo / monogram (Jamal, 2026-11-17). Drawn
+             * where the template's `logo_position` says, in place of the
+             * template's sample logo; the splash screen shows it too.
+             * NULL = use the template's sample. Added by apply-template-logo.js.
+             */
+            logo_image: { type: DataTypes.STRING(500), allowNull: true },
+
+            /**
              * The client's per-event OVERRIDE of the template's component set
              * and order. NULL on both means "inherit from the template".
              *

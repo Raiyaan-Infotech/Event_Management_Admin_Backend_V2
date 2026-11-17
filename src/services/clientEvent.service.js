@@ -67,7 +67,7 @@ const WRITABLE_FIELDS = [
     'menu_ids', 'disabled_app_menu_ids',
     'theme_id', 'primary_color', 'secondary_color',
     'home_screen_template_id',
-    'cover_image', 'custom_image',
+    'cover_image', 'custom_image', 'logo_image',
     'components', 'component_order',
     'qr_style',
 ];
@@ -456,6 +456,15 @@ const normalise = async (clientId, body, { partial = false } = {}) => {
             throw ApiError.badRequest('Invalid custom image.');
         }
         data.custom_image = value;
+    }
+    // The host's own event logo — drawn where the template's Event Logo sits,
+    // and on the splash. Null clears it (back to the template's sample logo).
+    if (has('logo_image')) {
+        const value = str(picked.logo_image, 500);
+        if (value && !/^(https?:\/\/|\/uploads\/)/i.test(value)) {
+            throw ApiError.badRequest('Invalid logo image.');
+        }
+        data.logo_image = value;
     }
 
     /**
@@ -1043,6 +1052,8 @@ const TEMPLATE_DESIGN_ATTRS = [
     'overlay_enabled', 'overlay_color', 'overlay_opacity',
     'secondary_color', 'primary_font', 'secondary_font', 'border_style',
     'primary_font_size', 'secondary_font_size', 'frame_color', 'decoration_color',
+    // The template's sample Event Logo and where it sits (2026-11-17).
+    'logo_image', 'logo_position', 'logo_size',
     // A custom template's shape (heart / circle / arch): the app cuts an
     // event's card and its list thumbnail to it.
     'image_shape', 'corner_radius',
