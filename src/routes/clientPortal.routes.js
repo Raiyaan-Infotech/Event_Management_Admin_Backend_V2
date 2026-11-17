@@ -537,6 +537,19 @@ router.get('/messages', messageController.list);
 router.get('/messages/:id', messageController.getById);
 
 /**
+ * Invitations flow (Jamal's design, 2026-11-18): step 3 Share with Guests and
+ * step 4 Track Responses. To the event's PHONE-BOOK guests (not participants),
+ * saved in invitation_sends — recorded, not delivered, until a WhatsApp / email
+ * provider is connected. `audience` comes before `/:id`.
+ */
+const invitationSendController = require('../controllers/clientInvitationSend.controller');
+router.get('/invitation-sends/audience', invitationSendController.audience);
+router.get('/invitation-sends', invitationSendController.list);
+router.post('/invitation-sends', invitationSendController.send);
+router.post('/invitation-sends/:id/resend', invitationSendController.resend);
+router.delete('/invitation-sends/:id', invitationSendController.remove);
+
+/**
  * RSVPs.
  *
  * ⚠ An RSVP is NOT a row — it is the response columns on a guest. So there is
