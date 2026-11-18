@@ -7,6 +7,7 @@ const {
     EventMenu,
     ClientSubscription,
     ClientSubscriptionEvent,
+    ClientTransaction,
     Event,
     EventParticipant,
     Guest,
@@ -697,7 +698,8 @@ const getAvailablePlans = async (clientId) => {
             is_visible: 1,
             ...(client.company_id ? { company_id: client.company_id } : {}),
         },
-        attributes: PLAN_ATTRS,
+        // + the limits, for the Book Event → Select Plan cards ("Up to 10 events").
+        attributes: [...PLAN_ATTRS, 'max_events', 'max_guests_per_event'],
         order: [['sort_order', 'ASC'], ['price', 'ASC'], ['id', 'ASC']],
     });
 
@@ -898,9 +900,107 @@ const resumeSubscription = async (clientId) => {
  * waiting to disagree. The merged one replaced it.
  */
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * Book Event → Select Plan → Review → Payment (Jamal's Create Event v3 designs, 2026-11-18)
+ * ────────────────────────────────────────────────────────────────────────── */
+
+const CHECKOUT_METHODS = ['upi', 'card', 'netbanking', 'wallet'];
+const UPI_APPS = { gpay: 'GPay', phonepe: 'PhonePe', paytm: 'Paytm' };
+const clean = (v, max) => String(v ?? '').trim().slice(0, max);
+
+/**
+ * Save the payment details for a plan the client picked while booking an event.
+ *
+ * ⚠ THERE IS NO PAYMENT GATEWAY YET (Jamal, 2026-11-18: "we don't have any payment api,
+ * just save payment details"). So nothing is charged and the plan is NOT switched here —
+ * this writes ONE `pending` payment row to the ledger (it shows in Billing History) with
+ * the method the client chose. When the gateway lands, its success callback marks that
+ * row successful and applies the plan; until then a paid plan is never handed out on a
+ * button press.
+ *
+ * No card number / CVC / expiry ever reaches this server — the form keeps them in the
+ * browser and sends only the brand + last four + name (`assertNoRawCard` enforces it).
+ */
+const checkout = async (clientId, body = {}) => {
+    require('./clientPaymentMethod.service').assertNoRawCard(body);
+
+    const targetId = Number(body.plan_id);
+    if (!Number.isInteger(targetId) || targetId <= 0) throw ApiError.badRequest('Please choose a plan.');
+    const method = String(body.method || '').toLowerCase();
+    if (!CHECKOUT_METHODS.includes(method)) throw ApiError.badRequest('Please choose a payment method.');
+
+    const { client, subscription } = await getCurrentSubscription(clientId);
+    const plan = await SubscriptionPlan.findByPk(targetId, { attributes: [...PLAN_ATTRS, 'company_id'] });
+    if (!plan || Number(plan.is_active) !== 1 || Number(plan.is_visible) !== 1
+        || (client.company_id && plan.company_id && plan.company_id !== client.company_id)) {
+        throw ApiError.badRequest('That plan is not available.');
+    }
+    if (subscription?.subscription_plan_id === plan.id) throw ApiError.badRequest('You are already on this plan.');
+    if (!(Number(plan.price) > 0)) throw ApiError.badRequest('This plan is free — no payment is needed.');
+
+    // What the ledger prints for the method ("UPI · name@bank", "Visa ending in 4242").
+    let label; let brand = null; let last4 = null;
+    if (method === 'upi') {
+        const upiId = clean(body.upi_id, 100);
+        const app = UPI_APPS[String(body.upi_app || '').toLowerCase()];
+        if (upiId && !/^[\w.-]{2,}@[a-zA-Z][\w.-]{1,}$/.test(upiId)) throw ApiError.badRequest('Enter a valid UPI ID (e.g. name@okaxis).');
+        if (!upiId && !app) throw ApiError.badRequest('Enter your UPI ID or choose a UPI app.');
+        label = upiId ? `UPI · ${upiId}` : `UPI · ${app}`;
+    } else if (method === 'card') {
+        last4 = clean(body.card_last4, 4);
+        if (!/^\d{4}$/.test(last4)) throw ApiError.badRequest('Enter a valid card number.');
+        if (!clean(body.holder_name, 100)) throw ApiError.badRequest('Enter the cardholder name.');
+        brand = clean(body.card_brand, 30) || 'Card';
+        label = `${brand} ending in ${last4}`;
+    } else if (method === 'netbanking') {
+        const bank = clean(body.bank_name, 80);
+        if (!bank) throw ApiError.badRequest('Choose your bank.');
+        label = `Net Banking · ${bank}`;
+    } else {
+        const wallet = clean(body.wallet, 40);
+        if (!wallet) throw ApiError.badRequest('Choose a wallet.');
+        label = `Wallet · ${wallet}`;
+    }
+
+    const amount = withTax(plan.price, subscription?.tax_rate ?? 18);
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.start_date || '')) ? body.start_date : null;
+    const reference = `TXN${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 90 + 10)}`;
+    const row = await ClientTransaction.create({
+        website_client_id: clientId,
+        client_subscription_id: subscription?.id ?? null,
+        company_id: client.company_id ?? null,
+        type: 'payment',
+        status: 'pending',
+        description: `${plan.name} plan (${plan.billing_cycle})${date ? ` for event on ${date}` : ''} — payment details saved, awaiting confirmation`.slice(0, 300),
+        // Signed from the client's side: money leaving is negative (see the model).
+        amount: -amount.total,
+        currency_code: plan.currency_code || 'INR',
+        reference,
+        method_brand: brand,
+        method_last4: last4,
+        method_label: label.slice(0, 120),
+        occurred_at: new Date(),
+    });
+
+    return {
+        transaction: {
+            id: row.id,
+            reference,
+            status: 'pending',
+            method,
+            method_label: row.method_label,
+            amount,
+            currency_code: row.currency_code,
+            occurred_at: row.occurred_at,
+        },
+        plan: { id: plan.id, name: plan.name, billing_cycle: plan.billing_cycle },
+    };
+};
+
 module.exports = {
     getOverview,
     getAvailablePlans,
+    checkout,
     changePlan,
     cancelSubscription,
     resumeSubscription,

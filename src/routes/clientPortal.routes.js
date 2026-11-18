@@ -631,6 +631,8 @@ router.get('/billing/overview', billingController.overview);
 router.get('/billing/plans', billingController.plans);
 router.get('/billing/history', billingController.history);
 router.post('/billing/change-plan', billingController.changePlan);
+// Book Event → Payment (2026-11-18): saves the payment details as a PENDING payment — no gateway yet.
+router.post('/billing/checkout', billingController.checkout);
 router.post('/billing/cancel', billingController.cancel);
 router.post('/billing/resume', billingController.resume);
 

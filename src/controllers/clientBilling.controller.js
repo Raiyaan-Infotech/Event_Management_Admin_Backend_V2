@@ -45,6 +45,12 @@ const changePlan = asyncHandler(async (req, res) => {
     return ApiResponse.success(res, data, 'Plan change scheduled');
 });
 
+/** Book Event → Payment: saves the payment details as a pending payment (no gateway yet). */
+const checkout = asyncHandler(async (req, res) => {
+    const data = await billingService.checkout(req.websiteClient.id, req.body || {});
+    return ApiResponse.success(res, data, 'Payment details saved');
+});
+
 const cancel = asyncHandler(async (req, res) => {
     const data = await billingService.cancelSubscription(req.websiteClient.id, {
         reason: req.body?.reason,
@@ -170,6 +176,6 @@ const removePaymentMethod = asyncHandler(async (req, res) => {
 
 module.exports = {
     listPaymentMethods, addPaymentMethod, setDefaultPaymentMethod, removePaymentMethod,
-    overview, plans, changePlan, cancel, resume,
+    overview, plans, checkout, changePlan, cancel, resume,
     listInvoices, getInvoice, history, contactSales,
 };
