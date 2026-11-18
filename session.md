@@ -1860,3 +1860,14 @@ the timeline frame strip needs CORS on the media bucket.
 - LIVE-LIKE (+374 ms per query): no difference (0-1%). Time = number of round trips x 374 ms: list 386 vs 384, detail 388 vs 385, insert+update+delete in a transaction 1,930 vs 1,926 (5 statements), bulk 1,176 vs 1,163 (3 statements).
 - Decision (proposed): KEEP Sequelize as the one structure; direct SQL only for heavy report queries (dashboard / analytics / RSVP board), written through one helper. The rule that actually matters: fewest round trips - parallel independent queries, joins / includes instead of loops, bulkCreate / one UPDATE ... WHERE id IN, no per-row queries.
 - Existing `services/base.service.js` (getAll / getById / create / update / remove / restore + company scoping + redaction) is used by 32 of 103 services; 20 files use raw SQL. Step 4 (common CRUD) builds on it - waiting for Jamal's go-ahead.
+
+### 2026-11-19 - V2 clean-up pushed + step 4 common CRUD, batch 1 (backend, local tested, NOT deployed)
+- Clean-up committed + pushed: backend a333020, admin frontend 5fa125f. Live V2 backend still old -> needs Render MANUAL DEPLOY; then `apply-v2-cleanup.js --prod` (dry run) -> `--prod --apply`.
+- Common CRUD kit: services/crud.service.js, controllers/crud.controller.js, routes/crud.router.js (on top of base.service.js). Converted: notification categories, event categories, guest relationship / food preference options, event responsibilities (guestOption.* now sit on the kit), plan types, colour palettes.
+- tests/crud-contract.test.js (+ tests/snapshots/crud-contract.json): in-process, local DB; create / duplicate / blank name / get / list / update / status / delete per module; cleans up its rows. Before vs after: 5 modules identical; the only differences = bug fixes:
+  - PLAN TYPES: create always answered 500 "subscription is not defined" (a log line in the controller) AFTER saving the row -> every "failed" create on live still added a plan type (and retries made duplicates). Now 201; blank / duplicate name refused; only plan-type fields writable (before: any body field, incl. company_id).
+  - COLOUR PALETTES: blank and duplicate names were accepted; edit / delete passed `{ companyId }` (an object) as the company id -> "not found" for any palette owned by a company. Fixed by the kit.
+- Approval checked through the kit (admin@admin.com create + edit -> request -> developer approves -> row active / renamed).
+- Backend CLAUDE.md: "Common CRUD" section (use the kit, Sequelize, fewest round trips, contract test).
+- Next batch: home screen categories + template categories (slug, counts, reorder - reorder saves ONE ROW PER QUERY, ~374 ms each on live), currencies, languages, plan badges, then decorations / frame styles / template fonts.
+- To check on live after deploy: plan_types rows created by the old 500 bug (duplicates / blank names).

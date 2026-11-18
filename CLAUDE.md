@@ -21,6 +21,19 @@ src/
 tests/           — node scripts run against a live local server
 ```
 
+## Common CRUD (V2, 2026-11-19)
+- Admin master modules are built from one kit, not hand-written:
+  `services/crud.service.js` (build: Model, writable whitelist, search / sort, name required + unique,
+  `beforeSave`, `extend`), `controllers/crud.controller.js`, `routes/crud.router.js` (login → company →
+  permission → approval). Example: `services/notificationCategory.service.js` (+ its controller / routes).
+- New admin CRUD module = these three files, a few lines each. Custom rules go in `beforeSave` / `extend`
+  / the router's `routes` callback — do not copy a hand-written module.
+- Stay on Sequelize. Direct SQL only for heavy report queries. Live DB is ~374 ms per query, so the rule
+  that matters is FEWEST ROUND TRIPS: parallel independent queries, includes instead of loops,
+  bulkCreate / one `UPDATE … WHERE id IN`, never one query per row (`tests/orm-vs-sql.bench.js`).
+- Before / after refactoring a module, run `node tests/crud-contract.test.js` (in-process, local DB);
+  `--save` records a new baseline after an intended change.
+
 ## Auth Middleware
 - `isAuthenticated` — admin JWT (cookie: `access_token`)
 - `isVendorAuthenticated` — vendor JWT (cookie: `vendor_access_token`)

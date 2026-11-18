@@ -1,0 +1,1704 @@
+{
+ "/notification-categories": {
+  "create": {
+   "json": {
+    "data": {
+     "notificationCategory": {
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "description": "d",
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Notif <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>"
+     }
+    },
+    "message": "Notification category created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_duplicate": {
+   "json": {
+    "message": "A notification category named \"Notif <stamp>\" already exists.",
+    "success": false
+   },
+   "status": 400
+  },
+  "create_no_name": {
+   "json": {
+    "message": "Category name is required",
+    "success": false
+   },
+   "status": 400
+  },
+  "delete": {
+   "json": {
+    "data": null,
+    "message": "Notification category deleted successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "delete_missing": {
+   "json": {
+    "message": "NotificationCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get": {
+   "json": {
+    "data": {
+     "notificationCategory": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Notif <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Success",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "get_after_delete": {
+   "json": {
+    "message": "NotificationCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get_missing": {
+   "json": {
+    "message": "NotificationCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "list_default_shape": {
+   "dataKeys": [
+    "color",
+    "company_id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "description",
+    "has_pending_approval",
+    "icon",
+    "id",
+    "is_active",
+    "name",
+    "sort_order",
+    "updated_at",
+    "updated_by"
+   ],
+   "keys": [
+    "data",
+    "message",
+    "pagination",
+    "success",
+    "timestamp"
+   ],
+   "pagination": [
+    "hasNextPage",
+    "hasPrevPage",
+    "limit",
+    "page",
+    "totalItems",
+    "totalPages"
+   ],
+   "status": 200
+  },
+  "list_search": {
+   "json": {
+    "data": [
+     {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "has_pending_approval": false,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Notif <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    ],
+    "message": "Success",
+    "pagination": {
+     "hasNextPage": false,
+     "hasPrevPage": false,
+     "limit": 10,
+     "page": 1,
+     "totalItems": 1,
+     "totalPages": 1
+    },
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_off": {
+   "json": {
+    "data": {
+     "notificationCategory": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "icon": "",
+      "id": "<x>",
+      "is_active": 0,
+      "name": "Notif <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Notification category status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_on": {
+   "json": {
+    "data": {
+     "notificationCategory": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Notif <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Notification category status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update": {
+   "json": {
+    "data": {
+     "notificationCategory": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Notif <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Notification category updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update_missing": {
+   "json": {
+    "message": "Notification category not found",
+    "success": false
+   },
+   "status": 404
+  }
+ },
+ "/event-categories": {
+  "create": {
+   "json": {
+    "data": {
+     "eventCategory": {
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "description": "d",
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Cat <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>"
+     }
+    },
+    "message": "Event category created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_duplicate": {
+   "json": {
+    "message": "An event category named \"Cat <stamp>\" already exists.",
+    "success": false
+   },
+   "status": 400
+  },
+  "create_no_name": {
+   "json": {
+    "message": "Category name is required",
+    "success": false
+   },
+   "status": 400
+  },
+  "delete": {
+   "json": {
+    "data": null,
+    "message": "Event category deleted successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "delete_missing": {
+   "json": {
+    "message": "EventCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get": {
+   "json": {
+    "data": {
+     "eventCategory": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Cat <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Success",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "get_after_delete": {
+   "json": {
+    "message": "EventCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get_missing": {
+   "json": {
+    "message": "EventCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "list_default_shape": {
+   "dataKeys": [
+    "color",
+    "company_id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "description",
+    "has_pending_approval",
+    "icon",
+    "id",
+    "is_active",
+    "name",
+    "sort_order",
+    "updated_at",
+    "updated_by"
+   ],
+   "keys": [
+    "data",
+    "message",
+    "pagination",
+    "success",
+    "timestamp"
+   ],
+   "pagination": [
+    "hasNextPage",
+    "hasPrevPage",
+    "limit",
+    "page",
+    "totalItems",
+    "totalPages"
+   ],
+   "status": 200
+  },
+  "list_search": {
+   "json": {
+    "data": [
+     {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "has_pending_approval": false,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Cat <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    ],
+    "message": "Success",
+    "pagination": {
+     "hasNextPage": false,
+     "hasPrevPage": false,
+     "limit": 10,
+     "page": 1,
+     "totalItems": 1,
+     "totalPages": 1
+    },
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_off": {
+   "json": {
+    "data": {
+     "eventCategory": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "icon": "",
+      "id": "<x>",
+      "is_active": 0,
+      "name": "Cat <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Event category status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_on": {
+   "json": {
+    "data": {
+     "eventCategory": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Cat <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Event category status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update": {
+   "json": {
+    "data": {
+     "eventCategory": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Cat <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Event category updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update_missing": {
+   "json": {
+    "message": "Event category not found",
+    "success": false
+   },
+   "status": 404
+  }
+ },
+ "/guest-relationship-options": {
+  "create": {
+   "json": {
+    "data": {
+     "relationshipOption": {
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Rel <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>"
+     }
+    },
+    "message": "Option created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_duplicate": {
+   "json": {
+    "message": "\"Rel <stamp>\" is already in this list.",
+    "success": false
+   },
+   "status": 400
+  },
+  "create_no_name": {
+   "json": {
+    "message": "A relationship name is required.",
+    "success": false
+   },
+   "status": 400
+  },
+  "delete": {
+   "json": {
+    "data": null,
+    "message": "Option deleted successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "delete_missing": {
+   "json": {
+    "message": "GuestRelationshipOption not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get": {
+   "json": {
+    "data": {
+     "relationshipOption": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Rel <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Success",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "get_after_delete": {
+   "json": {
+    "message": "GuestRelationshipOption not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get_missing": {
+   "json": {
+    "message": "GuestRelationshipOption not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "list_default_shape": {
+   "dataKeys": [
+    "category",
+    "color",
+    "company_id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "description",
+    "event_category_id",
+    "has_pending_approval",
+    "icon",
+    "id",
+    "is_active",
+    "name",
+    "sort_order",
+    "updated_at",
+    "updated_by"
+   ],
+   "keys": [
+    "data",
+    "message",
+    "pagination",
+    "success",
+    "timestamp"
+   ],
+   "pagination": [
+    "hasNextPage",
+    "hasPrevPage",
+    "limit",
+    "page",
+    "totalItems",
+    "totalPages"
+   ],
+   "status": 200
+  },
+  "list_search": {
+   "json": {
+    "data": [
+     {
+      "category": null,
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "has_pending_approval": false,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Rel <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    ],
+    "message": "Success",
+    "pagination": {
+     "hasNextPage": false,
+     "hasPrevPage": false,
+     "limit": 10,
+     "page": 1,
+     "totalItems": 1,
+     "totalPages": 1
+    },
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_off": {
+   "json": {
+    "data": {
+     "relationshipOption": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 0,
+      "name": "Rel <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Option status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_on": {
+   "json": {
+    "data": {
+     "relationshipOption": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Rel <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Option status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update": {
+   "json": {
+    "data": {
+     "relationshipOption": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Rel <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Option updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update_missing": {
+   "json": {
+    "message": "That relationship was not found.",
+    "success": false
+   },
+   "status": 404
+  }
+ },
+ "/guest-food-preference-options": {
+  "create": {
+   "json": {
+    "data": {
+     "foodPreferenceOption": {
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Food <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>"
+     }
+    },
+    "message": "Option created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_duplicate": {
+   "json": {
+    "message": "\"Food <stamp>\" is already in this list.",
+    "success": false
+   },
+   "status": 400
+  },
+  "create_no_name": {
+   "json": {
+    "message": "A food preference name is required.",
+    "success": false
+   },
+   "status": 400
+  },
+  "delete": {
+   "json": {
+    "data": null,
+    "message": "Option deleted successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "delete_missing": {
+   "json": {
+    "message": "GuestFoodPreferenceOption not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get": {
+   "json": {
+    "data": {
+     "foodPreferenceOption": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Food <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Success",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "get_after_delete": {
+   "json": {
+    "message": "GuestFoodPreferenceOption not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get_missing": {
+   "json": {
+    "message": "GuestFoodPreferenceOption not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "list_default_shape": {
+   "dataKeys": [
+    "category",
+    "color",
+    "company_id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "description",
+    "event_category_id",
+    "has_pending_approval",
+    "icon",
+    "id",
+    "is_active",
+    "name",
+    "sort_order",
+    "updated_at",
+    "updated_by"
+   ],
+   "keys": [
+    "data",
+    "message",
+    "pagination",
+    "success",
+    "timestamp"
+   ],
+   "pagination": [
+    "hasNextPage",
+    "hasPrevPage",
+    "limit",
+    "page",
+    "totalItems",
+    "totalPages"
+   ],
+   "status": 200
+  },
+  "list_search": {
+   "json": {
+    "data": [
+     {
+      "category": null,
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "has_pending_approval": false,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Food <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    ],
+    "message": "Success",
+    "pagination": {
+     "hasNextPage": false,
+     "hasPrevPage": false,
+     "limit": 10,
+     "page": 1,
+     "totalItems": 1,
+     "totalPages": 1
+    },
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_off": {
+   "json": {
+    "data": {
+     "foodPreferenceOption": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 0,
+      "name": "Food <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Option status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_on": {
+   "json": {
+    "data": {
+     "foodPreferenceOption": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Food <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Option status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update": {
+   "json": {
+    "data": {
+     "foodPreferenceOption": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Food <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Option updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update_missing": {
+   "json": {
+    "message": "That food preference was not found.",
+    "success": false
+   },
+   "status": 404
+  }
+ },
+ "/event-responsibilities": {
+  "create": {
+   "json": {
+    "data": {
+     "responsibility": {
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Resp <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>"
+     }
+    },
+    "message": "Option created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_duplicate": {
+   "json": {
+    "message": "\"Resp <stamp>\" is already in this list.",
+    "success": false
+   },
+   "status": 400
+  },
+  "create_no_name": {
+   "json": {
+    "message": "A responsibility name is required.",
+    "success": false
+   },
+   "status": 400
+  },
+  "delete": {
+   "json": {
+    "data": null,
+    "message": "Option deleted successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "delete_missing": {
+   "json": {
+    "message": "EventResponsibility not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get": {
+   "json": {
+    "data": {
+     "responsibility": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Resp <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Success",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "get_after_delete": {
+   "json": {
+    "message": "EventResponsibility not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get_missing": {
+   "json": {
+    "message": "EventResponsibility not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "list_default_shape": {
+   "dataKeys": [
+    "category",
+    "color",
+    "company_id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "description",
+    "event_category_id",
+    "has_pending_approval",
+    "icon",
+    "id",
+    "is_active",
+    "name",
+    "sort_order",
+    "updated_at",
+    "updated_by"
+   ],
+   "keys": [
+    "data",
+    "message",
+    "pagination",
+    "success",
+    "timestamp"
+   ],
+   "pagination": [
+    "hasNextPage",
+    "hasPrevPage",
+    "limit",
+    "page",
+    "totalItems",
+    "totalPages"
+   ],
+   "status": 200
+  },
+  "list_search": {
+   "json": {
+    "data": [
+     {
+      "category": null,
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "has_pending_approval": false,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Resp <stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    ],
+    "message": "Success",
+    "pagination": {
+     "hasNextPage": false,
+     "hasPrevPage": false,
+     "limit": 10,
+     "page": 1,
+     "totalItems": 1,
+     "totalPages": 1
+    },
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_off": {
+   "json": {
+    "data": {
+     "responsibility": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 0,
+      "name": "Resp <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Option status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_on": {
+   "json": {
+    "data": {
+     "responsibility": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Resp <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Option status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update": {
+   "json": {
+    "data": {
+     "responsibility": {
+      "color": null,
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": null,
+      "event_category_id": null,
+      "icon": "",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Resp <stamp> 2",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Option updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update_missing": {
+   "json": {
+    "message": "That responsibility was not found.",
+    "success": false
+   },
+   "status": 404
+  }
+ },
+ "/plan-types": {
+  "create": {
+   "json": {
+    "data": {
+     "planType": {
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "description": "d",
+      "id": "<x>",
+      "is_active": 1,
+      "is_custom": 0,
+      "name": "Plan <stamp>",
+      "price": 10,
+      "sort_order": 5,
+      "updated_at": "<x>"
+     }
+    },
+    "message": "Plan type created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_duplicate": {
+   "json": {
+    "message": "A plan type named \"Plan <stamp>\" already exists.",
+    "success": false
+   },
+   "status": 400
+  },
+  "create_no_name": {
+   "json": {
+    "message": "Plan type name is required",
+    "success": false
+   },
+   "status": 400
+  },
+  "delete": {
+   "json": {
+    "data": null,
+    "message": "Plan type deleted successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "delete_missing": {
+   "json": {
+    "message": "PlanType not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get": {
+   "json": {
+    "data": {
+     "planType": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "discounted_price": null,
+      "features": null,
+      "id": "<x>",
+      "is_active": 1,
+      "is_custom": 0,
+      "label_color": null,
+      "menu_ids": null,
+      "name": "Plan <stamp>",
+      "price": "10.00",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null,
+      "validity": null,
+      "vendor_id": null
+     }
+    },
+    "message": "Success",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "get_after_delete": {
+   "json": {
+    "message": "PlanType not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get_missing": {
+   "json": {
+    "message": "PlanType not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "list_default_shape": {
+   "dataKeys": [
+    "company_id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "description",
+    "discounted_price",
+    "features",
+    "has_pending_approval",
+    "id",
+    "is_active",
+    "is_custom",
+    "label_color",
+    "menu_ids",
+    "name",
+    "price",
+    "sort_order",
+    "updated_at",
+    "updated_by",
+    "validity",
+    "vendor_id"
+   ],
+   "keys": [
+    "data",
+    "message",
+    "pagination",
+    "success",
+    "timestamp"
+   ],
+   "pagination": [
+    "hasNextPage",
+    "hasPrevPage",
+    "limit",
+    "page",
+    "totalItems",
+    "totalPages"
+   ],
+   "status": 200
+  },
+  "list_search": {
+   "json": {
+    "data": [
+     {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "discounted_price": null,
+      "features": null,
+      "has_pending_approval": false,
+      "id": "<x>",
+      "is_active": 1,
+      "is_custom": 0,
+      "label_color": null,
+      "menu_ids": null,
+      "name": "Plan <stamp>",
+      "price": "10.00",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null,
+      "validity": null,
+      "vendor_id": null
+     }
+    ],
+    "message": "Success",
+    "pagination": {
+     "hasNextPage": false,
+     "hasPrevPage": false,
+     "limit": 10,
+     "page": 1,
+     "totalItems": 1,
+     "totalPages": 1
+    },
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_off": {
+   "json": {
+    "data": {
+     "planType": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "discounted_price": null,
+      "features": null,
+      "id": "<x>",
+      "is_active": 0,
+      "is_custom": 0,
+      "label_color": null,
+      "menu_ids": null,
+      "name": "Plan <stamp> 2",
+      "price": "10.00",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>",
+      "validity": null,
+      "vendor_id": null
+     }
+    },
+    "message": "Plan type status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_on": {
+   "json": {
+    "data": {
+     "planType": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "discounted_price": null,
+      "features": null,
+      "id": "<x>",
+      "is_active": 1,
+      "is_custom": 0,
+      "label_color": null,
+      "menu_ids": null,
+      "name": "Plan <stamp> 2",
+      "price": "10.00",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>",
+      "validity": null,
+      "vendor_id": null
+     }
+    },
+    "message": "Plan type status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update": {
+   "json": {
+    "data": {
+     "planType": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "description": "d",
+      "discounted_price": null,
+      "features": null,
+      "id": "<x>",
+      "is_active": 1,
+      "is_custom": 0,
+      "label_color": null,
+      "menu_ids": null,
+      "name": "Plan <stamp> 2",
+      "price": "10.00",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>",
+      "validity": null,
+      "vendor_id": null
+     }
+    },
+    "message": "Plan type updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update_missing": {
+   "json": {
+    "message": "PlanType not found",
+    "success": false
+   },
+   "status": 404
+  }
+ },
+ "/color-palettes": {
+  "create": {
+   "json": {
+    "data": {
+     "palette": {
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Pal <stamp>",
+      "primary_bg_color": "#111111",
+      "primary_text_color": "#222222",
+      "updated_at": "<x>"
+     }
+    },
+    "message": "Color palette created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_duplicate": {
+   "json": {
+    "message": "A colour palette named \"Pal <stamp>\" already exists.",
+    "success": false
+   },
+   "status": 400
+  },
+  "create_no_name": {
+   "json": {
+    "message": "Palette name is required",
+    "success": false
+   },
+   "status": 400
+  },
+  "delete": {
+   "json": {
+    "data": null,
+    "message": "Color palette deleted successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "delete_missing": {
+   "json": {
+    "message": "ColorPalette not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get": {
+   "json": {
+    "data": {
+     "palette": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Pal <stamp>",
+      "paragraph_color": null,
+      "primary_bg_color": "#111111",
+      "primary_text_color": "#222222",
+      "secondary_text_color": null,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Success",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "get_after_delete": {
+   "json": {
+    "message": "ColorPalette not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get_missing": {
+   "json": {
+    "message": "ColorPalette not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "list_default_shape": {
+   "dataKeys": [
+    "company_id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "id",
+    "is_active",
+    "name",
+    "paragraph_color",
+    "primary_bg_color",
+    "primary_text_color",
+    "secondary_text_color",
+    "updated_at",
+    "updated_by"
+   ],
+   "keys": [
+    "data",
+    "message",
+    "pagination",
+    "success",
+    "timestamp"
+   ],
+   "pagination": [
+    "hasNextPage",
+    "hasPrevPage",
+    "limit",
+    "page",
+    "totalItems",
+    "totalPages"
+   ],
+   "status": 200
+  },
+  "list_search": {
+   "json": {
+    "data": [
+     {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Pal <stamp>",
+      "paragraph_color": null,
+      "primary_bg_color": "#111111",
+      "primary_text_color": "#222222",
+      "secondary_text_color": null,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    ],
+    "message": "Success",
+    "pagination": {
+     "hasNextPage": false,
+     "hasPrevPage": false,
+     "limit": 10,
+     "page": 1,
+     "totalItems": 1,
+     "totalPages": 1
+    },
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update": {
+   "json": {
+    "data": {
+     "palette": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Pal <stamp> 2",
+      "paragraph_color": null,
+      "primary_bg_color": "#111111",
+      "primary_text_color": "#222222",
+      "secondary_text_color": null,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Color palette updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update_missing": {
+   "json": {
+    "message": "ColorPalette not found",
+    "success": false
+   },
+   "status": 404
+  }
+ }
+}
