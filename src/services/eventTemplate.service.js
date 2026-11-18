@@ -1,5 +1,6 @@
 const { Sequelize, User, EventTemplate, EventCategory,
     TemplateCategory, FrameStyle, Decoration, sequelize } = require('../models');
+const { applySortOrder } = require('../utils/sortOrder');
 const { Op } = Sequelize;
 const baseService = require('./base.service');
 const ApiError = require('../utils/apiError');
@@ -832,31 +833,9 @@ const duplicate = async (id, userId = null, companyId = undefined) => {
  * non-deterministically.
  */
 const reorder = async (items = [], userId = null, companyId = undefined) => {
-    if (!Array.isArray(items) || items.length === 0) {
-        throw ApiError.badRequest('Provide an array of { id, sort_order }.');
-    }
-
-    const ids = items.map((i) => parseInt(i.id, 10)).filter((n) => !Number.isNaN(n));
-
-    const where = { id: ids };
-    if (companyId !== undefined && companyId !== null) where.company_id = companyId;
-
-    const owned = await EventTemplate.findAll({ where, attributes: ['id'], raw: true });
-    const ownedIds = new Set(owned.map((r) => r.id));
-
-    await sequelize.transaction(async (transaction) => {
-        for (const item of items) {
-            const id = parseInt(item.id, 10);
-            if (!ownedIds.has(id)) continue;
-            await EventTemplate.update(
-                { sort_order: parseInt(item.sort_order, 10) || 0, updated_by: userId },
-                { where: { id }, transaction }
-            );
-        }
-    });
-
-    await logger.logActivity(userId, 'update', MODEL_NAME, `Reordered ${ownedIds.size} templates`, { companyId });
-    return { updated: ownedIds.size };
+    const result = await applySortOrder(EventTemplate, items, { userId, companyId });
+    await logger.logActivity(userId, 'update', MODEL_NAME, `Reordered ${result.updated} templates`, { companyId });
+    return result;
 };
 
 const deleteById = async (id, userId = null, companyId = undefined) => {

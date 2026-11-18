@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const { sequelize } = require('../models');
 const crud = require('./crud.service');
 const ApiError = require('../utils/apiError');
+const { applySortOrder } = require('../utils/sortOrder');
 
 /**
  * Shared builder for the admin "style" masters with a slug, a child count and drag reorder:
@@ -94,26 +95,8 @@ const build = ({ Model, modelName, moduleSlug, Child, childKey, countKey, orphan
         beforeDelete: async (id) => ({ [orphanKey]: await Child.count({ where: { [childKey]: id } }) }),
     });
 
-    /** Drag reorder: [{ id, sort_order }] — rows of another company are skipped. One UPDATE. */
-    service.reorder = async (items = [], userId = null, companyId = undefined) => {
-        if (!Array.isArray(items) || items.length === 0) throw ApiError.badRequest('Provide an array of { id, sort_order }.');
-        const wanted = new Map();
-        for (const item of items) {
-            const id = parseInt(item.id, 10);
-            if (!Number.isNaN(id)) wanted.set(id, parseInt(item.sort_order, 10) || 0);
-        }
-        const where = { id: [...wanted.keys()] };
-        if (companyId !== undefined && companyId !== null) where.company_id = companyId;
-        const owned = (await Model.findAll({ where, attributes: ['id'], raw: true })).map((r) => r.id);
-        if (owned.length) {
-            const cases = owned.map((id) => `WHEN ${Number(id)} THEN ${Number(wanted.get(id))}`).join(' ');
-            await Model.update(
-                { sort_order: sequelize.literal(`CASE id ${cases} ELSE sort_order END`), updated_by: userId },
-                { where: { id: owned } },
-            );
-        }
-        return { updated: owned.length };
-    };
+    /** Drag reorder: [{ id, sort_order }] — one UPDATE for all rows (utils/sortOrder.js). */
+    service.reorder = (items = [], userId = null, companyId = undefined) => applySortOrder(Model, items, { userId, companyId });
 
     return service;
 };

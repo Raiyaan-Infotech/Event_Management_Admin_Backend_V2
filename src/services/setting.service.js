@@ -149,34 +149,27 @@ const update = async (key, value, userId = null, companyId = undefined) => {
  */
 const bulkUpdate = async (settings, group = 'general', userId = null, companyId = undefined) => {
   try {
-    const results = [];
-
-    for (const [key, value] of Object.entries(settings)) {
-      const strValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-
-      // Match by the globally-unique `key` only — matching by key+company_id can
-      // miss a row stored under a different/NULL company and then hit the
-      // UNIQUE(key) constraint on insert ("Duplicate entry").
-      const [setting, created] = await Setting.findOrCreate({
-        where: { key },
-        defaults: {
-          value: strValue,
+    // Matched by the globally-unique `key` only (UNIQUE(key)) — matching by key+company_id can miss a
+    // row stored under a different / NULL company. One INSERT … ON DUPLICATE KEY UPDATE for every key
+    // (existing rows: only value + updated_by change), then one read — was 2 queries PER KEY.
+    const keys = Object.keys(settings);
+    if (keys.length) {
+      await Setting.bulkCreate(keys.map((key) => {
+        const value = settings[key];
+        return {
+          key,
+          value: typeof value === 'object' ? JSON.stringify(value) : String(value),
           group,
           type: 'text',
           created_by: userId,
-          ...(companyId !== undefined && companyId !== null ? { company_id: companyId } : {}),
-        },
-      });
-
-      if (!created) {
-        await setting.update({
-          value: strValue,
           updated_by: userId,
-        });
-      }
-
-      results.push(setting);
+          ...(companyId !== undefined && companyId !== null ? { company_id: companyId } : {}),
+        };
+      }), { updateOnDuplicate: ['value', 'updated_by', 'updated_at'] });
     }
+    const rows = keys.length ? await Setting.findAll({ where: { key: keys } }) : [];
+    const byKey = new Map(rows.map((r) => [r.key, r]));
+    const results = keys.map((k) => byKey.get(k)).filter(Boolean);
 
     logger.logDB('bulkUpdate', MODEL_NAME, null, { count: results.length });
     logger.logActivity(userId, 'bulk_update', MODEL_NAME, `Bulk updated ${results.length} settings`);

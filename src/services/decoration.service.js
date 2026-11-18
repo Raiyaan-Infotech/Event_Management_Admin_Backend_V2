@@ -1,4 +1,5 @@
 const path = require('path');
+const { applySortOrder } = require('../utils/sortOrder');
 const fs = require('fs');
 const axios = require('axios');
 const { Sequelize, User, Decoration, sequelize } = require('../models');
@@ -267,30 +268,8 @@ const updateStatus = async (id, is_active, userId = null, companyId = undefined)
  * then paginates non-deterministically.
  */
 const reorder = async (items = [], userId = null, companyId = undefined) => {
-    if (!Array.isArray(items) || items.length === 0) {
-        throw ApiError.badRequest('Provide an array of { id, sort_order }.');
-    }
-
-    const ids = items.map((i) => parseInt(i.id, 10)).filter((n) => !Number.isNaN(n));
-
-    const where = { id: ids };
-    if (companyId !== undefined && companyId !== null) where.company_id = companyId;
-
-    const owned = await Decoration.findAll({ where, attributes: ['id'], raw: true });
-    const ownedIds = new Set(owned.map((r) => r.id));
-
-    await sequelize.transaction(async (transaction) => {
-        for (const item of items) {
-            const id = parseInt(item.id, 10);
-            if (!ownedIds.has(id)) continue;
-            await Decoration.update(
-                { sort_order: parseInt(item.sort_order, 10) || 0, updated_by: userId },
-                { where: { id }, transaction }
-            );
-        }
-    });
-
-    return { updated: ownedIds.size };
+    const result = await applySortOrder(Decoration, items, { userId, companyId });
+    return result;
 };
 
 const deleteById = async (id, userId = null, companyId = undefined) =>
