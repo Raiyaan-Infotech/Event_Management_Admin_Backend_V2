@@ -921,22 +921,26 @@ const clean = (v, max) => String(v ?? '').trim().slice(0, max);
  * No card number / CVC / expiry ever reaches this server — the form keeps them in the
  * browser and sends only the brand + last four + name (`assertNoRawCard` enforces it).
  */
-const checkout = async (clientId, body = {}) => {
-    require('./clientPaymentMethod.service').assertNoRawCard(body);
-
-    const targetId = Number(body.plan_id);
+/** A plan the client may pick: active, visible, and of the client's company. */
+const findPickablePlan = async (client, planId) => {
+    const targetId = Number(planId);
     if (!Number.isInteger(targetId) || targetId <= 0) throw ApiError.badRequest('Please choose a plan.');
-    const method = String(body.method || '').toLowerCase();
-    if (!CHECKOUT_METHODS.includes(method)) throw ApiError.badRequest('Please choose a payment method.');
-
-    const { client, subscription } = await getCurrentSubscription(clientId);
     const plan = await SubscriptionPlan.findByPk(targetId, { attributes: [...PLAN_ATTRS, 'company_id'] });
     if (!plan || Number(plan.is_active) !== 1 || Number(plan.is_visible) !== 1
         || (client.company_id && plan.company_id && plan.company_id !== client.company_id)) {
         throw ApiError.badRequest('That plan is not available.');
     }
-    if (subscription?.subscription_plan_id === plan.id) throw ApiError.badRequest('You are already on this plan.');
-    if (!(Number(plan.price) > 0)) throw ApiError.badRequest('This plan is free — no payment is needed.');
+    return plan;
+};
+
+/**
+ * Validate the payment method and save ONE pending payment row for `plan` (no gateway yet).
+ * Shared by the old checkout and by per-event bookings (clientBooking.service).
+ */
+const savePendingPayment = async ({ clientId, client, subscription, plan, body, date, transaction }) => {
+    require('./clientPaymentMethod.service').assertNoRawCard(body);
+    const method = String(body.method || '').toLowerCase();
+    if (!CHECKOUT_METHODS.includes(method)) throw ApiError.badRequest('Please choose a payment method.');
 
     // What the ledger prints for the method ("UPI · name@bank", "Visa ending in 4242").
     let label; let brand = null; let last4 = null;
@@ -963,7 +967,6 @@ const checkout = async (clientId, body = {}) => {
     }
 
     const amount = withTax(plan.price, subscription?.tax_rate ?? 18);
-    const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.start_date || '')) ? body.start_date : null;
     const reference = `TXN${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 90 + 10)}`;
     const row = await ClientTransaction.create({
         website_client_id: clientId,
@@ -980,27 +983,38 @@ const checkout = async (clientId, body = {}) => {
         method_last4: last4,
         method_label: label.slice(0, 120),
         occurred_at: new Date(),
-    });
+    }, { transaction });
 
     return {
-        transaction: {
-            id: row.id,
-            reference,
-            status: 'pending',
-            method,
-            method_label: row.method_label,
-            amount,
-            currency_code: row.currency_code,
-            occurred_at: row.occurred_at,
-        },
-        plan: { id: plan.id, name: plan.name, billing_cycle: plan.billing_cycle },
+        id: row.id,
+        reference,
+        status: 'pending',
+        method,
+        method_label: row.method_label,
+        amount,
+        currency_code: row.currency_code,
+        occurred_at: row.occurred_at,
     };
+};
+
+const checkout = async (clientId, body = {}) => {
+    require('./clientPaymentMethod.service').assertNoRawCard(body);
+    const { client, subscription } = await getCurrentSubscription(clientId);
+    const plan = await findPickablePlan(client, body.plan_id);
+    if (subscription?.subscription_plan_id === plan.id) throw ApiError.badRequest('You are already on this plan.');
+    if (!(Number(plan.price) > 0)) throw ApiError.badRequest('This plan is free — no payment is needed.');
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.start_date || '')) ? body.start_date : null;
+    const transaction = await savePendingPayment({ clientId, client, subscription, plan, body, date });
+    return { transaction, plan: { id: plan.id, name: plan.name, billing_cycle: plan.billing_cycle } };
 };
 
 module.exports = {
     getOverview,
     getAvailablePlans,
     checkout,
+    findPickablePlan,
+    savePendingPayment,
+    getCurrentSubscription,
     changePlan,
     cancelSubscription,
     resumeSubscription,

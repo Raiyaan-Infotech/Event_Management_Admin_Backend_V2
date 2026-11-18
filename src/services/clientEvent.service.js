@@ -175,12 +175,12 @@ const str = (value, max) => {
  * Throws ApiError.badRequest on the first problem, with a message written for
  * the person filling the form rather than for a log.
  */
-const normalise = async (clientId, body, { partial = false } = {}) => {
+const normalise = async (clientId, body, { partial = false, bookingId = null } = {}) => {
     // The same call the wizard's dropdowns were populated from. Re-running it
     // here is what makes the check authoritative: if the plan changed between
     // the form loading and the submit, the submit is judged against the plan as
     // it is NOW.
-    const options = await clientPortalService.getEventOptions(clientId);
+    const options = await clientPortalService.getEventOptions(clientId, { bookingId });
 
     if (!options.plan) {
         throw ApiError.badRequest(
@@ -542,7 +542,20 @@ const createEvent = async (clientId, body) => {
     const client = await WebsiteClient.findByPk(clientId);
     if (!client) throw ApiError.notFound('Account not found.');
 
-    const { data, plan } = await normalise(clientId, body, { partial: false });
+    // Per-event plans (2026-11-19): an event made from a booked date carries that booking's
+    // plan (its categories / menus / templates too), uses the slot the booking already holds,
+    // and is not counted against the account's max_events (the plan was chosen for THIS
+    // event). Without a booking: the old rules.
+    const bookingService = require('./clientBooking.service');
+    const booking = body.booking_id != null && body.booking_id !== ''
+        ? await bookingService.getReservedBooking(client.id, body.booking_id)
+        : null;
+
+    const { data, plan } = await normalise(clientId, body, { partial: false, bookingId: booking?.id ?? null });
+
+    if (booking && String(data.start_date) !== String(booking.start_date)) {
+        throw ApiError.badRequest(`This booking is for ${booking.start_date}. Please keep the booked event date.`);
+    }
 
     // Event Availability: the dates must be configured and not full (only when enforced).
     const availability = await eventAvailability.assertEventDatesBookable({
@@ -550,12 +563,13 @@ const createEvent = async (clientId, body) => {
         startDate: data.start_date,
         endDate: data.end_date,
         clientId: client.id,
+        excludeBookingId: booking?.id ?? null,
     });
 
     // Plan limit — see LIMIT_FIELDS in subscriptionPlan.service.js. Checked
     // against the client's CURRENT plan (same one `normalise` just validated the
     // rest of the body against), not the plan any existing event was created under.
-    const maxEvents = await subscriptionPlanService.getPlanLimit(plan.id, 'max_events');
+    const maxEvents = booking ? null : await subscriptionPlanService.getPlanLimit(plan.id, 'max_events');
     if (maxEvents !== null) {
         // `paranoid: false` — a DELETED event still spends its slot. Counting
         // only live rows made the limit meaningless: create, delete, repeat, and
@@ -581,10 +595,17 @@ const createEvent = async (clientId, body) => {
                 website_client_id: client.id,
                 vendor_id: client.vendor_id,
                 company_id: client.company_id ?? null,
-                subscription_plan_id: client.subscription_plan_id ?? null,
+                subscription_plan_id: booking ? booking.subscription_plan_id : (client.subscription_plan_id ?? null),
             },
             { transaction }
         );
+
+        // The booked date is spent by this event. Re-read under a lock so two tabs cannot
+        // both create an event from the same booking.
+        if (booking) {
+            const locked = await bookingService.getReservedBooking(client.id, booking.id, { transaction });
+            await bookingService.markUsed(locked, event.id, transaction);
+        }
 
         // The QR is bound to the event id and made ONCE — editing the event never
         // changes it. See utils/eventQr.js.

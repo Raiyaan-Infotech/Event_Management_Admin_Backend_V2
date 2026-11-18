@@ -438,7 +438,17 @@ const ownerGrantedMenuIds = async (ownerClientId) => {
  * features on mobile, portal sections in the portal — not which menus the plan
  * grants, which is the same everywhere.
  */
-const getEventOptions = async (clientId, { platform = 'website' } = {}) => {
+const getEventOptions = async (clientId, { platform = 'website', bookingId = null } = {}) => {
+    // Per-event plans (2026-11-19): an event made from a booked date uses THAT booking's plan,
+    // whatever (or whether any) plan the account has.
+    if (bookingId) {
+        const booking = await require('./clientBooking.service').getReservedBooking(clientId, bookingId);
+        return getEventOptionsForPlan(clientId, booking.subscription_plan_id, { platform });
+    }
+    return getEventOptionsForPlan(clientId, null, { platform });
+};
+
+const getEventOptionsForPlan = async (clientId, forcedPlanId, { platform = 'website' } = {}) => {
     // What the client has already spent against `max_events`, counted the same
     // way createEvent counts it — deleted events included. Sent here so the
     // wizard can refuse before the first field instead of after the last one,
@@ -456,18 +466,20 @@ const getEventOptions = async (clientId, { platform = 'website' } = {}) => {
     // two reads go together instead of one after the other.
     const [client, clientPlan] = await Promise.all([
         WebsiteClient.findByPk(clientId),
-        SubscriptionPlan.findOne({
-            where: {
-                // Op.eq is required: a bare literal as the value is rendered as
-                // a condition of its own (matching every plan), not `id = (…)`.
-                id: {
-                    [Op.eq]: Sequelize.literal(
-                        `(SELECT subscription_plan_id FROM website_clients WHERE id = ${Number(clientId)} AND deleted_at IS NULL)`
-                    ),
+        forcedPlanId
+            ? SubscriptionPlan.findByPk(forcedPlanId, { attributes: PLAN_ATTRS })
+            : SubscriptionPlan.findOne({
+                where: {
+                    // Op.eq is required: a bare literal as the value is rendered as
+                    // a condition of its own (matching every plan), not `id = (…)`.
+                    id: {
+                        [Op.eq]: Sequelize.literal(
+                            `(SELECT subscription_plan_id FROM website_clients WHERE id = ${Number(clientId)} AND deleted_at IS NULL)`
+                        ),
+                    },
                 },
-            },
-            attributes: PLAN_ATTRS,
-        }),
+                attributes: PLAN_ATTRS,
+            }),
     ]);
     if (!client) {
         return { plan: null, reason: 'Account not found.', categories: [], menus: [], portal_sections: [], app_features: [], templates: [] };
@@ -475,7 +487,7 @@ const getEventOptions = async (clientId, { platform = 'website' } = {}) => {
 
     const companyId = client.company_id ?? null;
 
-    if (!client.subscription_plan_id) {
+    if (!forcedPlanId && !client.subscription_plan_id) {
         return {
             plan: null,
             reason: 'No subscription plan is assigned to your account yet. Please contact us.',

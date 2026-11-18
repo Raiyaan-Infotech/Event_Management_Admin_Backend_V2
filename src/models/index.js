@@ -181,6 +181,8 @@ db.EventDownload = require('./EventDownload')(sequelize, Sequelize);
 db.EventDownloadLog = require('./EventDownloadLog')(sequelize, Sequelize);
 // Invitations flow step 3 (2026-11-18): one row per guest per invitation send.
 db.InvitationSend = require('./InvitationSend')(sequelize, Sequelize);
+// Per-event plans (2026-11-19): one row per booked date + the plan chosen for that event.
+db.EventBooking = require('./EventBooking')(sequelize, Sequelize);
 db.DownloadCategory = require('./DownloadCategory')(sequelize, Sequelize);
 db.EventNearbyPlace = require('./EventNearbyPlace')(sequelize, Sequelize);
 db.NearbyCategory = require('./NearbyCategory')(sequelize, Sequelize);

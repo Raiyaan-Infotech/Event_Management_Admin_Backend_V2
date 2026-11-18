@@ -32,6 +32,8 @@ const eventOptions = asyncHandler(async (req, res) => {
     // The app gets the plan's MOBILE menus, the portal its WEBSITE menus.
     const options = await clientPortalService.getEventOptions(req.websiteClient.id, {
         platform: clientPortalService.platformFromHeader(req.get('x-client')),
+        // Create Event from a booked date: that booking's plan decides the options.
+        bookingId: req.query.booking_id || null,
     });
     return ApiResponse.success(res, options, 'Event options retrieved');
 });

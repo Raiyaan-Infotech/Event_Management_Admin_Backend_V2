@@ -633,6 +633,13 @@ router.get('/billing/history', billingController.history);
 router.post('/billing/change-plan', billingController.changePlan);
 // Book Event → Payment (2026-11-18): saves the payment details as a PENDING payment — no gateway yet.
 router.post('/billing/checkout', billingController.checkout);
+
+// Per-event plans (2026-11-19): book a date with the plan for that event; list booked dates.
+const bookingController = require('../controllers/clientBooking.controller');
+router.get('/bookings/summary', bookingController.summary);
+router.get('/bookings', bookingController.list);
+router.post('/bookings', bookingController.create);
+router.get('/bookings/:id', bookingController.getOne);
 router.post('/billing/cancel', billingController.cancel);
 router.post('/billing/resume', billingController.resume);
 

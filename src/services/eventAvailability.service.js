@@ -106,6 +106,24 @@ const loadEvents = async (from, to, { excludeEventId = null } = {}) => {
     });
 };
 
+/**
+ * Booked dates with no event yet (per-event plans, 2026-11-19): a 'reserved' event_bookings row
+ * holds a slot like an event does. Shaped like an event row (no category: it is picked later, so
+ * it counts on the all-categories configs). Only the client calendar and the create check use
+ * these; the admin day lists still count real events.
+ */
+const loadBookings = async (from, to, { excludeBookingId = null } = {}) => {
+    const { EventBooking } = require('../models');
+    const where = {
+        status: 'reserved',
+        start_date: { [Op.lte]: to },
+        [Op.and]: [Sequelize.literal(`COALESCE(\`EventBooking\`.\`end_date\`, \`EventBooking\`.\`start_date\`) >= ${Event.sequelize.escape(from)}`)],
+    };
+    if (excludeBookingId) where.id = { [Op.ne]: excludeBookingId };
+    const rows = await EventBooking.findAll({ where, attributes: ['id', 'website_client_id', 'start_date', 'end_date'], raw: true });
+    return rows.map((b) => ({ ...b, id: `booking-${b.id}`, booking_id: b.id, event_category_id: null, is_booking: true }));
+};
+
 const eventCovers = (ev, d) => ev.start_date <= d && (ev.end_date || ev.start_date) >= d;
 const eventMatches = (config, ev) => config.event_category_id == null || ev.event_category_id === config.event_category_id;
 
@@ -730,8 +748,9 @@ const clientCalendar = async (query = {}, clientId = null) => {
     const { from, to } = rangeFromQuery(query);
     const configs = (await liveConfigs(from, to)).map(parseHolidays);
     const overrides = await loadOverrides(configs.map((c) => c.id), from, to);
-    const events = await loadEvents(from, to);
-    const mine = clientId ? events.filter((e) => e.website_client_id === Number(clientId)) : [];
+    const realEvents = await loadEvents(from, to);
+    const events = [...realEvents, ...await loadBookings(from, to)];
+    const mine = clientId ? realEvents.filter((e) => e.website_client_id === Number(clientId)) : [];
     const exceptions = await clientExceptions(clientId, from, to);
 
     const days = eachDay(from, to).map((d) => {
@@ -790,14 +809,17 @@ const clientExceptions = async (clientId, from, to) => {
  * Returns { usedRequestIds } — the approved exceptions this booking relies on, so the caller can mark
  * them used once the event is saved.
  */
-const assertEventDatesBookable = async ({ categoryId = null, startDate, endDate, excludeEventId = null, clientId = null }) => {
+const assertEventDatesBookable = async ({ categoryId = null, startDate, endDate, excludeEventId = null, excludeBookingId = null, clientId = null }) => {
     if (!startDate) return { usedRequestIds: [] };
     const from = startDate;
     const to = endDate && endDate > startDate ? endDate : startDate;
     const dates = eachDay(from, to);
     const configs = (await liveConfigs(from, to, { categoryId })).map(parseHolidays);
     const overrides = await loadOverrides(configs.map((c) => c.id), from, to);
-    const events = await loadEvents(from, to, { excludeEventId });
+    const events = [
+        ...await loadEvents(from, to, { excludeEventId }),
+        ...await loadBookings(from, to, { excludeBookingId }),
+    ];
     const exceptions = await clientExceptions(clientId, from, to);
     const used = new Set();
 
