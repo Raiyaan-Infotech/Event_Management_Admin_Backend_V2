@@ -1,10 +1,7 @@
 require('dotenv').config();  // ← MUST be first
 
 const app = require('./app');
-const { isInstalled, checkInstalledFromDB } = require('./middleware/setup');
 const http = require('http');
-const { Server } = require('socket.io');
-const { attachChatSocket } = require('./sockets/chat.socket');
 
 const PORT = process.env.PORT || 5000;
 
@@ -16,37 +13,13 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('Database connection established successfully.');
 
-    /* Original Logic (Commented for future use):
-    await checkInstalledFromDB();
-    if (isInstalled()) {
-      const { sequelize } = require('./models');
-      await sequelize.authenticate();
-      console.log('Database connection established successfully.');
-    } else {
-      console.log('[Setup] Application not yet installed. Starting in setup mode...');
-      console.log('[Setup] Visit /install to begin setup.');
-    }
-    */
 
     const server = http.createServer(app);
-    const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3004')
-      .split(',')
-      .map((origin) => origin.trim());
-    const io = new Server(server, {
-      cors: {
-        origin: allowedOrigins,
-        credentials: true,
-      },
-    });
-
-    attachChatSocket(io);
-    app.set('io', io);
 
     /*
       Scheduled campaigns. Started HERE and nowhere else: a scheduler running
       in more than one place sends the same notification twice, and one that is
-      never started makes "Schedule for Later" a button that silently does
-      nothing — which is the state `emailScheduler.service` is in.
+      never started makes "Schedule for Later" a button that silently does nothing.
     */
     require('./services/campaignScheduler.service').start();
     // The mobile app's scheduled notifications (event_notifications).

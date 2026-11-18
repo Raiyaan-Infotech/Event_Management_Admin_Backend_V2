@@ -82,7 +82,6 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Routes
 app.use('/api/v1/auth', require('./routes/auth.routes'));
 app.use('/api/v1/users',       require('./routes/user.routes'));
-app.use('/api/v1/departments', require('./routes/department.routes'));
 app.use('/api/v1/roles', require('./routes/role.routes'));
 app.use('/api/v1/permissions', require('./routes/permission.routes'));
 app.use('/api/v1/modules', require('./routes/module.routes'));
@@ -97,13 +96,9 @@ app.use('/api/v1/translation-keys', require('./routes/translationKey.routes'));
 app.use('/api/v1/email-configs', require('./routes/emailConfig.routes'));
 app.use('/api/v1/push-notification-configs', require('./routes/pushNotificationConfig.routes'));
 app.use('/api/v1/email-templates', require('./routes/emailTemplate.routes'));
-app.use('/api/v1/email-campaigns', require('./routes/emailCampaign.routes'));
 app.use('/api/v1/activity-logs', require('./routes/activityLog.routes'));
 app.use('/api/v1/approvals', require('./routes/approval.routes'));
-app.use('/api/v1/plugins', require('./routes/plugin.routes'));
 app.use('/api/v1/color-palettes', require('./routes/colorPalette.routes'));
-app.use('/api/v1/faq-categories', require('./routes/faqCategory.routes'));
-app.use('/api/v1/faqs', require('./routes/faq.routes'));
 app.use('/api/v1/vendors', require('./routes/vendor.routes'));
 app.use('/api/v1/menus', require('./routes/menu.routes'));
 // Menu Management
@@ -141,11 +136,7 @@ app.use('/api/v1/plan-badges', require('./routes/planBadge.routes'));
 app.use('/api/v1/website-clients', require('./routes/websiteClient.routes'));
 // Client portal — requires a signed-in website client (see websiteClientAuth).
 app.use('/api/v1/client', require('./routes/clientPortal.routes'));
-app.use('/api/v1/payments', require('./routes/payment.routes'));
-app.use('/api/v1/setup', require('./routes/setup.routes'));
 app.use('/api/v1/timezones', require('./routes/timezone.routes'));
-app.use('/api/v1/mail',      require('./routes/mail.routes'));
-app.use('/api/v1/chat',      require('./routes/chat.routes'));
 app.use('/api/v1/public',    require('./routes/public.routes'));
 app.use('/api/v1/website-builder', require('./routes/companyWebsiteBuilder.routes'));
 

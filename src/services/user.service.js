@@ -1,4 +1,4 @@
-const { User, Role, Permission, Country, State, District, City, RefreshToken, Department } = require('../models');
+const { User, Role, Permission, Country, State, District, City, RefreshToken } = require('../models');
 const baseService = require('./base.service');
 const logger = require('../utils/logger');
 const ApiError = require('../utils/apiError');
@@ -20,12 +20,6 @@ const getAll = async (query = {}, companyId = undefined) => {
         model: Role,
         as: 'role',
         attributes: ['id', 'name', 'slug', 'level'],
-      },
-      {
-        model: Department,
-        as: 'department_ref',
-        attributes: ['id', 'name'],
-        required: false,
       },
     ],
     moduleSlug: 'employees',
@@ -50,7 +44,6 @@ const getById = async (id, companyId = undefined) => {
         { model: Country,    as: 'country',        attributes: ['id', 'name', 'code'] },
         { model: State,      as: 'state',           attributes: ['id', 'name'] },
         { model: District,   as: 'city',            attributes: ['id', 'name'] },
-        { model: Department, as: 'department_ref',  attributes: ['id', 'name'], required: false },
       ],
     });
 

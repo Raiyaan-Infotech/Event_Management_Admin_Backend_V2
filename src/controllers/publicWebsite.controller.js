@@ -1,10 +1,6 @@
 const {
     Vendor,
     VendorClient,
-    VendorSubscriber,
-    PlanType,
-    District,
-    City,
 } = require('../models');
 const ApiResponse      = require('../utils/apiResponse');
 const ApiError         = require('../utils/apiError');
@@ -12,40 +8,8 @@ const { asyncHandler } = require('../utils/helpers');
 const { v4: uuidv4 } = require('uuid');
 const { generateClientHandoffToken } = require('../utils/jwt');
 const { validateClientPassword } = require('../utils/clientPasswordPolicy');
-const vendorWebsiteBuilderService = require('../services/vendorWebsiteBuilder.service');
 
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
-
-// Mirror a newsletter signup into the vendor_subscribers table (the User
-// Management > Subscriber list). Idempotent: revives a soft-deleted row,
-// reactivates an existing one, otherwise inserts. Never throws — a subscriber
-// bookkeeping failure must not break the public subscribe/register response.
-const upsertVendorSubscriber = async (vendorId, companyId, email) => {
-    const normalized = normalizeEmail(email);
-    if (!vendorId || !normalized) return;
-    try {
-        const existing = await VendorSubscriber.findOne({
-            where: { vendor_id: vendorId, email: normalized },
-            paranoid: false,
-        });
-        if (existing) {
-            if (existing.deletedAt) await existing.restore();
-            if (existing.is_active !== 1 || existing.deletedAt) {
-                await existing.update({ is_active: 1 });
-            }
-            return;
-        }
-        await VendorSubscriber.create({
-            vendor_id: vendorId,
-            company_id: companyId || null,
-            email: normalized,
-            is_active: 1,
-        });
-    } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('[upsertVendorSubscriber] failed:', err.message);
-    }
-};
 
 const toSlug = (name) =>
     name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -66,51 +30,6 @@ const findActiveVendorBySlug = async (slug, attributes, options = {}) => {
     });
     return vendor ? vendor.toJSON() : matchedVendor;
 };
-
-const getPublicVendorWebsite = asyncHandler(async (req, res) => {
-    const { slug } = req.params;
-
-    const builderPayload = await vendorWebsiteBuilderService.getPublicWebsitePayloadBySlug(slug);
-    if (builderPayload) {
-        return ApiResponse.success(res, builderPayload, 'Vendor data retrieved');
-    }
-
-    const vendor = await findActiveVendorBySlug(slug, [
-            'id', 'company_name', 'company_logo', 'short_description', 'website',
-            'about_us', 'company_information', 'company_contact', 'company_email',
-            'company_address', 'contact_mode', 'contact', 'alt_contact', 'alt_email',
-            'address', 'alt_address', 'copywrite', 'poweredby',
-            'city_id', 'state_id', 'country_id', 'pincode_id',
-    ], {
-        include: [
-            { model: District, as: 'district', attributes: ['id', 'name'] },
-            { model: City, as: 'locality', attributes: ['id', 'name', 'pincode'] },
-        ],
-    });
-    if (!vendor) throw ApiError.notFound('Vendor not found');
-
-    const subscriptionPlans = await PlanType.findAll({
-        where: { is_active: 1, is_custom: 0 },
-        order: [['sort_order', 'ASC']],
-        attributes: ['id', 'name', 'price', 'discounted_price', 'features', 'label_color'],
-    });
-
-    return ApiResponse.success(res, {
-        vendor,
-        colors: null,
-        sliders: [],
-        heroSection: null,
-        portfolio: { clients: [], sponsors: [], events: [] },
-        gallery: [],
-        testimonials: [],
-        plans: subscriptionPlans,
-        socialLinks: [],
-        pages: [],
-        terms_content: '',
-        privacy_content: '',
-    }, 'Vendor data retrieved');
-
-});
 
 const generateClientId = () => {
     return `CLI-${uuidv4().replace(/-/g, '').slice(0, 10).toUpperCase()}`;
@@ -168,10 +87,6 @@ const registerPublicVendorClient = asyncHandler(async (req, res) => {
         is_active: 1,
     });
 
-    if (wantsNewsletter) {
-        await upsertVendorSubscriber(vendor.id, vendor.company_id, normalizedEmail);
-    }
-
     ApiResponse.success(res, client, 'Registration completed successfully', 201);
 });
 
@@ -207,64 +122,7 @@ const loginPublicVendorClient = asyncHandler(async (req, res) => {
     }, 'Login successful');
 });
 
-const subscribePublicVendorNewsletter = asyncHandler(async (req, res) => {
-    const { slug } = req.params;
-    const { email, name, mobile } = req.body;
-
-    const normalizedEmail = normalizeEmail(email);
-
-    if (!normalizedEmail) throw ApiError.badRequest('Email is required');
-
-    const vendor = await findActiveVendorBySlug(slug, ['id', 'company_name', 'company_id']);
-    if (!vendor) throw ApiError.notFound('Vendor not found');
-
-    const existing = await VendorClient.findOne({
-        where: { email: normalizedEmail },
-        paranoid: false,
-    });
-    if (existing) {
-        if (existing.vendor_id !== vendor.id || existing.deletedAt) {
-            throw ApiError.conflict('This email is already registered.');
-        }
-        await existing.update({
-            client_type: 'subscribed',
-            registration_type: existing.registration_type || 'guest',
-            login_access: existing.login_access === 1 ? 1 : existing.login_access,
-        });
-        await upsertVendorSubscriber(vendor.id, vendor.company_id, normalizedEmail);
-        return ApiResponse.success(res, existing, 'Newsletter subscribed successfully');
-    }
-
-    const localName = normalizedEmail.split('@')[0] || 'Newsletter Subscriber';
-    const client = await VendorClient.create({
-        vendor_id: vendor.id,
-        company_id: vendor.company_id || null,
-        client_id: generateClientId(),
-        name: name || localName,
-        email: normalizedEmail,
-        mobile: mobile || '',
-        registration_type: 'guest',
-        client_type: 'subscribed',
-        login_access: 0,
-        is_active: 1,
-    });
-
-    await upsertVendorSubscriber(vendor.id, vendor.company_id, normalizedEmail);
-
-    ApiResponse.success(res, client, 'Newsletter subscribed successfully', 201);
-});
-
-const submitPublicVendorContact = asyncHandler(async (req, res) => {
-    const { slug } = req.params;
-    const message = await vendorWebsiteBuilderService.createPublicContactMessage(slug, req.body || {});
-    if (!message) throw ApiError.notFound('Vendor not found');
-    return ApiResponse.created(res, message, 'Contact message submitted successfully');
-});
-
 module.exports = {
-    getPublicVendorWebsite,
     registerPublicVendorClient,
     loginPublicVendorClient,
-    subscribePublicVendorNewsletter,
-    submitPublicVendorContact,
 };

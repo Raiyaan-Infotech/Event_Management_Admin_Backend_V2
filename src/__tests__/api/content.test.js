@@ -5,7 +5,7 @@ const request = require('supertest');
 const app = require('../../app');
 const { loginAsDeveloper, loginAsSuperAdmin, loginAsAdmin } = require('../helpers');
 
-describe('Content API (Companies, Ads, Blog, Announcements, FAQs)', () => {
+describe('Content API (Companies, Ads, Blog, Announcements)', () => {
   let devCookie, superAdminCookie, adminCookie;
   let companyId;
 
@@ -201,47 +201,6 @@ describe('Content API (Companies, Ads, Blog, Announcements, FAQs)', () => {
         });
 
       expect([201, 202]).toContain(res.status);
-      expect(res.body.success).toBe(true);
-    });
-  });
-
-  // ── FAQ CATEGORIES ───────────────────────────────────────────────
-  describe('FAQ Categories /api/v1/faq-categories', () => {
-    it('should list FAQ categories', async () => {
-      const res = await request(app)
-        .get('/api/v1/faq-categories')
-        .set('Cookie', adminCookie)
-        .set('X-Company-Id', String(companyId));
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-    });
-
-    it('should create a FAQ category', async () => {
-      const res = await request(app)
-        .post('/api/v1/faq-categories')
-        .set('Cookie', devCookie)
-        .set('X-Company-Id', String(companyId))
-        .send({
-          name: `FAQ Cat ${Date.now()}`,
-          is_active: true,
-          company_id: companyId,
-        });
-
-      expect([201, 202]).toContain(res.status);
-      expect(res.body.success).toBe(true);
-    });
-  });
-
-  // ── FAQS ─────────────────────────────────────────────────────────
-  describe('FAQs /api/v1/faqs', () => {
-    it('should list FAQs', async () => {
-      const res = await request(app)
-        .get('/api/v1/faqs')
-        .set('Cookie', adminCookie)
-        .set('X-Company-Id', String(companyId));
-
-      expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
     });
   });

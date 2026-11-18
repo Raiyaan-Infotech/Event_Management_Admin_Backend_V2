@@ -32,7 +32,6 @@ db.ClientRefreshToken = require('./ClientRefreshToken')(sequelize, Sequelize);
 // Infrastructure
 db.Company = require('./Company')(sequelize, Sequelize);
 db.Role = require('./Role')(sequelize, Sequelize);
-db.Department = require('./Department')(sequelize, Sequelize);
 db.User = require('./User')(sequelize, Sequelize);
 db.Permission = require('./Permission')(sequelize, Sequelize);
 db.Module = require('./Module')(sequelize, Sequelize);
@@ -40,7 +39,6 @@ db.RolePermission = require('./RolePermission')(sequelize, Sequelize);
 db.Setting = require('./Setting')(sequelize, Sequelize);
 db.ApprovalRequest = require('./ApprovalRequest')(sequelize, Sequelize);
 db.ActivityLog = require('./ActivityLog')(sequelize, Sequelize);
-db.Plugin = require('./Plugin')(sequelize, Sequelize);
 
 // Locations
 db.Country = require('./Country')(sequelize, Sequelize);
@@ -53,15 +51,10 @@ db.City = require('./City')(sequelize, Sequelize);
 // (Media module interacts with storage directly via service, no model needed)
 
 // FAQs
-db.Faq = require('./Faq')(sequelize, Sequelize);
-db.FaqCategory = require('./FaqCategory')(sequelize, Sequelize);
 
 // Email System
 db.EmailConfig = require('./EmailConfig')(sequelize, Sequelize);
 db.EmailTemplate = require('./EmailTemplate')(sequelize, Sequelize);
-db.EmailCampaign = require('./EmailCampaign')(sequelize, Sequelize);
-db.EmailQueue = require('./EmailQueue')(sequelize, Sequelize);
-db.EmailSentLog = require('./EmailSentLog')(sequelize, Sequelize);
 
 // Push Notification (Firebase)
 db.PushNotificationConfig = require('./PushNotificationConfig')(sequelize, Sequelize);
@@ -69,14 +62,11 @@ db.PushNotificationConfig = require('./PushNotificationConfig')(sequelize, Seque
 // Vendor
 db.Vendor = require('./Vendor')(sequelize, Sequelize);
 db.VendorClient = require('./VendorClient')(sequelize, Sequelize);
-db.VendorStaff = require('./VendorStaff')(sequelize, Sequelize);
-db.VendorDepartment = require('./VendorDepartment')(sequelize, Sequelize);
 
 // Website builder color palettes
 db.ColorPalette = require('./ColorPalette')(sequelize, Sequelize);
 
 // Vendor website newsletter subscribers (footer email signups)
-db.VendorSubscriber = require('./VendorSubscriber')(sequelize, Sequelize);
 
 // Menus & Subscriptions
 db.Menu = require('./Menu')(sequelize, Sequelize);
@@ -222,22 +212,8 @@ db.Translation = require('./Translation')(sequelize, Sequelize);
 db.MissingTranslationKey = require('./MissingTranslationKey')(sequelize, Sequelize);
 
 // Payments
-db.Payment = require('./Payment')(sequelize, Sequelize);
 db.Currency = require('./Currency')(sequelize, Sequelize); // ✅ Add this line
-db.VendorEmailCategory = require('./VendorEmailCategory')(sequelize, Sequelize);
-db.VendorEmailTemplate = require('./VendorEmailTemplate')(sequelize, Sequelize);
 // Unified mail system
-db.Mail = require('./Mail')(sequelize, Sequelize);
-db.MailRecipient = require('./MailRecipient')(sequelize, Sequelize);
-db.MailFolder = require('./MailFolder')(sequelize, Sequelize);
-db.MailNotification = require('./MailNotification')(sequelize, Sequelize);
-db.ChatConversation = require('./ChatConversation')(sequelize, Sequelize);
-db.ChatParticipant = require('./ChatParticipant')(sequelize, Sequelize);
-db.ChatMessage = require('./ChatMessage')(sequelize, Sequelize);
-db.ChatReadState = require('./ChatReadState')(sequelize, Sequelize);
-db.VendorNewsletter = require('./VendorNewsletter')(sequelize, Sequelize);
-db.VendorNewsletterSend = require('./VendorNewsletterSend')(sequelize, Sequelize);
-db.VendorNewsletterSentLog = require('./VendorNewsletterSentLog')(sequelize, Sequelize);
 
 // Vendor Slider → Page
 
@@ -245,27 +221,18 @@ db.VendorNewsletterSentLog = require('./VendorNewsletterSentLog')(sequelize, Seq
 //Vendor gallery → Vendor
 
 // Vendor Newsletter → Client
-db.VendorNewsletter.belongsTo(db.VendorClient, { foreignKey: 'client_id', as: 'client' });
-db.VendorClient.hasMany(db.VendorNewsletter, { foreignKey: 'client_id', as: 'newsletters' });
 
 // Vendor Newsletter Send → Sent Logs
-db.VendorNewsletterSend.hasMany(db.VendorNewsletterSentLog, { foreignKey: 'campaign_id', as: 'logs' });
-db.VendorNewsletterSentLog.belongsTo(db.VendorNewsletterSend, { foreignKey: 'campaign_id', as: 'send' });
 
 // Vendor Newsletter Sent Log → Client (for current subscription status)
-db.VendorNewsletterSentLog.belongsTo(db.VendorClient, { foreignKey: 'client_id', as: 'client' });
 
 // Define Associations
 // Company Relationships
 db.Company.hasMany(db.User, { foreignKey: 'company_id', as: 'users' });
 db.User.belongsTo(db.Company, { foreignKey: 'company_id', as: 'company' });
 
-db.Company.hasMany(db.Department, { foreignKey: 'company_id', as: 'departments' });
-db.Department.belongsTo(db.Company, { foreignKey: 'company_id', as: 'company' });
 
 // Department → User
-db.Department.hasMany(db.User, { foreignKey: 'department_id', as: 'employees' });
-db.User.belongsTo(db.Department, { foreignKey: 'department_id', as: 'department_ref' });
 
 db.Company.hasMany(db.Role, { foreignKey: 'company_id', as: 'roles' });
 db.Role.belongsTo(db.Company, { foreignKey: 'company_id', as: 'company' });
@@ -336,8 +303,6 @@ db.Translation.belongsTo(db.Language, {
 });
 
 // FAQ Relationships
-db.FaqCategory.hasMany(db.Faq, { foreignKey: 'faq_category_id', as: 'faqs' });
-db.Faq.belongsTo(db.FaqCategory, { foreignKey: 'faq_category_id', as: 'category' });
 
 // Vendor Location Relationships
 // city_id → districts.id (the "district" level)
@@ -355,44 +320,19 @@ db.VendorClient.belongsTo(db.PlanType, { foreignKey: 'subscription_id', as: 'sub
 db.VendorClient.hasMany(db.ClientRefreshToken, { foreignKey: 'client_id', as: 'refreshTokens' });
 db.ClientRefreshToken.belongsTo(db.VendorClient, { foreignKey: 'client_id', as: 'client' });
 
-db.Vendor.hasMany(db.VendorSubscriber, { foreignKey: 'vendor_id', as: 'subscribers' });
-db.VendorSubscriber.belongsTo(db.Vendor, { foreignKey: 'vendor_id', as: 'vendor' });
 
-db.Vendor.hasMany(db.VendorStaff, { foreignKey: 'vendor_id', as: 'staff' });
-db.VendorStaff.belongsTo(db.Vendor, { foreignKey: 'vendor_id', as: 'vendor' });
 
-db.Vendor.hasMany(db.VendorDepartment, { foreignKey: 'vendor_id', as: 'departments' });
-db.VendorDepartment.belongsTo(db.Vendor, { foreignKey: 'vendor_id', as: 'vendor' });
 
-db.VendorDepartment.hasMany(db.VendorStaff, { foreignKey: 'department_id', as: 'staff' });
-db.VendorStaff.belongsTo(db.VendorDepartment, { foreignKey: 'department_id', as: 'department' });
 
 // Staff RBAC
-db.VendorStaff.belongsTo(db.Role, { foreignKey: 'role_id', as: 'role' });
-db.Role.hasMany(db.VendorStaff, { foreignKey: 'role_id', as: 'staffMembers' });
 
 // Vendor Email Category → Email Template
-db.VendorEmailCategory.hasMany(db.VendorEmailTemplate, { foreignKey: 'category_id', as: 'templates' });
-db.VendorEmailTemplate.belongsTo(db.VendorEmailCategory, { foreignKey: 'category_id', as: 'category' });
 
 // Unified Mail System
-db.Mail.hasMany(db.MailRecipient, { foreignKey: 'mail_id', as: 'recipients' });
-db.MailRecipient.belongsTo(db.Mail, { foreignKey: 'mail_id', as: 'mail' });
 
-db.Mail.hasMany(db.MailNotification, { foreignKey: 'mail_id', as: 'notifications' });
-db.MailNotification.belongsTo(db.Mail, { foreignKey: 'mail_id', as: 'mail' });
 
-db.MailFolder.hasMany(db.MailRecipient, { foreignKey: 'custom_folder_id', as: 'mails' });
-db.MailRecipient.belongsTo(db.MailFolder, { foreignKey: 'custom_folder_id', as: 'folder' });
 
 // Common Chat System
-db.ChatConversation.hasMany(db.ChatParticipant, { foreignKey: 'conversation_id', as: 'participants' });
-db.ChatParticipant.belongsTo(db.ChatConversation, { foreignKey: 'conversation_id', as: 'conversation' });
-db.ChatConversation.hasMany(db.ChatMessage, { foreignKey: 'conversation_id', as: 'messages' });
-db.ChatMessage.belongsTo(db.ChatConversation, { foreignKey: 'conversation_id', as: 'conversation' });
-db.ChatConversation.belongsTo(db.ChatMessage, { foreignKey: 'last_message_id', as: 'lastMessage' });
-db.ChatConversation.hasMany(db.ChatReadState, { foreignKey: 'conversation_id', as: 'readStates' });
-db.ChatReadState.belongsTo(db.ChatConversation, { foreignKey: 'conversation_id', as: 'conversation' });
 
 // Theme → Color Palette
 
@@ -642,17 +582,8 @@ db.EmailConfig.hasMany(db.EmailTemplate, { foreignKey: 'email_config_id', as: 't
 db.EmailTemplate.belongsTo(db.EmailTemplate, { foreignKey: 'header_id', as: 'header' });
 db.EmailTemplate.belongsTo(db.EmailTemplate, { foreignKey: 'footer_id', as: 'footer' });
 
-db.EmailCampaign.belongsTo(db.EmailTemplate, { foreignKey: 'email_template_id', as: 'template' });
-db.EmailTemplate.hasMany(db.EmailCampaign, { foreignKey: 'email_template_id', as: 'campaigns' });
-db.EmailCampaign.belongsTo(db.EmailConfig, { foreignKey: 'email_config_id', as: 'email_config' });
-db.EmailConfig.hasMany(db.EmailCampaign, { foreignKey: 'email_config_id', as: 'campaigns' });
 
-db.EmailQueue.belongsTo(db.EmailCampaign, { foreignKey: 'campaign_id', as: 'campaign' });
-db.EmailQueue.belongsTo(db.EmailTemplate, { foreignKey: 'template_id', as: 'template' });
-db.EmailQueue.belongsTo(db.EmailConfig, { foreignKey: 'email_config_id', as: 'config' });
 
-db.EmailSentLog.belongsTo(db.EmailCampaign, { foreignKey: 'campaign_id', as: 'campaign' });
-db.EmailSentLog.belongsTo(db.EmailTemplate, { foreignKey: 'template_id', as: 'template' });
 
 // ── Personal QR codes (Jamal, 2026-10-28) ────────────────────────────────────
 // Every account and contact person gets one when created — here, so every

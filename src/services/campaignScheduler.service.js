@@ -8,11 +8,7 @@ const logger = require('../utils/logger');
 /**
  * Fires campaigns whose scheduled time has arrived.
  *
- * ── WHY THIS EXISTS SEPARATELY FROM `emailScheduler.service` ────────────────
- * That one drives the ADMIN's `EmailCampaign` — a different table, a different
- * owner, a different audience model — and, as it happens, nothing ever calls
- * its `start()`. This is the client portal's own scheduler, over
- * `event_message_campaigns`, and it IS started, from `server.js`.
+ * The client portal's scheduler, over `event_message_campaigns`; started from `server.js`.
  *
  * ── ⚠ ONLY PUSH ACTUALLY GOES OUT ───────────────────────────────────────────
  * A scheduled WhatsApp or Email campaign is promoted to 'sent' at its time and

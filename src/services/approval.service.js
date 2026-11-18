@@ -12,7 +12,6 @@ function getServiceMap() {
       users: require('./user.service'),
       employees: require('./user.service'),
       roles: require('./role.service'),
-      email_campaigns: require('./emailCampaign.service'),
       email_templates: require('./emailTemplate.service'),
       email_configs: require('./emailConfig.service'),
       settings: require('./setting.service'),
@@ -20,8 +19,6 @@ function getServiceMap() {
       languages: require('./language.service'),
       locations: require('./location.service'),
       translations: require('./translation.service'),
-      faqs: require('./faq.service'),
-      faq_categories: require('./faqCategory.service'),
       vendors: require('./vendor.service'),
       media: require('./media.service'),
 

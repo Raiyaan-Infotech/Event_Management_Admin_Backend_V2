@@ -1,11 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const {
-    getPublicVendorWebsite,
     registerPublicVendorClient,
     loginPublicVendorClient,
-    subscribePublicVendorNewsletter,
-    submitPublicVendorContact,
 } = require('../controllers/publicWebsite.controller');
 const {
     resolvePublicSite,
@@ -21,12 +18,8 @@ const guestRegistrationController = require('../controllers/guestRegistration.co
 router.get('/site/resolve', resolvePublicSite);
 router.get('/site/bundle', getPublicSiteBundle);
 
-router.get('/vendors/:slug/website-data', getPublicVendorWebsite);
-router.get('/website/:slug', getPublicVendorWebsite);
 router.post('/vendors/:slug/register-client', registerPublicVendorClient);
 router.post('/vendors/:slug/login-client', loginPublicVendorClient);
-router.post('/vendors/:slug/newsletter-subscribe', subscribePublicVendorNewsletter);
-router.post('/vendors/:slug/contact', submitPublicVendorContact);
 
 // ── Website signup ──────────────────────────────────────────────────────────
 // The public site's signup form. Creates a `website_clients` row, which the

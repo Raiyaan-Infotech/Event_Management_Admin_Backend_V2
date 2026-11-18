@@ -9,7 +9,6 @@ function getServiceMap() {
       users: require('../services/user.service'),
       employees: require('../services/user.service'),
       roles: require('../services/role.service'),
-      email_campaigns: require('../services/emailCampaign.service'),
       email_templates: require('../services/emailTemplate.service'),
       email_configs: require('../services/emailConfig.service'),
       settings: require('../services/setting.service'),
@@ -18,8 +17,6 @@ function getServiceMap() {
       locations: require('../services/location.service'),
       translations: require('../services/translation.service'),
       media: require('../services/media.service'),
-      faqs: require('../services/faq.service'),
-      faq_categories: require('../services/faqCategory.service'),
       vendors: require('../services/vendor.service'),
 
       // Menu Management
