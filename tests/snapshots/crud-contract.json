@@ -2346,5 +2346,439 @@
    },
    "status": 200
   }
+ },
+ "/currencies": {
+  "create": {
+   "json": {
+    "data": {
+     "currency": {
+      "code": "<code>",
+      "createdAt": "<x>",
+      "created_by": "<x>",
+      "decimal_places": 2,
+      "decimal_separator": ".",
+      "exchange_rate": 1.5,
+      "id": "<x>",
+      "is_active": 1,
+      "is_default": false,
+      "name": "Cur <stamp>",
+      "space_between": 0,
+      "symbol": "¤",
+      "symbol_position": "before",
+      "thousand_separator": ",",
+      "updatedAt": "<x>"
+     }
+    },
+    "message": "Currency created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_duplicate": {
+   "json": {
+    "message": "Currency with this code already exists",
+    "success": false
+   },
+   "status": 409
+  },
+  "create_no_name": {
+   "json": {
+    "message": "Currency with this code already exists",
+    "success": false
+   },
+   "status": 409
+  },
+  "delete": {
+   "json": {
+    "data": null,
+    "message": "Currency deleted successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "delete_missing": {
+   "json": {
+    "message": "Currency not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get": {
+   "json": {
+    "data": {
+     "currency": {
+      "code": "<code>",
+      "createdAt": "<x>",
+      "created_by": "<x>",
+      "decimal_places": 2,
+      "decimal_separator": ".",
+      "deletedAt": null,
+      "exchange_rate": "1.5000",
+      "id": "<x>",
+      "is_active": 1,
+      "is_default": false,
+      "name": "Cur <stamp>",
+      "space_between": 0,
+      "symbol": "¤",
+      "symbol_position": "before",
+      "thousand_separator": ",",
+      "updatedAt": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Success",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "get_after_delete": {
+   "json": {
+    "message": "Currency not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get_missing": {
+   "json": {
+    "message": "Currency not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "list_default_shape": {
+   "dataKeys": [
+    "code",
+    "createdAt",
+    "created_by",
+    "decimal_places",
+    "decimal_separator",
+    "deletedAt",
+    "exchange_rate",
+    "has_pending_approval",
+    "id",
+    "is_active",
+    "is_default",
+    "name",
+    "space_between",
+    "symbol",
+    "symbol_position",
+    "thousand_separator",
+    "updatedAt",
+    "updated_by"
+   ],
+   "keys": [
+    "data",
+    "message",
+    "pagination",
+    "success",
+    "timestamp"
+   ],
+   "pagination": [
+    "hasNextPage",
+    "hasPrevPage",
+    "limit",
+    "page",
+    "totalItems",
+    "totalPages"
+   ],
+   "status": 200
+  },
+  "list_search": {
+   "json": {
+    "data": [
+     {
+      "code": "<code>",
+      "createdAt": "<x>",
+      "created_by": "<x>",
+      "decimal_places": 2,
+      "decimal_separator": ".",
+      "deletedAt": null,
+      "exchange_rate": "1.5000",
+      "has_pending_approval": false,
+      "id": "<x>",
+      "is_active": 1,
+      "is_default": false,
+      "name": "Cur <stamp>",
+      "space_between": 0,
+      "symbol": "¤",
+      "symbol_position": "before",
+      "thousand_separator": ",",
+      "updatedAt": "<x>",
+      "updated_by": null
+     }
+    ],
+    "message": "Success",
+    "pagination": {
+     "hasNextPage": false,
+     "hasPrevPage": false,
+     "limit": 10,
+     "page": 1,
+     "totalItems": 1,
+     "totalPages": 1
+    },
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "public_get": {
+   "hasMine": true,
+   "keys": [
+    "currencies"
+   ],
+   "rowKeys": [
+    "code",
+    "decimal_places",
+    "exchange_rate",
+    "id",
+    "is_default",
+    "name",
+    "symbol"
+   ],
+   "status": 200
+  },
+  "update": {
+   "json": {
+    "data": {
+     "currency": {
+      "code": "<code>",
+      "createdAt": "<x>",
+      "created_by": "<x>",
+      "decimal_places": 2,
+      "decimal_separator": ".",
+      "deletedAt": null,
+      "exchange_rate": "1.5000",
+      "id": "<x>",
+      "is_active": 1,
+      "is_default": false,
+      "name": "Cur <stamp> 2",
+      "space_between": 0,
+      "symbol": "¤",
+      "symbol_position": "before",
+      "thousand_separator": ",",
+      "updatedAt": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Currency updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update_missing": {
+   "json": {
+    "message": "Currency not found",
+    "success": false
+   },
+   "status": 404
+  }
+ },
+ "/languages": {
+  "create": {
+   "json": {
+    "data": {
+     "language": {
+      "code": "<code>",
+      "createdAt": "<x>",
+      "created_by": "<x>",
+      "direction": "ltr",
+      "id": "<x>",
+      "is_active": 1,
+      "is_default": false,
+      "name": "Lang <stamp>",
+      "native_name": "N",
+      "updatedAt": "<x>"
+     }
+    },
+    "message": "Language created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_duplicate": {
+   "json": {
+    "message": "Language with this code already exists",
+    "success": false
+   },
+   "status": 409
+  },
+  "create_no_name": {
+   "json": {
+    "message": "Language with this code already exists",
+    "success": false
+   },
+   "status": 409
+  },
+  "delete": {
+   "json": {
+    "data": null,
+    "message": "Language deleted successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "delete_missing": {
+   "json": {
+    "message": "Language not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get": {
+   "json": {
+    "data": {
+     "language": {
+      "code": "<code>",
+      "createdAt": "<x>",
+      "created_by": "<x>",
+      "deletedAt": null,
+      "direction": "ltr",
+      "id": "<x>",
+      "is_active": 1,
+      "is_default": false,
+      "name": "Lang <stamp>",
+      "native_name": "N",
+      "updatedAt": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Success",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "get_after_delete": {
+   "json": {
+    "message": "Language not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get_missing": {
+   "json": {
+    "message": "Language not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "list_default_shape": {
+   "dataKeys": [
+    "code",
+    "createdAt",
+    "created_by",
+    "deletedAt",
+    "direction",
+    "has_pending_approval",
+    "id",
+    "is_active",
+    "is_default",
+    "name",
+    "native_name",
+    "updatedAt",
+    "updated_by"
+   ],
+   "keys": [
+    "data",
+    "message",
+    "pagination",
+    "success",
+    "timestamp"
+   ],
+   "pagination": [
+    "hasNextPage",
+    "hasPrevPage",
+    "limit",
+    "page",
+    "totalItems",
+    "totalPages"
+   ],
+   "status": 200
+  },
+  "list_search": {
+   "json": {
+    "data": [
+     {
+      "code": "<code>",
+      "createdAt": "<x>",
+      "created_by": "<x>",
+      "deletedAt": null,
+      "direction": "ltr",
+      "has_pending_approval": false,
+      "id": "<x>",
+      "is_active": 1,
+      "is_default": false,
+      "name": "Lang <stamp>",
+      "native_name": "N",
+      "updatedAt": "<x>",
+      "updated_by": null
+     }
+    ],
+    "message": "Success",
+    "pagination": {
+     "hasNextPage": false,
+     "hasPrevPage": false,
+     "limit": 10,
+     "page": 1,
+     "totalItems": 1,
+     "totalPages": 1
+    },
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "public_get": {
+   "hasMine": true,
+   "keys": [
+    "languages"
+   ],
+   "rowKeys": [
+    "code",
+    "direction",
+    "id",
+    "is_default",
+    "name",
+    "native_name"
+   ],
+   "status": 200
+  },
+  "update": {
+   "json": {
+    "data": {
+     "language": {
+      "code": "<code>",
+      "createdAt": "<x>",
+      "created_by": "<x>",
+      "deletedAt": null,
+      "direction": "ltr",
+      "id": "<x>",
+      "is_active": 1,
+      "is_default": false,
+      "name": "Lang <stamp> 2",
+      "native_name": "N",
+      "updatedAt": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Language updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update_missing": {
+   "json": {
+    "message": "Language not found",
+    "success": false
+   },
+   "status": 404
+  }
  }
 }

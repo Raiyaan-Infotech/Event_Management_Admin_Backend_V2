@@ -35,6 +35,9 @@ const ApiError = require('../utils/apiError');
  *   prepareList(query, where)  returns { query, where } just before the list runs
  *   decorateList(rows)      adds computed fields to the list rows (one query for all rows, never per row)
  *   beforeDelete(id)        what it returns becomes the DELETE answer's data
+ *   companyScoped: false    a global table: company id is never applied (currencies, languages)
+ *   unique: [{ field, message, conflict }]  other unique columns, checked first (conflict → 409)
+ *   deleteUniqueFields      unique columns suffixed on soft delete (default slug, key)
  */
 
 const PROTECTED = new Set([
@@ -62,8 +65,22 @@ const build = (cfg) => {
         reload = false,
         prepareList,
         decorateList,
+        companyScoped = true,
+        unique: uniques = [],
+        deleteUniqueFields,
         extend,
     } = cfg;
+    const scope = (companyId) => (companyScoped ? companyId : undefined);
+
+    const assertUnique = async (payload, row = null) => {
+        for (const u of uniques) {
+            const value = payload[u.field];
+            if (value === undefined || value === null || value === '') continue;
+            if (row && value === row[u.field]) continue;
+            const hit = await Model.findOne({ where: { [u.field]: value }, attributes: ['id'] });
+            if (hit) throw u.conflict ? ApiError.conflict(u.message) : ApiError.badRequest(u.message);
+        }
+    };
 
     const fields = writable || Object.keys(Model.rawAttributes).filter((k) => !PROTECTED.has(k));
     const nameField = name ? name.field || 'name' : null;
@@ -95,11 +112,12 @@ const build = (cfg) => {
         if (hit) throw ApiError.badRequest(name.duplicate(finalName));
     };
 
-    const getById = async (id, companyId = undefined) => baseService.getById(Model, modelName, id, { companyId });
+    const getById = async (id, companyId = undefined) => baseService.getById(Model, modelName, id, { companyId: scope(companyId) });
     const fresh = (row, companyId) => (reload ? getById(row.id, companyId) : row);
 
     const service = {
-        getAll: async (rawQuery = {}, companyId = undefined) => {
+        getAll: async (rawQuery = {}, cid = undefined) => {
+            const companyId = scope(cid);
             let query = defaultSort ? { ...defaultSort, ...rawQuery } : rawQuery;
             let where = listWhere ? listWhere(rawQuery) : undefined;
             if (prepareList) ({ query, where } = prepareList(query, where));
@@ -113,31 +131,35 @@ const build = (cfg) => {
 
         getById,
 
-        create: async (data, userId = null, companyId = undefined) => {
+        create: async (data, userId = null, cid = undefined) => {
+            const companyId = scope(cid);
             const payload = pickWritable(data);
+            await assertUnique(payload);
             if (beforeSave) await beforeSave(payload, { row: null, companyId, isCreate: true });
             await assertName(payload, { companyId });
             return fresh(await baseService.create(Model, modelName, payload, userId, companyId), companyId);
         },
 
-        update: async (id, data, userId = null, companyId = undefined) => {
+        update: async (id, data, userId = null, cid = undefined) => {
+            const companyId = scope(cid);
             const row = await Model.findByPk(id);
             if (!row) throw ApiError.notFound(notFound);
             if (companyId !== undefined && companyId !== null && row.company_id && row.company_id !== companyId) {
                 throw ApiError.notFound(notFound);
             }
             const payload = pickWritable(data);
+            await assertUnique(payload, row);
             if (beforeSave) await beforeSave(payload, { row, companyId, isCreate: false });
             await assertName(payload, { row, companyId });
             return fresh(await baseService.update(Model, modelName, id, payload, userId, companyId), companyId);
         },
 
-        updateStatus: async (id, isActive, userId = null, companyId = undefined) =>
-            fresh(await baseService.update(Model, modelName, id, { is_active: statusValue(isActive) }, userId, companyId), companyId),
+        updateStatus: async (id, isActive, userId = null, cid = undefined) =>
+            fresh(await baseService.update(Model, modelName, id, { is_active: statusValue(isActive) }, userId, scope(cid)), scope(cid)),
 
-        deleteById: async (id, userId = null, companyId = undefined) => {
-            const extra = beforeDelete ? await beforeDelete(id) : undefined;
-            const done = await baseService.remove(Model, modelName, id, userId, companyId);
+        deleteById: async (id, userId = null, cid = undefined) => {
+            const extra = beforeDelete ? await beforeDelete(id, userId) : undefined;
+            const done = await baseService.remove(Model, modelName, id, userId, scope(cid), deleteUniqueFields ? { uniqueFields: deleteUniqueFields } : {});
             return extra !== undefined ? extra : done;
         },
     };

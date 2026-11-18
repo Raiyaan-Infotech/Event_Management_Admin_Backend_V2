@@ -37,7 +37,21 @@ const MODULES = [
     { path: '/color-palettes', key: 'palette', table: 'color_palettes', body: { name: 'Pal', primary_bg_color: '#111111', primary_text_color: '#222222' }, status: false },
     { path: '/template-categories', key: 'category', table: 'template_categories', body: { name: 'Tpl', sort_order: 5 }, status: true, reorder: true },
     { path: '/home-screen-categories', key: 'category', table: 'home_screen_categories', body: { name: 'Home', sort_order: 5 }, status: true, reorder: true },
+    { path: '/currencies', key: 'currency', table: 'currencies', body: { name: 'Cur', code: '@C3', symbol: '¤', exchange_rate: 1.5, decimal_places: 2 }, status: false, publicGet: '/active' },
+    { path: '/languages', key: 'language', table: 'languages', body: { name: 'Lang', code: '@L8', native_name: 'N', direction: 'ltr' }, status: false, publicGet: '/active' },
 ];
+
+// Unique short codes for tables with a `code` column ('@C3' = 3 letters, '@L8' = 8 letters).
+const CODES = {};
+const codeFor = (tag) => {
+    if (!CODES[tag]) {
+        const len = Number(tag.slice(2));
+        let c = '';
+        while (c.length < len) c += 'QXZJKV'[Math.floor(Math.random() * 6)];
+        CODES[tag] = tag[1] === 'C' ? c : c.toLowerCase();
+    }
+    return CODES[tag];
+};
 
 const VOLATILE = new Set(['id', 'created_at', 'updated_at', 'deleted_at', 'createdAt', 'updatedAt', 'deletedAt', 'created_by', 'updated_by', 'timestamp']);
 function norm(v) {
@@ -47,6 +61,7 @@ function norm(v) {
         for (const k of Object.keys(v).sort()) o[k] = VOLATILE.has(k) && v[k] !== null ? '<x>' : norm(v[k]);
         return o;
     }
+    if (typeof v === 'string') for (const c of Object.values(CODES)) if (v === c || v.startsWith(`${c}-d`) || v.startsWith(`${c}d`)) return '<code>';
     if (typeof v === 'string') return v.split(STAMP).join('<stamp>').split(STAMP.toLowerCase()).join('<stamp>').replace(/\b\d{4}-\d{2}-\d{2}T[\d:.]+Z\b/g, '<time>').replace(/(slug|-d)\d{6,}/g, '$1<n>');
     return v;
 }
@@ -75,6 +90,7 @@ function norm(v) {
     for (const m of MODULES) {
         const r = {};
         const name = `${m.body.name} ${STAMP}`;
+        for (const [k, v] of Object.entries(m.body)) if (typeof v === 'string' && v.startsWith('@')) m.body[k] = codeFor(v);
         const add = await call('POST', m.path, { ...m.body, name });
         r.create = add;
         const row = add.json?.data?.[m.key];
@@ -106,6 +122,14 @@ function norm(v) {
             r.list_all = (await call('GET', `${m.path}?search=${STAMP}&is_active=all`)).status;
             await call('DELETE', `${m.path}/${id2}`);
         }
+        if (m.publicGet) {
+            const saved = cookie;
+            cookie = '';
+            const pub = await call('GET', `${m.path}${m.publicGet}`);
+            cookie = saved;
+            const rows = Object.values(pub.json?.data || {})[0] || [];
+            r.public_get = { status: pub.status, keys: Object.keys(pub.json?.data || {}), rowKeys: rows[0] ? Object.keys(rows[0]).sort() : [], hasMine: rows.some((x) => x.id === id) };
+        }
         r.delete = await call('DELETE', `${m.path}/${id}`);
         r.get_after_delete = await call('GET', `${m.path}/${id}`);
         r.delete_missing = await call('DELETE', `${m.path}/99999999`);
@@ -117,6 +141,7 @@ function norm(v) {
     for (const [table, id] of created) await sequelize.query(`DELETE FROM \`${table}\` WHERE id = ?`, { replacements: [id] });
     for (const m of MODULES) {
         await sequelize.query(`DELETE FROM \`${m.table}\` WHERE name LIKE ? OR (TRIM(name) = '' AND created_at >= ?)`, { replacements: [`%${STAMP}%`, RUN_START] });
+        if (m.table === 'languages') await sequelize.query('DELETE FROM translations WHERE language_id NOT IN (SELECT id FROM languages)').catch(() => {});
     }
     await sequelize.query(`DELETE FROM activity_logs WHERE description LIKE ? OR metadata LIKE ?`, { replacements: [`%${STAMP}%`, `%${STAMP}%`] }).catch(() => {});
     server.close();
