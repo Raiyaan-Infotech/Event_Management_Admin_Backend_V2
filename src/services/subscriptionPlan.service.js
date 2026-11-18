@@ -296,16 +296,13 @@ const syncPlanMenus = async (planId, menus, transaction) => {
         transaction,
     });
 
-    for (const row of incoming) {
-        const existing = await SubscriptionPlanMenu.findOne({
-            where: { plan_id: planId, menu_id: row.menu_id },
-            transaction,
-        });
-        if (existing) {
-            await existing.update(row, { transaction });
-        } else {
-            await SubscriptionPlanMenu.create({ ...row, plan_id: planId }, { transaction });
-        }
+    // One INSERT … ON DUPLICATE KEY UPDATE (unique uniq_plan_menu): existing rows keep their id and
+    // only change sort_order — was a findOne + update / create per menu.
+    if (incoming.length) {
+        await SubscriptionPlanMenu.bulkCreate(
+            incoming.map((row) => ({ ...row, plan_id: planId })),
+            { updateOnDuplicate: ['sort_order', 'updated_at'], transaction },
+        );
     }
 };
 

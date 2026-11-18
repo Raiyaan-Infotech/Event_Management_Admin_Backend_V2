@@ -435,6 +435,10 @@ const updateNotifications = async (client, body = {}) => {
         throw ApiError.badRequest('No notification settings were sent.');
     }
 
+    // Every item is checked first, then all are saved in ONE upsert (unique
+    // client_notification_prefs_slot) — was a findOne + update / create per item, and a bad item
+    // half-way left the earlier ones saved.
+    const rows = [];
     for (const item of items) {
         const { channel, type } = item || {};
         if (!CHANNELS.includes(channel)) {
@@ -469,12 +473,10 @@ const updateNotifications = async (client, body = {}) => {
                 : Boolean(item.sound);
         }
 
-        const existing = await ClientNotificationPref.findOne({
-            where: { website_client_id: client.id, channel, type },
-        });
-        if (existing) await existing.update(values);
-        else await ClientNotificationPref.create(values);
+        rows.push(values);
     }
+
+    await ClientNotificationPref.bulkCreate(rows, { updateOnDuplicate: ['enabled', 'frequency', 'sound', 'updated_at'] });
 
     return getSettings(client);
 };
