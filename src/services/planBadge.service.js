@@ -68,12 +68,12 @@ const syncBadgePlans = async (badgeId, applyTo, planIds, transaction) => {
         transaction,
     });
 
-    for (const planId of ids) {
-        await PlanBadgePlan.findOrCreate({
-            where: { badge_id: badgeId, plan_id: planId },
-            defaults: { badge_id: badgeId, plan_id: planId },
-            transaction,
-        });
+    // One INSERT IGNORE for all plans (unique key uniq_badge_plan) — was one query per plan.
+    if (ids.length > 0) {
+        await PlanBadgePlan.bulkCreate(
+            [...new Set(ids)].map((planId) => ({ badge_id: badgeId, plan_id: planId })),
+            { ignoreDuplicates: true, transaction },
+        );
     }
 };
 
