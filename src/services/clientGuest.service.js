@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const {
     Sequelize,
     sequelize,
@@ -5,6 +6,7 @@ const {
     EventParticipant,
     GuestGroup,
     Guest,
+    InvitationSend,
     WebsiteClient,
 } = require('../models');
 const { Op } = Sequelize;
@@ -516,6 +518,38 @@ const deleteGuest = async (clientId, guestId) => {
 };
 
 /**
+ * Every "Send Invitation" outside the Invitations flow (Share Event popup,
+ * Guests → Send Invitation, RSVPs → Send Invitation) also lands in the
+ * Invitation page's Track list (Jamal, 2026-11-18: "I sent an invitation and
+ * can't see the guest in the track list"). One `invitation_sends` row per guest
+ * per channel, status `recorded` — nothing is delivered yet, same as the flow.
+ * Only WhatsApp / Email are listed there; In-App alone records nothing.
+ */
+const recordInvitationSends = async (clientId, ids, value, now) => {
+    const asked = value && typeof value === 'object' && Array.isArray(value.channels) ? value.channels : null;
+    const channels = asked ? [...new Set(asked.filter((c) => c === 'whatsapp' || c === 'email'))] : ['whatsapp'];
+    if (!channels.length) return;
+    const guests = await Guest.findAll({
+        where: { website_client_id: clientId, id: { [Op.in]: ids }, event_id: { [Op.ne]: null } },
+        attributes: ['id', 'event_id'],
+    });
+    if (!guests.length) return;
+    const message = String((value && value.message) || '').trim().slice(0, 1000) || 'Invitation shared.';
+    const batchKey = crypto.randomBytes(12).toString('hex');
+    await InvitationSend.bulkCreate(guests.flatMap((g) => channels.map((channel) => ({
+        website_client_id: clientId,
+        event_id: g.event_id,
+        guest_id: g.id,
+        batch_key: batchKey,
+        channel,
+        subject: null,
+        message,
+        status: 'recorded',
+        sent_at: now,
+    }))));
+};
+
+/**
  * The list screen's checkbox column. One statement per action, not a loop —
  * a 200-row selection would otherwise be 200 round trips.
  */
@@ -551,10 +585,12 @@ const bulkUpdate = async (clientId, guestIds, action, value) => {
         const extra = value && typeof value === 'object'
             ? designFields({ invite_channels: value.channels, invite_message: value.message })
             : {};
+        const now = new Date();
         const [affected] = await Guest.update(
-            { invited_at: new Date(), ...extra },
+            { invited_at: now, ...extra },
             { where: { ...scope, event_id: { [Op.ne]: null } } },
         );
+        await recordInvitationSends(clientId, ids, value, now);
         return { action, affected };
     }
 
