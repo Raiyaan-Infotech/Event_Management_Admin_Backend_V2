@@ -623,7 +623,32 @@ const deleteWithReason = async (id, data = {}, userId = null, companyId = undefi
     };
 };
 
+/**
+ * The plan a NEW host account starts on (Jamal, 2026-11-18: "initial signup
+ * assign free plan"). Before this a signup had no plan at all, so the portal
+ * offered Book Event and the create form then refused with "contact us".
+ *
+ * Picks the admin's free plan: active, visible to clients, price 0, in the
+ * signup's company (or a plan with no company). A plan named "…free…" wins
+ * (a hidden QA plan at 0 is skipped by is_visible); then the oldest.
+ * `FREE_PLAN_ID` in the env overrides the choice. Returns null when there is
+ * none — the account is then created without a plan, as before.
+ */
+const getFreePlanId = async (companyId = null) => {
+    const forced = Number(process.env.FREE_PLAN_ID);
+    if (Number.isInteger(forced) && forced > 0) {
+        const plan = await SubscriptionPlan.findOne({ where: { id: forced, is_active: 1 }, attributes: ['id'] });
+        if (plan) return plan.id;
+    }
+    const where = { is_active: 1, is_visible: 1, price: 0 };
+    if (companyId) where[Op.or] = [{ company_id: companyId }, { company_id: null }];
+    const plans = await SubscriptionPlan.findAll({ where, attributes: ['id', 'name'], order: [['id', 'ASC']] });
+    if (!plans.length) return null;
+    return (plans.find((p) => /free/i.test(p.name)) ?? plans[0]).id;
+};
+
 module.exports = {
+    getFreePlanId,
     getAll,
     getById,
     create,

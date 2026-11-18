@@ -429,6 +429,8 @@ const findOrCreateFromProfile = async ({ providerName, profile, vendorId, compan
         client = await WebsiteClient.create({
             vendor_id: resolvedVendorId,
             company_id: resolvedCompanyId,
+            // A new host starts on the free plan, same as the email signup (Jamal, 2026-11-18).
+            subscription_plan_id: await require('./subscriptionPlan.service').getFreePlanId(resolvedCompanyId),
             name: profile.name || profile.email.split('@')[0],
             email: profile.email,
             // No password at all. The column is nullable, and the login service

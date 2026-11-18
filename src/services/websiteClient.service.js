@@ -200,6 +200,9 @@ const register = async (data = {}, vendorId = DEFAULT_VENDOR_ID, companyId = nul
         ...payload,
         vendor_id: resolvedVendorId,
         company_id: resolvedCompanyId,
+        // A new host starts on the free plan (Jamal, 2026-11-18). Decided by the
+        // server — still never taken from the signup body.
+        subscription_plan_id: await require('./subscriptionPlan.service').getFreePlanId(resolvedCompanyId),
         source: 'website',
         email_verified: 0,
         mobile_verified: 0,
