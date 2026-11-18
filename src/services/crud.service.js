@@ -27,6 +27,14 @@ const ApiError = require('../utils/apiError');
  *
  * Module-specific rules go in `beforeSave(payload, { row, companyId, isCreate })` (throw an ApiError
  * to refuse) and extra methods in `extend(service)`.
+ *
+ * Other options:
+ *   name.unique: false      name required but may repeat
+ *   statusValue(v)          how PATCH /:id/status stores its value (default 1 / 0)
+ *   reload: true            create / update / status answer with a fresh getById row
+ *   prepareList(query, where)  returns { query, where } just before the list runs
+ *   decorateList(rows)      adds computed fields to the list rows (one query for all rows, never per row)
+ *   beforeDelete(id)        what it returns becomes the DELETE answer's data
  */
 
 const PROTECTED = new Set([
@@ -49,6 +57,11 @@ const build = (cfg) => {
         uniqueScope,
         notFound = `${modelName} not found`,
         beforeSave,
+        beforeDelete,
+        statusValue = (v) => (v ? 1 : 0),
+        reload = false,
+        prepareList,
+        decorateList,
         extend,
     } = cfg;
 
@@ -60,14 +73,17 @@ const build = (cfg) => {
         return acc;
     }, {});
 
+    const unique = !name || name.unique !== false;
+
     const assertName = async (payload, { row = null, companyId } = {}) => {
         if (!nameField) return;
-        if (row && payload[nameField] === undefined && !uniqueScope) return;
+        if (row && payload[nameField] === undefined && (!uniqueScope || !unique)) return;
         if (payload[nameField] !== undefined || !row) {
             const value = String(payload[nameField] ?? '').trim();
             if (!value) throw ApiError.badRequest(name.required);
             payload[nameField] = value;
         }
+        if (!unique) return;
         const finalName = payload[nameField] ?? row[nameField];
         const where = {
             company_id: (companyId ?? (row ? row.company_id : null)) ?? null,
@@ -79,39 +95,51 @@ const build = (cfg) => {
         if (hit) throw ApiError.badRequest(name.duplicate(finalName));
     };
 
-    const service = {
-        getAll: async (query = {}, companyId = undefined) => baseService.getAll(Model, modelName, defaultSort ? { ...defaultSort, ...query } : query, {
-            searchFields,
-            sortableFields,
-            companyId,
-            moduleSlug,
-            where: listWhere ? listWhere(query) : undefined,
-            include,
-        }),
+    const getById = async (id, companyId = undefined) => baseService.getById(Model, modelName, id, { companyId });
+    const fresh = (row, companyId) => (reload ? getById(row.id, companyId) : row);
 
-        getById: async (id, companyId = undefined) => baseService.getById(Model, modelName, id, { companyId }),
+    const service = {
+        getAll: async (rawQuery = {}, companyId = undefined) => {
+            let query = defaultSort ? { ...defaultSort, ...rawQuery } : rawQuery;
+            let where = listWhere ? listWhere(rawQuery) : undefined;
+            if (prepareList) ({ query, where } = prepareList(query, where));
+            const result = await baseService.getAll(Model, modelName, query, {
+                searchFields, sortableFields, companyId, moduleSlug, where, include,
+            });
+            if (!decorateList) return result;
+            const plain = result.data.map((r) => (r && r.toJSON ? r.toJSON() : { ...r }));
+            return { ...result, data: await decorateList(plain) };
+        },
+
+        getById,
 
         create: async (data, userId = null, companyId = undefined) => {
             const payload = pickWritable(data);
             if (beforeSave) await beforeSave(payload, { row: null, companyId, isCreate: true });
             await assertName(payload, { companyId });
-            return baseService.create(Model, modelName, payload, userId, companyId);
+            return fresh(await baseService.create(Model, modelName, payload, userId, companyId), companyId);
         },
 
         update: async (id, data, userId = null, companyId = undefined) => {
             const row = await Model.findByPk(id);
             if (!row) throw ApiError.notFound(notFound);
+            if (companyId !== undefined && companyId !== null && row.company_id && row.company_id !== companyId) {
+                throw ApiError.notFound(notFound);
+            }
             const payload = pickWritable(data);
             if (beforeSave) await beforeSave(payload, { row, companyId, isCreate: false });
             await assertName(payload, { row, companyId });
-            return baseService.update(Model, modelName, id, payload, userId, companyId);
+            return fresh(await baseService.update(Model, modelName, id, payload, userId, companyId), companyId);
         },
 
         updateStatus: async (id, isActive, userId = null, companyId = undefined) =>
-            baseService.update(Model, modelName, id, { is_active: isActive ? 1 : 0 }, userId, companyId),
+            fresh(await baseService.update(Model, modelName, id, { is_active: statusValue(isActive) }, userId, companyId), companyId),
 
-        deleteById: async (id, userId = null, companyId = undefined) =>
-            baseService.remove(Model, modelName, id, userId, companyId),
+        deleteById: async (id, userId = null, companyId = undefined) => {
+            const extra = beforeDelete ? await beforeDelete(id) : undefined;
+            const done = await baseService.remove(Model, modelName, id, userId, companyId);
+            return extra !== undefined ? extra : done;
+        },
     };
     service.remove = service.deleteById;
     service.pickWritable = pickWritable;

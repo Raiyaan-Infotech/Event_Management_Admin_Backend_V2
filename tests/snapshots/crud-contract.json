@@ -1700,5 +1700,651 @@
    },
    "status": 404
   }
+ },
+ "/template-categories": {
+  "create": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Tpl <stamp>",
+      "slug": "tpl-<stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Category created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_duplicate": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Tpl <stamp>",
+      "slug": "tpl-<stamp>-2",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Category created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_no_name": {
+   "json": {
+    "message": "Category name is required.",
+    "success": false
+   },
+   "status": 400
+  },
+  "delete": {
+   "json": {
+    "data": {
+     "orphaned_frame_styles": 0
+    },
+    "message": "Category deleted successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "delete_missing": {
+   "json": {
+    "message": "TemplateCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Tpl <stamp>",
+      "slug": "tpl-<stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Success",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "get_after_delete": {
+   "json": {
+    "message": "TemplateCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get_missing": {
+   "json": {
+    "message": "TemplateCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "list_all": 200,
+  "list_default_shape": {
+   "dataKeys": [
+    "company_id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "frame_styles_count",
+    "has_pending_approval",
+    "id",
+    "is_active",
+    "name",
+    "slug",
+    "sort_order",
+    "updated_at",
+    "updated_by"
+   ],
+   "keys": [
+    "data",
+    "message",
+    "pagination",
+    "success",
+    "timestamp"
+   ],
+   "pagination": [
+    "hasNextPage",
+    "hasPrevPage",
+    "limit",
+    "page",
+    "totalItems",
+    "totalPages"
+   ],
+   "status": 200
+  },
+  "list_search": {
+   "json": {
+    "data": [
+     {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "frame_styles_count": 0,
+      "has_pending_approval": false,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Tpl <stamp>",
+      "slug": "tpl-<stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     },
+     {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "frame_styles_count": 0,
+      "has_pending_approval": false,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Tpl <stamp>",
+      "slug": "tpl-<stamp>-2",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    ],
+    "message": "Success",
+    "pagination": {
+     "hasNextPage": false,
+     "hasPrevPage": false,
+     "limit": 10,
+     "page": 1,
+     "totalItems": 2,
+     "totalPages": 1
+    },
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "reorder": {
+   "json": {
+    "data": {
+     "updated": 2
+    },
+    "message": "Category order updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "reorder_empty": {
+   "json": {
+    "message": "Provide an array of { id, sort_order }.",
+    "success": false
+   },
+   "status": 400
+  },
+  "reorder_result": [
+   [
+    "Tpl <stamp>",
+    5
+   ],
+   [
+    "Tpl <stamp> 2",
+    71
+   ],
+   [
+    "Tpl <stamp> b",
+    72
+   ]
+  ],
+  "status_off": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 0,
+      "name": "Tpl <stamp> 2",
+      "slug": "tpl-<stamp>",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Category status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_on": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Tpl <stamp> 2",
+      "slug": "tpl-<stamp>",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Category status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Tpl <stamp> 2",
+      "slug": "tpl-<stamp>",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Category updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update_missing": {
+   "json": {
+    "message": "Category not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "update_slug": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Tpl <stamp> b",
+      "slug": "tpl-<stamp>-b",
+      "sort_order": 72,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Category updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  }
+ },
+ "/home-screen-categories": {
+  "create": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Home <stamp>",
+      "slug": "home-<stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Category created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_duplicate": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Home <stamp>",
+      "slug": "home-<stamp>-2",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Category created successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 201
+  },
+  "create_no_name": {
+   "json": {
+    "message": "Category name is required.",
+    "success": false
+   },
+   "status": 400
+  },
+  "delete": {
+   "json": {
+    "data": {
+     "orphaned_templates": 0
+    },
+    "message": "Category deleted successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "delete_missing": {
+   "json": {
+    "message": "HomeScreenCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Home <stamp>",
+      "slug": "home-<stamp>",
+      "sort_order": 5,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    },
+    "message": "Success",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "get_after_delete": {
+   "json": {
+    "message": "HomeScreenCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "get_missing": {
+   "json": {
+    "message": "HomeScreenCategory not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "list_all": 200,
+  "list_default_shape": {
+   "dataKeys": [
+    "company_id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "has_pending_approval",
+    "id",
+    "is_active",
+    "name",
+    "slug",
+    "sort_order",
+    "templates_count",
+    "updated_at",
+    "updated_by"
+   ],
+   "keys": [
+    "data",
+    "message",
+    "pagination",
+    "success",
+    "timestamp"
+   ],
+   "pagination": [
+    "hasNextPage",
+    "hasPrevPage",
+    "limit",
+    "page",
+    "totalItems",
+    "totalPages"
+   ],
+   "status": 200
+  },
+  "list_search": {
+   "json": {
+    "data": [
+     {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "has_pending_approval": false,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Home <stamp>",
+      "slug": "home-<stamp>",
+      "sort_order": 5,
+      "templates_count": 0,
+      "updated_at": "<x>",
+      "updated_by": null
+     },
+     {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "has_pending_approval": false,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Home <stamp>",
+      "slug": "home-<stamp>-2",
+      "sort_order": 5,
+      "templates_count": 0,
+      "updated_at": "<x>",
+      "updated_by": null
+     }
+    ],
+    "message": "Success",
+    "pagination": {
+     "hasNextPage": false,
+     "hasPrevPage": false,
+     "limit": 10,
+     "page": 1,
+     "totalItems": 2,
+     "totalPages": 1
+    },
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "reorder": {
+   "json": {
+    "data": {
+     "updated": 2
+    },
+    "message": "Category order updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "reorder_empty": {
+   "json": {
+    "message": "Provide an array of { id, sort_order }.",
+    "success": false
+   },
+   "status": 400
+  },
+  "reorder_result": [
+   [
+    "Home <stamp>",
+    5
+   ],
+   [
+    "Home <stamp> 2",
+    71
+   ],
+   [
+    "Home <stamp> b",
+    72
+   ]
+  ],
+  "status_off": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 0,
+      "name": "Home <stamp> 2",
+      "slug": "home-<stamp>",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Category status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "status_on": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Home <stamp> 2",
+      "slug": "home-<stamp>",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Category status updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Home <stamp> 2",
+      "slug": "home-<stamp>",
+      "sort_order": 6,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Category updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  },
+  "update_missing": {
+   "json": {
+    "message": "Category not found",
+    "success": false
+   },
+   "status": 404
+  },
+  "update_slug": {
+   "json": {
+    "data": {
+     "category": {
+      "company_id": null,
+      "created_at": "<x>",
+      "created_by": "<x>",
+      "deleted_at": null,
+      "id": "<x>",
+      "is_active": 1,
+      "name": "Home <stamp> b",
+      "slug": "home-<stamp>-b",
+      "sort_order": 72,
+      "updated_at": "<x>",
+      "updated_by": "<x>"
+     }
+    },
+    "message": "Category updated successfully",
+    "success": true,
+    "timestamp": "<x>"
+   },
+   "status": 200
+  }
  }
 }

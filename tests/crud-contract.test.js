@@ -35,6 +35,8 @@ const MODULES = [
     { path: '/event-responsibilities', key: 'responsibility', table: 'event_responsibilities', body: { name: 'Resp', event_category_id: null, sort_order: 5 }, status: true },
     { path: '/plan-types', key: 'planType', table: 'plan_types', body: { name: 'Plan', price: 10, sort_order: 5, description: 'd' }, status: true },
     { path: '/color-palettes', key: 'palette', table: 'color_palettes', body: { name: 'Pal', primary_bg_color: '#111111', primary_text_color: '#222222' }, status: false },
+    { path: '/template-categories', key: 'category', table: 'template_categories', body: { name: 'Tpl', sort_order: 5 }, status: true, reorder: true },
+    { path: '/home-screen-categories', key: 'category', table: 'home_screen_categories', body: { name: 'Home', sort_order: 5 }, status: true, reorder: true },
 ];
 
 const VOLATILE = new Set(['id', 'created_at', 'updated_at', 'deleted_at', 'createdAt', 'updatedAt', 'deletedAt', 'created_by', 'updated_by', 'timestamp']);
@@ -45,7 +47,7 @@ function norm(v) {
         for (const k of Object.keys(v).sort()) o[k] = VOLATILE.has(k) && v[k] !== null ? '<x>' : norm(v[k]);
         return o;
     }
-    if (typeof v === 'string') return v.split(STAMP).join('<stamp>').replace(/\b\d{4}-\d{2}-\d{2}T[\d:.]+Z\b/g, '<time>').replace(/(slug|-d)\d{6,}/g, '$1<n>');
+    if (typeof v === 'string') return v.split(STAMP).join('<stamp>').split(STAMP.toLowerCase()).join('<stamp>').replace(/\b\d{4}-\d{2}-\d{2}T[\d:.]+Z\b/g, '<time>').replace(/(slug|-d)\d{6,}/g, '$1<n>');
     return v;
 }
 
@@ -91,6 +93,18 @@ function norm(v) {
         if (m.status) {
             r.status_off = await call('PATCH', `${m.path}/${id}/status`, { is_active: false });
             r.status_on = await call('PATCH', `${m.path}/${id}/status`, { is_active: true });
+        }
+        if (m.reorder) {
+            const second = await call('POST', m.path, { ...m.body, name: `${name} b` });
+            const id2 = second.json?.data?.[m.key]?.id;
+            if (id2) created.push([m.table, id2]);
+            r.reorder = await call('PATCH', `${m.path}/reorder`, { items: [{ id, sort_order: 71 }, { id: id2, sort_order: 72 }, { id: 99999999, sort_order: 1 }] });
+            r.reorder_empty = await call('PATCH', `${m.path}/reorder`, { items: [] });
+            const after = await call('GET', `${m.path}?search=${STAMP}&sort_by=sort_order&sort_order=ASC`);
+            r.reorder_result = (after.json?.data || []).map((x) => [x.name, x.sort_order]);
+            r.update_slug = await call('PUT', `${m.path}/${id2}`, { slug: '' });
+            r.list_all = (await call('GET', `${m.path}?search=${STAMP}&is_active=all`)).status;
+            await call('DELETE', `${m.path}/${id2}`);
         }
         r.delete = await call('DELETE', `${m.path}/${id}`);
         r.get_after_delete = await call('GET', `${m.path}/${id}`);

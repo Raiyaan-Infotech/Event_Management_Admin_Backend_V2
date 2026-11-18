@@ -16,8 +16,10 @@ const { asyncHandler } = require('../utils/helpers');
  *   DELETE /:id    null                        "<title> deleted successfully"
  *
  * `remove` is the same handler as `deleteById` (some routers use that name).
+ * An object the service's delete returns is sent as the DELETE answer's data, and
+ * `deleteMessage(data)` can word the message from it (e.g. "3 frames became uncategorised").
  */
-const build = ({ service, resourceKey, title }) => {
+const build = ({ service, resourceKey, title, deleteMessage }) => {
     const log = String(title).toLowerCase();
 
     const handlers = {
@@ -52,9 +54,10 @@ const build = ({ service, resourceKey, title }) => {
         }),
 
         deleteById: asyncHandler(async (req, res) => {
-            await service.deleteById(req.params.id, req.user.id, req.companyId);
+            const result = await service.deleteById(req.params.id, req.user.id, req.companyId);
             logger.logRequest(req, `Deleted ${log} ${req.params.id}`);
-            return ApiResponse.success(res, null, `${title} deleted successfully`);
+            const data = result && typeof result === 'object' ? result : null;
+            return ApiResponse.success(res, data, (deleteMessage && deleteMessage(data)) || `${title} deleted successfully`);
         }),
     };
     handlers.remove = handlers.deleteById;
