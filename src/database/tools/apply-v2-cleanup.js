@@ -79,9 +79,10 @@ const DEAD_MODULES = ['staff', 'communication', 'transactions', 'payment'];
     console.log(`${PROD ? 'PRODUCTION' : 'LOCAL'} ${process.env.DB_NAME} @ ${process.env.DB_HOST} — ${APPLY ? 'APPLY' : 'dry run'}\n`);
 
     const [have] = await conn.query('SELECT TABLE_NAME AS t FROM information_schema.tables WHERE table_schema = DATABASE()');
-    const exists = new Set(have.map((r) => r.t.toLowerCase()));
-    const going = TABLES.filter((t) => exists.has(t));
-    const gone = TABLES.filter((t) => !exists.has(t));
+    // Real (case-preserving) names: on Linux MySQL `SequelizeMeta` ≠ `sequelizemeta`.
+    const realName = new Map(have.map((r) => [r.t.toLowerCase(), r.t]));
+    const going = TABLES.filter((t) => realName.has(t)).map((t) => realName.get(t));
+    const gone = TABLES.filter((t) => !realName.has(t));
 
     // A table that stays must not point at one that goes.
     const [fks] = await conn.query(
@@ -89,7 +90,8 @@ const DEAD_MODULES = ['staff', 'communication', 'transactions', 'payment'];
            FROM information_schema.key_column_usage
           WHERE table_schema = DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL`,
     );
-    const blockers = fks.filter((k) => going.includes(k.r.toLowerCase()) && !TABLES.includes(k.t.toLowerCase()));
+    const goingLower = going.map((t) => t.toLowerCase());
+    const blockers = fks.filter((k) => goingLower.includes(k.r.toLowerCase()) && !TABLES.includes(k.t.toLowerCase()));
     if (blockers.length) {
         for (const b of blockers) console.log(`  ✗ ${b.t}.${b.c} points at ${b.r} (a table that stays → one that goes)`);
         console.log('\nStopped: nothing changed.');
