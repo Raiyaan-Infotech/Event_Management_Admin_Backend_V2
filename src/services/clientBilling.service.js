@@ -724,16 +724,10 @@ const getAvailablePlans = async (clientId) => {
 };
 
 /**
- * Schedule a plan change for the end of the current term.
+ * Change the plan — applied immediately (Jamal, 2026-11-19), not scheduled for the end of the term.
  *
- * ⚠ SCHEDULED, never immediate, and that is not a limitation being hidden — it
- * is what the Change Plan screen states. An immediate upgrade would have to
- * charge the difference, and there is no gateway to charge it with; applying it
- * for free instead would hand out a paid plan on a button press.
- *
- * Choosing the plan already scheduled is idempotent. Choosing the CURRENT plan
- * cancels a pending change rather than erroring — it is the natural way to
- * express "actually, stay where I am".
+ * Choosing the CURRENT plan cancels any old scheduled change rather than erroring — it is the
+ * natural way to express "actually, stay where I am".
  */
 const changePlan = async (clientId, planId) => {
     const targetId = Number(planId);
@@ -795,22 +789,42 @@ const changePlan = async (clientId, planId) => {
         return getAvailablePlans(clientId);
     }
 
-    const effectiveAt = subscription.current_period_end || new Date();
-
-    subscription.pending_plan_id = plan.id;
-    subscription.pending_effective_at = effectiveAt;
+    /*
+     * APPLIED AT ONCE (Jamal, 2026-11-19: "upgrade plan don't pending"). The new plan starts a new
+     * term today, the entitlement follows it, and the term's invoice is raised — the same steps
+     * `reconcile` takes for a change whose date has arrived. No gateway yet, so nothing is charged.
+     */
+    const now = new Date();
+    const fromPlanId = subscription.subscription_plan_id;
+    subscription.subscription_plan_id = plan.id;
+    subscription.billing_cycle = plan.billing_cycle;
+    subscription.price = plan.price;
+    subscription.currency_code = plan.currency_code || 'INR';
+    subscription.pending_plan_id = null;
+    subscription.pending_effective_at = null;
+    subscription.current_period_start = now;
+    subscription.current_period_end = addCycle(new Date(now), plan.billing_cycle);
+    subscription.status = 'active';
     await subscription.save();
+    await syncEntitlement(clientId, plan.id);
 
     await logEvent({
         client_subscription_id: subscription.id,
         website_client_id: clientId,
-        type: 'change_scheduled',
-        from_plan_id: subscription.subscription_plan_id,
+        type: 'change_applied',
+        from_plan_id: fromPlanId,
         to_plan_id: plan.id,
-        description: `Plan change to ${plan.name} scheduled`,
+        description: `Plan changed to ${plan.name}`,
         amount: plan.price,
         currency_code: plan.currency_code,
         actor: 'client',
+    });
+
+    await invoiceService.raiseInvoiceForTerm(subscription, {
+        periodStart: subscription.current_period_start,
+        periodEnd: subscription.current_period_end,
+        issueDate: now,
+        planName: plan.name,
     });
 
     return getAvailablePlans(clientId);
@@ -934,10 +948,12 @@ const findPickablePlan = async (client, planId) => {
 };
 
 /**
- * Validate the payment method and save ONE pending payment row for `plan` (no gateway yet).
+ * Validate the payment method and save ONE payment row for `plan`, marked SUCCESSFUL.
+ * Jamal (2026-11-19, "upgrade plan don't pending"): no "awaiting confirmation" state. There is still
+ * no gateway, so nothing is actually charged; when one is wired, its result decides the status here.
  * Shared by the old checkout and by per-event bookings (clientBooking.service).
  */
-const savePendingPayment = async ({ clientId, client, subscription, plan, body, date, transaction }) => {
+const savePayment = async ({ clientId, client, subscription, plan, body, date, transaction }) => {
     require('./clientPaymentMethod.service').assertNoRawCard(body);
     const method = String(body.method || '').toLowerCase();
     if (!CHECKOUT_METHODS.includes(method)) throw ApiError.badRequest('Please choose a payment method.');
@@ -973,8 +989,8 @@ const savePendingPayment = async ({ clientId, client, subscription, plan, body, 
         client_subscription_id: subscription?.id ?? null,
         company_id: client.company_id ?? null,
         type: 'payment',
-        status: 'pending',
-        description: `${plan.name} plan (${plan.billing_cycle})${date ? ` for event on ${date}` : ''} — payment details saved, awaiting confirmation`.slice(0, 300),
+        status: 'successful',
+        description: `${plan.name} plan (${plan.billing_cycle})${date ? ` for event on ${date}` : ''}`.slice(0, 300),
         // Signed from the client's side: money leaving is negative (see the model).
         amount: -amount.total,
         currency_code: plan.currency_code || 'INR',
@@ -988,7 +1004,7 @@ const savePendingPayment = async ({ clientId, client, subscription, plan, body, 
     return {
         id: row.id,
         reference,
-        status: 'pending',
+        status: 'successful',
         method,
         method_label: row.method_label,
         amount,
@@ -1004,7 +1020,7 @@ const checkout = async (clientId, body = {}) => {
     if (subscription?.subscription_plan_id === plan.id) throw ApiError.badRequest('You are already on this plan.');
     if (!(Number(plan.price) > 0)) throw ApiError.badRequest('This plan is free — no payment is needed.');
     const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.start_date || '')) ? body.start_date : null;
-    const transaction = await savePendingPayment({ clientId, client, subscription, plan, body, date });
+    const transaction = await savePayment({ clientId, client, subscription, plan, body, date });
     return { transaction, plan: { id: plan.id, name: plan.name, billing_cycle: plan.billing_cycle } };
 };
 
@@ -1013,7 +1029,7 @@ module.exports = {
     getAvailablePlans,
     checkout,
     findPickablePlan,
-    savePendingPayment,
+    savePayment,
     getCurrentSubscription,
     changePlan,
     cancelSubscription,

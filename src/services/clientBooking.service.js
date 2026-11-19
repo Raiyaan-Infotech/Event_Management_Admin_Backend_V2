@@ -5,9 +5,9 @@
  * too) → the date is booked → Create Event. A booked date with no event yet is what the
  * dashboard's "Event Date Allotted — Create Your Event Now" card shows.
  *
- * ⚠ No payment gateway yet: a paid plan saves the payment details as ONE pending ledger row
- * (clientBilling.savePendingPayment) and the date is reserved straight away (Jamal chose
- * "reserve now, payment pending"). The client's account plan is NOT changed here.
+ * A paid plan saves ONE successful payment row (clientBilling.savePayment) and the booking is
+ * 'paid' at once (Jamal 2026-11-19: no pending). No gateway yet, so nothing is actually charged.
+ * The client's account plan is NOT changed here.
  *
  * Plan limits per event are configured later ("plan config we do later").
  */
@@ -64,7 +64,7 @@ const getBooking = async (clientId, bookingId) => {
 
 /**
  * Book a date with a plan.  body: { start_date, end_date?, plan_id, ...payment fields for a paid plan }
- * Free plan → reserved at once, no payment.  Paid plan → pending payment saved + reserved.
+ * Free plan → reserved at once, no payment.  Paid plan → payment saved (successful) + reserved.
  */
 const createBooking = async (clientId, body = {}) => {
     const start = String(body.start_date || '');
@@ -83,7 +83,7 @@ const createBooking = async (clientId, body = {}) => {
     const booking = await sequelize.transaction(async (transaction) => {
         let payment = null;
         if (paid) {
-            payment = await billing.savePendingPayment({ clientId, client, subscription, plan, body, date: start, transaction });
+            payment = await billing.savePayment({ clientId, client, subscription, plan, body, date: start, transaction });
         }
         const row = await EventBooking.create({
             website_client_id: clientId,
@@ -94,7 +94,7 @@ const createBooking = async (clientId, body = {}) => {
             plan_name: String(plan.name).slice(0, 120),
             amount: payment ? payment.amount.total : 0,
             currency_code: plan.currency_code || 'INR',
-            payment_status: paid ? 'pending' : 'free',
+            payment_status: paid ? 'paid' : 'free',
             client_transaction_id: payment?.id ?? null,
             status: 'reserved',
         }, { transaction });
