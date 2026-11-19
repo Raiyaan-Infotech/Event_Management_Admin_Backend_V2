@@ -42,10 +42,10 @@ const plans = asyncHandler(async (req, res) => {
 /** `bodyTransform` snake_cases incoming keys, so this reads `plan_id`. */
 const changePlan = asyncHandler(async (req, res) => {
     const data = await billingService.changePlan(req.websiteClient.id, req.body?.plan_id);
-    return ApiResponse.success(res, data, 'Plan change scheduled');
+    return ApiResponse.success(res, data, 'Plan changed');
 });
 
-/** Book Event → Payment: saves the payment details as a pending payment (no gateway yet). */
+/** Book Event → Payment: saves the payment as successful (no gateway yet, nothing is charged). */
 const checkout = asyncHandler(async (req, res) => {
     const data = await billingService.checkout(req.websiteClient.id, req.body || {});
     return ApiResponse.success(res, data, 'Payment details saved');
