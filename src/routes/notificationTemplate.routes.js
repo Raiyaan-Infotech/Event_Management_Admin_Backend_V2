@@ -13,6 +13,7 @@ router.use(extractCompanyContext);
 router.get('/', hasPermission('notification_templates.view'), controller.getAll);
 router.get('/variables', hasPermission('notification_templates.view'), controller.getVariables);
 router.get('/system-triggers', hasPermission('notification_templates.view'), controller.getSystemTriggers);
+router.get('/counts', hasPermission('notification_templates.view'), controller.getCounts);
 router.get('/:id', hasPermission('notification_templates.view'), controller.getById);
 
 router.post('/',
@@ -26,6 +27,8 @@ router.put('/:id',
     controller.update
 );
 router.patch('/:id/status', hasPermission('notification_templates.edit'), controller.updateStatus);
+// Sends to the given test recipients only; production trigger mapping is untouched.
+router.post('/:id/test-send', hasPermission('notification_templates.edit'), controller.testSend);
 router.post('/:id/duplicate', hasPermission('notification_templates.create'), controller.duplicate);
 router.delete('/:id',
     hasPermission('notification_templates.delete'),

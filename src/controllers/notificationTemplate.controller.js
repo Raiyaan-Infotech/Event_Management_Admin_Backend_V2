@@ -14,7 +14,21 @@ const getVariables = asyncHandler(async (req, res) => {
 });
 
 const getSystemTriggers = asyncHandler(async (req, res) => {
-    return ApiResponse.success(res, { triggers: notificationTemplateService.getSystemTriggers() });
+    return ApiResponse.success(res, {
+        triggers: notificationTemplateService.getSystemTriggers(),
+        sections: notificationTemplateService.getSections(),
+    });
+});
+
+const getCounts = asyncHandler(async (req, res) => {
+    const counts = await notificationTemplateService.getCounts(req.companyId);
+    return ApiResponse.success(res, { counts });
+});
+
+const testSend = asyncHandler(async (req, res) => {
+    const result = await notificationTemplateService.testSend(req.params.id, req.body, req.companyId);
+    logger.logRequest(req, `Test send for notification template ${req.params.id}`);
+    return ApiResponse.success(res, result, 'Test message processed');
 });
 
 const getById = asyncHandler(async (req, res) => {
@@ -67,6 +81,8 @@ module.exports = {
     getAll,
     getVariables,
     getSystemTriggers,
+    getCounts,
+    testSend,
     getById,
     create,
     update,

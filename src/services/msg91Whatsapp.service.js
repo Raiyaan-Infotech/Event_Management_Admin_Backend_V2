@@ -174,4 +174,67 @@ const sendOtp = async ({ dialCode, mobile, code, purpose = 'login' }) => {
     }
 };
 
-module.exports = { sendOtp, isConfigured, isDisabled, toWhatsAppNumber, ENDPOINT };
+/**
+ * Sends any Meta-approved template by name (used by the admin's "Send Test
+ * Message"). Values are positional, as Meta numbers them: bodyValues[0] fills
+ * {{1}} in the body, and so on. Only the account credentials come from the
+ * env; the template name comes from the caller. Same result shape as sendOtp.
+ *
+ *   buttons: [{ kind: 'url', value }]  dynamic URL suffix / full value
+ *            [{ kind: 'copy_code', value }]  authentication copy-code button
+ */
+const sendTemplate = async ({
+    dialCode, mobile, name, bodyValues = [], headerText = [], headerImageUrl = null,
+    buttons = [], language, purpose = 'template',
+}) => {
+    const c = config();
+    const to = toWhatsAppNumber(dialCode, mobile);
+
+    if (!c.enabled) return { delivered: false, reason: 'disabled' };
+    if (!(c.authKey && c.number)) return { delivered: false, reason: 'not_configured' };
+    if (!to) return { delivered: false, reason: 'no_number' };
+    if (!name) return { delivered: false, reason: 'no_template_name' };
+
+    const components = {};
+    if (headerImageUrl) components.header_1 = { type: 'image', value: String(headerImageUrl) };
+    headerText.forEach((v, i) => { components[`header_${i + 1}`] = { type: 'text', value: String(v) }; });
+    bodyValues.forEach((v, i) => { components[`body_${i + 1}`] = { type: 'text', value: String(v) }; });
+    buttons.forEach((b, i) => {
+        if (b && b.value) components[`button_${i + 1}`] = { subtype: 'url', type: 'text', value: String(b.value) };
+    });
+
+    const body = {
+        integrated_number: c.number,
+        content_type: 'template',
+        payload: {
+            messaging_product: 'whatsapp',
+            type: 'template',
+            template: {
+                name,
+                language: { code: language || c.language, policy: 'deterministic' },
+                ...(c.namespace ? { namespace: c.namespace } : {}),
+                to_and_components: [{ to: [to], components }],
+            },
+        },
+    };
+
+    try {
+        const res = await axios.post(ENDPOINT, body, {
+            headers: { 'Content-Type': 'application/json', authkey: c.authKey },
+            timeout: TIMEOUT_MS,
+            validateStatus: () => true,
+        });
+        const ok = res.status >= 200 && res.status < 300 && res.data?.type !== 'error';
+        if (!ok) {
+            logger.error?.(`[MSG91] ${purpose} "${name}" to ${to} REFUSED (http ${res.status}): ${JSON.stringify(res.data)}`);
+            return { delivered: false, reason: res.data?.message || `http_${res.status}` };
+        }
+        logger.info?.(`[MSG91] ${purpose} "${name}" delivered to ${to}`);
+        return { delivered: true, reason: null };
+    } catch (err) {
+        logger.error?.(`[MSG91] ${purpose} "${name}" to ${to} FAILED: ${err.message}`);
+        return { delivered: false, reason: err.code === 'ECONNABORTED' ? 'timeout' : 'network' };
+    }
+};
+
+module.exports = { sendOtp, sendTemplate, isConfigured, isDisabled, toWhatsAppNumber, ENDPOINT };

@@ -1,0 +1,2815 @@
+{
+ "sections": [
+  {
+   "code": "A1",
+   "name": "Account & login",
+   "to": "Organizer"
+  },
+  {
+   "code": "A2",
+   "name": "Security",
+   "to": "Organizer"
+  },
+  {
+   "code": "A3",
+   "name": "Booking & payment",
+   "to": "Organizer"
+  },
+  {
+   "code": "A4",
+   "name": "Plan & usage",
+   "to": "Organizer"
+  },
+  {
+   "code": "A5",
+   "name": "Event status & share flow",
+   "to": "Organizer"
+  },
+  {
+   "code": "A6",
+   "name": "Contact flow",
+   "to": "Organizer"
+  },
+  {
+   "code": "A7",
+   "name": "Guest activity",
+   "to": "Organizer"
+  },
+  {
+   "code": "B1",
+   "name": "Before the event · share flow",
+   "to": "Organizer's guests & team"
+  },
+  {
+   "code": "B2",
+   "name": "Before the event · joining",
+   "to": "Organizer's guests & team"
+  },
+  {
+   "code": "B3",
+   "name": "Before the event · updates & RSVP",
+   "to": "Organizer's guests & team"
+  },
+  {
+   "code": "B4",
+   "name": "Contact flow",
+   "to": "Organizer's guests & team"
+  },
+  {
+   "code": "B5",
+   "name": "Event day",
+   "to": "Organizer's guests & team"
+  },
+  {
+   "code": "B6",
+   "name": "After the event · share flow",
+   "to": "Organizer's guests & team"
+  }
+ ],
+ "triggers": [
+  {
+   "key": "account_registered",
+   "label": "Organizer signs up (email / Google)",
+   "section": "A1",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "email",
+    "temp_password",
+    "otp",
+    "otp_minutes",
+    "reset_code",
+    "account_status",
+    "login_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Welcome to EventInvit, {{client_name}}",
+     "preheader": "Your account is ready. Book your first event date in a few minutes.",
+     "heading": "Welcome aboard, {{client_name}}",
+     "body": "<p>Your EventInvit organizer account is ready. From one place you can book your event date, design the invitation, invite guests and follow every RSVP.</p>\n<p>Most organizers start like this:</p>\n<p><strong>1:</strong> Check availability and book your date</p>\n<p><strong>2:</strong> Create the event and pick a home screen</p>\n<p><strong>3:</strong> Add guests and send the invitation</p>",
+     "button_label": "Book your event date",
+     "button_url": "{{login_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Welcome aboard, {{client_name}}",
+     "content": "Your EventInvit organizer account is ready. From one place you can book your event date, design the invitation, invite guests and follow every RSVP. Most organizers start like this:"
+    }
+   }
+  },
+  {
+   "key": "account_created_by_admin",
+   "label": "Account created by admin (login details)",
+   "section": "A1",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "email",
+    "temp_password",
+    "otp",
+    "otp_minutes",
+    "reset_code",
+    "account_status",
+    "login_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your EventInvit account is ready",
+     "preheader": "Here are your login details. Please change the password after you sign in.",
+     "heading": "An account has been created for you",
+     "body": "<p>Hi {{client_name}}, our team has set up an EventInvit organizer account for you. Use the details below to sign in.</p>\n<p><strong>Email:</strong> {{email}}</p>\n<p><strong>Temporary password:</strong> {{temp_password}}</p>",
+     "button_label": "Sign in",
+     "button_url": "{{login_link}}",
+     "footer": "For your security, change this password from Settings → Security after your first sign-in. Questions? Write to {{support_email}}."
+    },
+    "in_app": {
+     "title": "An account has been created for you",
+     "content": "Hi {{client_name}}, our team has set up an EventInvit organizer account for you. Use the details below to sign in."
+    }
+   }
+  },
+  {
+   "key": "login_otp",
+   "label": "Login OTP",
+   "section": "A1",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "whatsapp"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "email",
+    "temp_password",
+    "otp",
+    "otp_minutes",
+    "reset_code",
+    "account_status",
+    "login_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "{{otp}} is your EventInvit login code",
+     "preheader": "This code expires in {{otp_minutes}} minutes. Never share it with anyone.",
+     "heading": "Your login code",
+     "body": "<p>Hi {{client_name}}, use this code to sign in to EventInvit:</p>\n<p><strong>Code:</strong> {{otp}}</p>",
+     "button_label": "",
+     "button_url": "",
+     "footer": "The code expires in {{otp_minutes}} minutes. EventInvit will never ask you for this code. If you did not try to sign in, you can ignore this email - your account stays safe."
+    },
+    "in_app": {
+     "title": "Your login code",
+     "content": "Hi {{client_name}}, use this code to sign in to EventInvit:"
+    },
+    "whatsapp": {
+     "template_name": "eventinvit_login_otp",
+     "category": "authentication",
+     "header_type": "none",
+     "header_text": "",
+     "body": "*{{otp}}* is your verification code. For your security, do not share this code.",
+     "footer": "This code expires in 10 minutes.",
+     "buttons": [
+      {
+       "type": "copy_code",
+       "text": "Copy code",
+       "url": ""
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "mobile_verify_otp",
+   "label": "Mobile number verification OTP",
+   "section": "A1",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "email",
+    "temp_password",
+    "otp",
+    "otp_minutes",
+    "reset_code",
+    "account_status",
+    "login_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "{{otp}} is your verification code",
+     "preheader": "Enter this code to confirm your mobile number.",
+     "heading": "Confirm your mobile number",
+     "body": "<p>Hi {{client_name}}, enter this code in EventInvit to confirm your mobile number:</p>\n<p><strong>Code:</strong> {{otp}}</p>",
+     "button_label": "",
+     "button_url": "",
+     "footer": "The code expires in {{otp_minutes}} minutes. Do not share it with anyone. If you did not request it, ignore this email."
+    },
+    "in_app": {
+     "title": "Confirm your mobile number",
+     "content": "Hi {{client_name}}, enter this code in EventInvit to confirm your mobile number:"
+    }
+   }
+  },
+  {
+   "key": "password_reset_code",
+   "label": "Forgot password – reset code",
+   "section": "A1",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "email",
+    "temp_password",
+    "otp",
+    "otp_minutes",
+    "reset_code",
+    "account_status",
+    "login_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Reset your EventInvit password",
+     "preheader": "Use this code to choose a new password. It expires soon.",
+     "heading": "Reset your password",
+     "body": "<p>Hi {{client_name}}, we received a request to reset the password for {{email}}. Enter this code to choose a new one:</p>\n<p><strong>Reset code:</strong> {{reset_code}}</p>",
+     "button_label": "",
+     "button_url": "",
+     "footer": "The code expires in {{otp_minutes}} minutes. If you did not ask for a reset, ignore this email - your password will not change."
+    },
+    "in_app": {
+     "title": "Reset your password",
+     "content": "Hi {{client_name}}, we received a request to reset the password for {{email}}. Enter this code to choose a new one:"
+    }
+   }
+  },
+  {
+   "key": "account_status_changed",
+   "label": "Account activated / deactivated by admin",
+   "section": "A1",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "email",
+    "temp_password",
+    "otp",
+    "otp_minutes",
+    "reset_code",
+    "account_status",
+    "login_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your EventInvit account has been {{account_status}}",
+     "preheader": "A change was made to your account by our team.",
+     "heading": "Your account is now {{account_status}}",
+     "body": "<p>Hi {{client_name}}, our team has {{account_status}} your EventInvit account.</p>\n<p>If your account was activated, you can sign in as usual. If it was deactivated, your events and guests are kept safe, but you cannot sign in until it is active again.</p>",
+     "button_label": "Go to EventInvit",
+     "button_url": "{{login_link}}",
+     "footer": "Think this is a mistake? Reply to this email or write to {{support_email}}."
+    },
+    "in_app": {
+     "title": "Your account is now {{account_status}}",
+     "content": "Hi {{client_name}}, our team has {{account_status}} your EventInvit account. If your account was activated, you can sign in as usual. If it was deactivated, your events and guests are kept safe, but you cannot sign in until it is active again."
+    }
+   }
+  },
+  {
+   "key": "account_deleted",
+   "label": "Account deleted",
+   "section": "A1",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "email",
+    "temp_password",
+    "otp",
+    "otp_minutes",
+    "reset_code",
+    "account_status",
+    "login_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your EventInvit account has been deleted",
+     "preheader": "We are sorry to see you go.",
+     "heading": "Your account has been deleted",
+     "body": "<p>Hi {{client_name}}, your EventInvit account ({{email}}) and its data have been deleted as requested.</p>\n<p>Thank you for planning your events with us. You are always welcome back.</p>",
+     "button_label": "",
+     "button_url": "",
+     "footer": "Did not ask for this? Contact {{support_email}} straight away."
+    },
+    "in_app": {
+     "title": "Your account has been deleted",
+     "content": "Hi {{client_name}}, your EventInvit account ({{email}}) and its data have been deleted as requested. Thank you for planning your events with us. You are always welcome back."
+    }
+   }
+  },
+  {
+   "key": "password_changed",
+   "label": "Password changed",
+   "section": "A2",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "device",
+    "browser",
+    "login_time",
+    "ip_location",
+    "old_email",
+    "new_email",
+    "support_email",
+    "login_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your EventInvit password was changed",
+     "preheader": "If this was you, no action is needed.",
+     "heading": "Your password was changed",
+     "body": "<p>Hi {{client_name}}, the password for your EventInvit account was changed on {{login_time}}.</p>\n<p>If you made this change, you are all set.</p>\n<p><strong>Device:</strong> {{device}} · {{browser}}</p>\n<p><strong>Location:</strong> {{ip_location}}</p>",
+     "button_label": "This wasn't me - secure my account",
+     "button_url": "{{login_link}}",
+     "footer": "This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
+    },
+    "in_app": {
+     "title": "Your password was changed",
+     "content": "Hi {{client_name}}, the password for your EventInvit account was changed on {{login_time}}. If you made this change, you are all set."
+    }
+   }
+  },
+  {
+   "key": "contact_details_changed",
+   "label": "Email or mobile number changed",
+   "section": "A2",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "device",
+    "browser",
+    "login_time",
+    "ip_location",
+    "old_email",
+    "new_email",
+    "support_email",
+    "login_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your account email or mobile was changed",
+     "preheader": "Your sign-in details were updated.",
+     "heading": "Your contact details were changed",
+     "body": "<p>Hi {{client_name}}, the email or mobile number on your EventInvit account was changed.</p>\n<p><strong>Old:</strong> {{old_email}}</p>\n<p><strong>New:</strong> {{new_email}}</p>\n<p><strong>When:</strong> {{login_time}}</p>",
+     "button_label": "This wasn't me",
+     "button_url": "{{login_link}}",
+     "footer": "We send this notice to both the old and the new address. This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
+    },
+    "in_app": {
+     "title": "Your contact details were changed",
+     "content": "Hi {{client_name}}, the email or mobile number on your EventInvit account was changed."
+    }
+   }
+  },
+  {
+   "key": "new_device_login",
+   "label": "New device signed in",
+   "section": "A2",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "device",
+    "browser",
+    "login_time",
+    "ip_location",
+    "old_email",
+    "new_email",
+    "support_email",
+    "login_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "New sign-in to your EventInvit account",
+     "preheader": "We noticed a sign-in from a new device.",
+     "heading": "New sign-in detected",
+     "body": "<p>Hi {{client_name}}, your account was just used to sign in on a device we have not seen before.</p>\n<p><strong>Device:</strong> {{device}} · {{browser}}</p>\n<p><strong>Location:</strong> {{ip_location}}</p>\n<p><strong>When:</strong> {{login_time}}</p>",
+     "button_label": "Review my devices",
+     "button_url": "{{login_link}}",
+     "footer": "If this was you, you can ignore this email. If not, change your password and sign out of all devices. This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
+    },
+    "in_app": {
+     "title": "New sign-in detected",
+     "content": "Hi {{client_name}}, your account was just used to sign in on a device we have not seen before."
+    }
+   }
+  },
+  {
+   "key": "two_factor_changed",
+   "label": "2FA turned on / off",
+   "section": "A2",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "device",
+    "browser",
+    "login_time",
+    "ip_location",
+    "old_email",
+    "new_email",
+    "support_email",
+    "account_status",
+    "login_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Two-step verification was {{account_status}}",
+     "preheader": "A security setting on your account changed.",
+     "heading": "Two-step verification {{account_status}}",
+     "body": "<p>Hi {{client_name}}, two-step verification on your EventInvit account was {{account_status}} on {{login_time}}.</p>\n<p>Two-step verification adds a second check at sign-in and is the best protection for your events and guest list.</p>",
+     "button_label": "Open security settings",
+     "button_url": "{{login_link}}",
+     "footer": "This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
+    },
+    "in_app": {
+     "title": "Two-step verification {{account_status}}",
+     "content": "Hi {{client_name}}, two-step verification on your EventInvit account was {{account_status}} on {{login_time}}. Two-step verification adds a second check at sign-in and is the best protection for your events and guest list."
+    }
+   }
+  },
+  {
+   "key": "sessions_revoked",
+   "label": "Signed out of all devices",
+   "section": "A2",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "device",
+    "browser",
+    "login_time",
+    "ip_location",
+    "old_email",
+    "new_email",
+    "support_email",
+    "login_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "You were signed out of all devices",
+     "preheader": "Every active session on your account has ended.",
+     "heading": "Signed out everywhere",
+     "body": "<p>Hi {{client_name}}, all devices signed in to your EventInvit account were signed out on {{login_time}}. You will need to sign in again on each device.</p>",
+     "button_label": "Sign in",
+     "button_url": "{{login_link}}",
+     "footer": "This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
+    },
+    "in_app": {
+     "title": "Signed out everywhere",
+     "content": "Hi {{client_name}}, all devices signed in to your EventInvit account were signed out on {{login_time}}. You will need to sign in again on each device."
+    }
+   }
+  },
+  {
+   "key": "booking_confirmed",
+   "label": "Date booked on Free plan",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "txn_id",
+    "invoice_link",
+    "card_last4",
+    "create_event_link",
+    "admin_note"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Date booked: {{event_date}}",
+     "preheader": "Your slot is reserved on the Free plan. Create your event next.",
+     "heading": "Your date is booked",
+     "body": "<p>Hi {{client_name}}, {{event_date}} is now reserved for you on the {{plan_name}} plan.</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Plan:</strong> {{plan_name}}</p>",
+     "button_label": "Create your event",
+     "button_url": "{{create_event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Your date is booked",
+     "content": "Hi {{client_name}}, {{event_date}} is now reserved for you on the {{plan_name}} plan."
+    }
+   }
+  },
+  {
+   "key": "payment_success",
+   "label": "Paid plan payment successful (+ invoice)",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "txn_id",
+    "invoice_link",
+    "card_last4",
+    "create_event_link",
+    "admin_note"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Payment received - receipt {{txn_id}}",
+     "preheader": "Thank you. Your date is booked and your invoice is attached.",
+     "heading": "Payment successful",
+     "body": "<p>Hi {{client_name}}, thank you for your payment. Your date is booked on the {{plan_name}} plan.</p>\n<p><strong>Amount:</strong> {{amount}}</p>\n<p><strong>Plan:</strong> {{plan_name}}</p>\n<p><strong>Event date:</strong> {{event_date}}</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Transaction:</strong> {{txn_id}}</p>\n<p><strong>Card:</strong> •••• {{card_last4}}</p>",
+     "button_label": "Download invoice",
+     "button_url": "{{invoice_link}}",
+     "footer": "Keep this email for your records. You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Payment successful",
+     "content": "Hi {{client_name}}, thank you for your payment. Your date is booked on the {{plan_name}} plan."
+    }
+   }
+  },
+  {
+   "key": "booking_unused_reminder",
+   "label": "Booked date, event not created yet",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "txn_id",
+    "invoice_link",
+    "card_last4",
+    "create_event_link",
+    "admin_note"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your booked date {{event_date}} is waiting",
+     "preheader": "Your slot is reserved - create your event so guests can be invited.",
+     "heading": "Finish setting up your event",
+     "body": "<p>Hi {{client_name}}, you booked {{event_date}} but have not created the event yet. Your slot stays reserved; it only takes a few minutes to finish.</p>\n<p>If you started already, we saved your progress.</p>",
+     "button_label": "Continue setup",
+     "button_url": "{{create_event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Finish setting up your event",
+     "content": "Hi {{client_name}}, you booked {{event_date}} but have not created the event yet. Your slot stays reserved; it only takes a few minutes to finish. If you started already, we saved your progress."
+    }
+   }
+  },
+  {
+   "key": "booked_date_changed",
+   "label": "Admin disabled / removed a date you booked",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "txn_id",
+    "invoice_link",
+    "card_last4",
+    "create_event_link",
+    "admin_note",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Important: a change to your booking {{booking_id}}",
+     "preheader": "Our team had to change your booked date. Please read.",
+     "heading": "Your booked date has changed",
+     "body": "<p>Hi {{client_name}}, we are sorry - our team had to change your booking for {{event_date}}.</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Note from our team:</strong> {{admin_note}}</p>",
+     "button_label": "Choose another date",
+     "button_url": "{{create_event_link}}",
+     "footer": "Any amount paid for this booking is kept on your account. Questions? Write to {{support_email}}."
+    },
+    "in_app": {
+     "title": "Your booked date has changed",
+     "content": "Hi {{client_name}}, we are sorry - our team had to change your booking for {{event_date}}."
+    }
+   }
+  },
+  {
+   "key": "payment_method_changed",
+   "label": "Payment method added / removed",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "txn_id",
+    "invoice_link",
+    "card_last4",
+    "create_event_link",
+    "admin_note",
+    "login_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "A payment method was updated on your account",
+     "preheader": "A card or UPI method was added or removed.",
+     "heading": "Payment method updated",
+     "body": "<p>Hi {{client_name}}, the payment method ending in {{card_last4}} was added to or removed from your EventInvit account.</p>",
+     "button_label": "Review billing",
+     "button_url": "{{login_link}}",
+     "footer": "Didn't make this change? Contact {{support_email}} straight away. This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
+    },
+    "in_app": {
+     "title": "Payment method updated",
+     "content": "Hi {{client_name}}, the payment method ending in {{card_last4}} was added to or removed from your EventInvit account."
+    }
+   }
+  },
+  {
+   "key": "plan_changed",
+   "label": "Plan upgraded / changed (by you or admin)",
+   "section": "A4",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "old_plan",
+    "new_plan",
+    "end_date",
+    "addon_name",
+    "amount",
+    "usage_percent",
+    "usage_used",
+    "usage_limit",
+    "max_guests",
+    "waiting_count",
+    "upgrade_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your plan is now {{new_plan}}",
+     "preheader": "The change is active straight away.",
+     "heading": "Plan changed",
+     "body": "<p>Hi {{client_name}}, your plan has changed from {{old_plan}} to {{new_plan}}. The new limits and features are available now.</p>\n<p><strong>Previous plan:</strong> {{old_plan}}</p>\n<p><strong>New plan:</strong> {{new_plan}}</p>\n<p><strong>Amount:</strong> {{amount}}</p>",
+     "button_label": "View my plan",
+     "button_url": "{{upgrade_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Plan changed",
+     "content": "Hi {{client_name}}, your plan has changed from {{old_plan}} to {{new_plan}}. The new limits and features are available now."
+    }
+   }
+  },
+  {
+   "key": "plan_cancelled",
+   "label": "Plan cancelled / resumed",
+   "section": "A4",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "old_plan",
+    "new_plan",
+    "end_date",
+    "addon_name",
+    "amount",
+    "usage_percent",
+    "usage_used",
+    "usage_limit",
+    "max_guests",
+    "waiting_count",
+    "upgrade_link",
+    "account_status"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your {{old_plan}} plan has been {{account_status}}",
+     "preheader": "A change was made to your plan.",
+     "heading": "Plan {{account_status}}",
+     "body": "<p>Hi {{client_name}}, your {{old_plan}} plan has been {{account_status}}. Your events and guests are not affected; you keep access until {{end_date}}.</p>",
+     "button_label": "Manage plan",
+     "button_url": "{{upgrade_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Plan {{account_status}}",
+     "content": "Hi {{client_name}}, your {{old_plan}} plan has been {{account_status}}. Your events and guests are not affected; you keep access until {{end_date}}."
+    }
+   }
+  },
+  {
+   "key": "plan_expiring",
+   "label": "Plan term ending (7 days before)",
+   "section": "A4",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "old_plan",
+    "new_plan",
+    "end_date",
+    "addon_name",
+    "amount",
+    "usage_percent",
+    "usage_used",
+    "usage_limit",
+    "max_guests",
+    "waiting_count",
+    "upgrade_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your {{old_plan}} plan ends on {{end_date}}",
+     "preheader": "7 days left - renew to keep every feature.",
+     "heading": "Your plan ends in 7 days",
+     "body": "<p>Hi {{client_name}}, your {{old_plan}} plan ends on {{end_date}}. Renew before then so your guests keep full access to your event.</p>",
+     "button_label": "Renew plan",
+     "button_url": "{{upgrade_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Your plan ends in 7 days",
+     "content": "Hi {{client_name}}, your {{old_plan}} plan ends on {{end_date}}. Renew before then so your guests keep full access to your event."
+    }
+   }
+  },
+  {
+   "key": "addon_purchased",
+   "label": "Add-on purchased",
+   "section": "A4",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "old_plan",
+    "new_plan",
+    "end_date",
+    "addon_name",
+    "amount",
+    "usage_percent",
+    "usage_used",
+    "usage_limit",
+    "max_guests",
+    "waiting_count",
+    "upgrade_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Add-on active: {{addon_name}}",
+     "preheader": "Thank you - your add-on is ready to use.",
+     "heading": "Your add-on is active",
+     "body": "<p>Hi {{client_name}}, {{addon_name}} has been added to your account and is ready to use.</p>\n<p><strong>Add-on:</strong> {{addon_name}}</p>\n<p><strong>Amount:</strong> {{amount}}</p>",
+     "button_label": "View my plan",
+     "button_url": "{{upgrade_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Your add-on is active",
+     "content": "Hi {{client_name}}, {{addon_name}} has been added to your account and is ready to use."
+    }
+   }
+  },
+  {
+   "key": "storage_half_full",
+   "label": "Storage 50% full (plan storage)",
+   "section": "A4",
+   "audience": "organizer",
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": true,
+   "variables": [
+    "client_name",
+    "storage_percent",
+    "storage_used",
+    "storage_limit",
+    "storage_left",
+    "upgrade_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "storage_75_full",
+   "label": "Storage 75% full (plan storage)",
+   "section": "A4",
+   "audience": "organizer",
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": true,
+   "variables": [
+    "client_name",
+    "storage_percent",
+    "storage_used",
+    "storage_limit",
+    "storage_left",
+    "upgrade_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "storage_full",
+   "label": "Storage full (plan storage)",
+   "section": "A4",
+   "audience": "organizer",
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": true,
+   "variables": [
+    "client_name",
+    "storage_percent",
+    "storage_used",
+    "storage_limit",
+    "storage_left",
+    "upgrade_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "photos_half_full",
+   "label": "Photos 50% full (event photo limit)",
+   "section": "A4",
+   "audience": "organizer",
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": true,
+   "variables": [
+    "client_name",
+    "event_name",
+    "usage_percent",
+    "usage_used",
+    "usage_limit",
+    "usage_left",
+    "upgrade_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "photos_75_full",
+   "label": "Photos 75% full (event photo limit)",
+   "section": "A4",
+   "audience": "organizer",
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": true,
+   "variables": [
+    "client_name",
+    "event_name",
+    "usage_percent",
+    "usage_used",
+    "usage_limit",
+    "usage_left",
+    "upgrade_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "photos_full",
+   "label": "Photos full (event photo limit)",
+   "section": "A4",
+   "audience": "organizer",
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": true,
+   "variables": [
+    "client_name",
+    "event_name",
+    "usage_percent",
+    "usage_used",
+    "usage_limit",
+    "usage_left",
+    "upgrade_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "videos_half_full",
+   "label": "Videos 50% full (event video limit)",
+   "section": "A4",
+   "audience": "organizer",
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": true,
+   "variables": [
+    "client_name",
+    "event_name",
+    "usage_percent",
+    "usage_used",
+    "usage_limit",
+    "usage_left",
+    "upgrade_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "videos_75_full",
+   "label": "Videos 75% full (event video limit)",
+   "section": "A4",
+   "audience": "organizer",
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": true,
+   "variables": [
+    "client_name",
+    "event_name",
+    "usage_percent",
+    "usage_used",
+    "usage_limit",
+    "usage_left",
+    "upgrade_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "videos_full",
+   "label": "Videos full (event video limit)",
+   "section": "A4",
+   "audience": "organizer",
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": true,
+   "variables": [
+    "client_name",
+    "event_name",
+    "usage_percent",
+    "usage_used",
+    "usage_limit",
+    "usage_left",
+    "upgrade_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "guest_limit_reached",
+   "label": "Guest limit reached (plan max guests)",
+   "section": "A4",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "old_plan",
+    "new_plan",
+    "end_date",
+    "addon_name",
+    "amount",
+    "usage_percent",
+    "usage_used",
+    "usage_limit",
+    "max_guests",
+    "waiting_count",
+    "upgrade_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Guest limit reached - {{waiting_count}} waiting",
+     "preheader": "Your plan allows {{max_guests}} guests. New guests are on the waiting list.",
+     "heading": "Your guest list is full",
+     "body": "<p>Hi {{client_name}}, your event has reached the {{max_guests}}-guest limit of your plan. {{waiting_count}} people are on the waiting list and will join automatically once space is available.</p>",
+     "button_label": "Increase guest limit",
+     "button_url": "{{upgrade_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Your guest list is full",
+     "content": "Hi {{client_name}}, your event has reached the {{max_guests}}-guest limit of your plan. {{waiting_count}} people are on the waiting list and will join automatically once space is available."
+    }
+   }
+  },
+  {
+   "key": "event_created",
+   "label": "Event created (draft) – next steps",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "qr_link",
+    "sent",
+    "delivered",
+    "failed",
+    "total_guests",
+    "confirmed",
+    "checked_in"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "{{event_name}} is saved as a draft",
+     "preheader": "A few steps left before you can invite guests.",
+     "heading": "Your event is created",
+     "body": "<p>Hi {{client_name}}, {{event_name}} on {{event_date}} is saved as a draft. Finish the setup and publish it to start inviting guests.</p>",
+     "button_label": "Continue setup",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Your event is created",
+     "content": "Hi {{client_name}}, {{event_name}} on {{event_date}} is saved as a draft. Finish the setup and publish it to start inviting guests."
+    }
+   }
+  },
+  {
+   "key": "event_published",
+   "label": "Event published – share link + QR",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "qr_link",
+    "sent",
+    "delivered",
+    "failed",
+    "total_guests",
+    "confirmed",
+    "checked_in"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "{{event_name}} is live - share it now",
+     "preheader": "Your event link and QR code are ready.",
+     "heading": "Your event is live",
+     "body": "<p>Hi {{client_name}}, {{event_name}} is published. Guests can now open it with your link or QR code.</p>\n<p><strong>Event link:</strong> {{event_link}}</p>\n<p><strong>QR code:</strong> {{qr_link}}</p>",
+     "button_label": "Share your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Your event is live",
+     "content": "Hi {{client_name}}, {{event_name}} is published. Guests can now open it with your link or QR code."
+    }
+   }
+  },
+  {
+   "key": "invitation_delivery_report",
+   "label": "Invitation sends finished – delivered / failed",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "qr_link",
+    "sent",
+    "delivered",
+    "failed",
+    "total_guests",
+    "confirmed",
+    "checked_in"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Invitations sent for {{event_name}}: {{delivered}} delivered",
+     "preheader": "{{sent}} sent · {{delivered}} delivered · {{failed}} failed.",
+     "heading": "Invitation delivery report",
+     "body": "<p>Hi {{client_name}}, your invitations for {{event_name}} have finished sending.</p>\n<p><strong>Sent:</strong> {{sent}}</p>\n<p><strong>Delivered:</strong> {{delivered}}</p>\n<p><strong>Failed:</strong> {{failed}}</p>",
+     "button_label": "See who did not receive it",
+     "button_url": "{{event_link}}",
+     "footer": "Failed sends are usually a wrong or inactive number - fix it and resend from Guests. You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Invitation delivery report",
+     "content": "Hi {{client_name}}, your invitations for {{event_name}} have finished sending."
+    }
+   }
+  },
+  {
+   "key": "event_reminder_organizer",
+   "label": "Your event is tomorrow",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "qr_link",
+    "sent",
+    "delivered",
+    "failed",
+    "total_guests",
+    "confirmed",
+    "checked_in"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Tomorrow: {{event_name}}",
+     "preheader": "{{confirmed}} guests confirmed. Here is your quick checklist.",
+     "heading": "Your event is tomorrow",
+     "body": "<p>Hi {{client_name}}, {{event_name}} is on {{event_date}}. Here is where things stand:</p>\n<p><strong>Guests:</strong> {{total_guests}}</p>\n<p><strong>Confirmed:</strong> {{confirmed}}</p>",
+     "button_label": "Open event dashboard",
+     "button_url": "{{event_link}}",
+     "footer": "Tip: keep the QR scanner ready for check-in at the entrance. You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Your event is tomorrow",
+     "content": "Hi {{client_name}}, {{event_name}} is on {{event_date}}. Here is where things stand:"
+    }
+   }
+  },
+  {
+   "key": "event_summary",
+   "label": "Event summary (day after)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "qr_link",
+    "sent",
+    "delivered",
+    "failed",
+    "total_guests",
+    "confirmed",
+    "checked_in"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "How {{event_name}} went",
+     "preheader": "Your event in numbers.",
+     "heading": "Thank you for hosting with EventInvit",
+     "body": "<p>Hi {{client_name}}, we hope {{event_name}} was a wonderful day. Here is a summary:</p>\n<p><strong>Guests invited:</strong> {{total_guests}}</p>\n<p><strong>Confirmed:</strong> {{confirmed}}</p>\n<p><strong>Checked in:</strong> {{checked_in}}</p>",
+     "button_label": "See full analytics",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Thank you for hosting with EventInvit",
+     "content": "Hi {{client_name}}, we hope {{event_name}} was a wonderful day. Here is a summary:"
+    }
+   }
+  },
+  {
+   "key": "date_request_received",
+   "label": "Date request received (acknowledgement)",
+   "section": "A6",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "request_dates",
+    "request_status",
+    "admin_note",
+    "guest_name",
+    "event_name",
+    "message_preview",
+    "chat_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "We received your date request",
+     "preheader": "Our team will reply within 1 working day.",
+     "heading": "Request received",
+     "body": "<p>Hi {{client_name}}, thank you - we have received your request for {{request_dates}}. Our team will review it and reply soon.</p>\n<p><strong>Dates requested:</strong> {{request_dates}}</p>\n<p><strong>Status:</strong> Under review</p>",
+     "button_label": "",
+     "button_url": "",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Request received",
+     "content": "Hi {{client_name}}, thank you - we have received your request for {{request_dates}}. Our team will review it and reply soon."
+    }
+   }
+  },
+  {
+   "key": "date_request_approved",
+   "label": "Date request approved by admin",
+   "section": "A6",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "request_dates",
+    "request_status",
+    "admin_note",
+    "guest_name",
+    "event_name",
+    "message_preview",
+    "chat_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Good news - your date request is approved",
+     "preheader": "{{request_dates}} is available for you. Book it now.",
+     "heading": "Your request is approved",
+     "body": "<p>Hi {{client_name}}, your request for {{request_dates}} has been approved.</p>\n<p><strong>Dates:</strong> {{request_dates}}</p>\n<p><strong>Note from our team:</strong> {{admin_note}}</p>",
+     "button_label": "Book this date",
+     "button_url": "{{chat_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Your request is approved",
+     "content": "Hi {{client_name}}, your request for {{request_dates}} has been approved."
+    }
+   }
+  },
+  {
+   "key": "date_request_rejected",
+   "label": "Date request rejected by admin",
+   "section": "A6",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "request_dates",
+    "request_status",
+    "admin_note",
+    "guest_name",
+    "event_name",
+    "message_preview",
+    "chat_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Update on your date request",
+     "preheader": "Unfortunately the requested dates are not available.",
+     "heading": "We could not approve your request",
+     "body": "<p>Hi {{client_name}}, we are sorry - your request for {{request_dates}} could not be approved.</p>\n<p><strong>Reason:</strong> {{admin_note}}</p>",
+     "button_label": "Check other dates",
+     "button_url": "{{chat_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "We could not approve your request",
+     "content": "Hi {{client_name}}, we are sorry - your request for {{request_dates}} could not be approved."
+    }
+   }
+  },
+  {
+   "key": "contact_sales_received",
+   "label": "Contact sales request received",
+   "section": "A6",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "request_dates",
+    "request_status",
+    "admin_note",
+    "guest_name",
+    "event_name",
+    "message_preview",
+    "chat_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Thanks for contacting us, {{client_name}}",
+     "preheader": "Our sales team will get back to you shortly.",
+     "heading": "We will be in touch soon",
+     "body": "<p>Hi {{client_name}}, thank you for your interest. A member of our sales team will contact you within 1 working day.</p>",
+     "button_label": "",
+     "button_url": "",
+     "footer": "Need help sooner? Write to {{support_email}}."
+    },
+    "in_app": {
+     "title": "We will be in touch soon",
+     "content": "Hi {{client_name}}, thank you for your interest. A member of our sales team will contact you within 1 working day."
+    }
+   }
+  },
+  {
+   "key": "contact_chat_message",
+   "label": "Guest wrote to the event team",
+   "section": "A6",
+   "audience": "organizer",
+   "also": [
+    "contact_person"
+   ],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "request_dates",
+    "request_status",
+    "admin_note",
+    "guest_name",
+    "event_name",
+    "message_preview",
+    "chat_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "rsvp_received",
+   "label": "Guest answered or changed RSVP",
+   "section": "A7",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "rsvp_status",
+    "guest_count",
+    "waiting_count",
+    "responses_today",
+    "reminder_note",
+    "client_name",
+    "chat_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "{{guest_name}} replied: {{rsvp_status}}",
+     "preheader": "New RSVP for {{event_name}}.",
+     "heading": "New RSVP",
+     "body": "<p>Hi {{client_name}}, {{guest_name}} has replied to {{event_name}}.</p>\n<p><strong>Answer:</strong> {{rsvp_status}}</p>\n<p><strong>Guests coming:</strong> {{guest_count}}</p>",
+     "button_label": "View RSVPs",
+     "button_url": "{{chat_link}}",
+     "footer": "You can switch RSVP emails to a daily digest in Settings → Notifications. You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "New RSVP",
+     "content": "Hi {{client_name}}, {{guest_name}} has replied to {{event_name}}."
+    }
+   }
+  },
+  {
+   "key": "registration_pending",
+   "label": "Guest waiting for approval / on waiting list",
+   "section": "A7",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "rsvp_status",
+    "guest_count",
+    "waiting_count",
+    "responses_today",
+    "reminder_note",
+    "client_name",
+    "chat_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "{{waiting_count}} guests waiting for approval",
+     "preheader": "New registrations for {{event_name}} need your decision.",
+     "heading": "Guests are waiting for you",
+     "body": "<p>Hi {{client_name}}, {{waiting_count}} people registered for {{event_name}} and are waiting for your approval.</p>",
+     "button_label": "Review registrations",
+     "button_url": "{{chat_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Guests are waiting for you",
+     "content": "Hi {{client_name}}, {{waiting_count}} people registered for {{event_name}} and are waiting for your approval."
+    }
+   }
+  },
+  {
+   "key": "guest_added_digest",
+   "label": "Guests added today (digest)",
+   "section": "A7",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "rsvp_status",
+    "guest_count",
+    "waiting_count",
+    "responses_today",
+    "reminder_note",
+    "client_name",
+    "chat_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Today on {{event_name}}: {{guest_count}} new guests",
+     "preheader": "Your daily guest summary.",
+     "heading": "Your daily guest summary",
+     "body": "<p>Hi {{client_name}}, here is what happened on {{event_name}} today:</p>\n<p><strong>New guests:</strong> {{guest_count}}</p>\n<p><strong>RSVPs received:</strong> {{responses_today}}</p>",
+     "button_label": "Open guest list",
+     "button_url": "{{chat_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Your daily guest summary",
+     "content": "Hi {{client_name}}, here is what happened on {{event_name}} today:"
+    }
+   }
+  },
+  {
+   "key": "guest_reminder_due",
+   "label": "Organizer's reminder on a guest falls due",
+   "section": "A7",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "rsvp_status",
+    "guest_count",
+    "waiting_count",
+    "responses_today",
+    "reminder_note",
+    "client_name",
+    "chat_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Reminder: {{guest_name}}",
+     "preheader": "A reminder you set for {{event_name}} is due.",
+     "heading": "Your reminder is due",
+     "body": "<p>Hi {{client_name}}, you asked us to remind you about {{guest_name}} for {{event_name}}:</p>\n<p><strong>Note:</strong> {{reminder_note}}</p>",
+     "button_label": "Open guest",
+     "button_url": "{{chat_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Your reminder is due",
+     "content": "Hi {{client_name}}, you asked us to remind you about {{guest_name}} for {{event_name}}:"
+    }
+   }
+  },
+  {
+   "key": "invitation_send",
+   "label": "Invitation sent now (one guest / selected)",
+   "section": "B1",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "whatsapp"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "couple_names",
+    "groom_name",
+    "bride_name",
+    "event_date",
+    "event_time",
+    "venue_name",
+    "venue_address",
+    "map_link",
+    "invitation_link",
+    "qr_link",
+    "organizer",
+    "contact_phone"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "You're invited: {{event_name}}",
+     "preheader": "{{organizer}} would love you to join them on {{event_date}}.",
+     "heading": "You're invited!",
+     "body": "<p>Dear {{guest_name}},</p>\n<p>{{organizer}} would be delighted to have you at {{event_name}}.</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Time:</strong> {{event_time}}</p>\n<p><strong>Venue:</strong> {{venue_name}}, {{venue_address}}</p>\n<p><strong>Map:</strong> {{map_link}}</p>",
+     "button_label": "View invitation & RSVP",
+     "button_url": "{{invitation_link}}",
+     "footer": "Questions about the event? Call {{contact_phone}}. You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "You're invited!",
+     "content": "Dear {{guest_name}}, {{organizer}} would be delighted to have you at {{event_name}}."
+    },
+    "whatsapp": {
+     "template_name": "event_invitation",
+     "category": "utility",
+     "header_type": "none",
+     "header_text": "",
+     "body": "Dear {{guest_name}},\n\nYou are warmly invited to *{{event_name}}*, hosted by {{organizer}}.\n\n📅 {{event_date}}, {{event_time}}\n📍 {{venue_name}}\n\nPlease tap below to view your invitation and let us know if you can join.",
+     "footer": "Sent via EventInvit",
+     "buttons": [
+      {
+       "type": "url",
+       "text": "View invitation",
+       "url": "{{invitation_link}}"
+      },
+      {
+       "type": "url",
+       "text": "Directions",
+       "url": "{{map_link}}"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "invitation_scheduled",
+   "label": "Scheduled invitation reaches its time",
+   "section": "B1",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "whatsapp"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "couple_names",
+    "groom_name",
+    "bride_name",
+    "event_date",
+    "event_time",
+    "venue_name",
+    "venue_address",
+    "map_link",
+    "invitation_link",
+    "qr_link",
+    "organizer",
+    "contact_phone"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "You're invited: {{event_name}}",
+     "preheader": "{{organizer}} would love you to join them on {{event_date}}.",
+     "heading": "You're invited!",
+     "body": "<p>Dear {{guest_name}},</p>\n<p>{{organizer}} would be delighted to have you at {{event_name}}.</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Time:</strong> {{event_time}}</p>\n<p><strong>Venue:</strong> {{venue_name}}, {{venue_address}}</p>\n<p><strong>Map:</strong> {{map_link}}</p>",
+     "button_label": "View invitation & RSVP",
+     "button_url": "{{invitation_link}}",
+     "footer": "Same content as invitation_send - sent automatically at the time the organizer chose. You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "You're invited!",
+     "content": "Dear {{guest_name}}, {{organizer}} would be delighted to have you at {{event_name}}."
+    },
+    "whatsapp": {
+     "template_name": "event_invitation",
+     "category": "utility",
+     "header_type": "none",
+     "header_text": "",
+     "body": "Dear {{guest_name}},\n\nYou are warmly invited to *{{event_name}}*, hosted by {{organizer}}.\n\n📅 {{event_date}}, {{event_time}}\n📍 {{venue_name}}\n\nPlease tap below to view your invitation and let us know if you can join.",
+     "footer": "Sent via EventInvit",
+     "buttons": [
+      {
+       "type": "url",
+       "text": "View invitation",
+       "url": "{{invitation_link}}"
+      },
+      {
+       "type": "url",
+       "text": "Directions",
+       "url": "{{map_link}}"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "invitation_resend",
+   "label": "Resend invitation",
+   "section": "B1",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "whatsapp"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "couple_names",
+    "groom_name",
+    "bride_name",
+    "event_date",
+    "event_time",
+    "venue_name",
+    "venue_address",
+    "map_link",
+    "invitation_link",
+    "qr_link",
+    "organizer",
+    "contact_phone"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "A reminder of your invitation to {{event_name}}",
+     "preheader": "In case you missed it - {{organizer}} is looking forward to seeing you.",
+     "heading": "Your invitation, once more",
+     "body": "<p>Dear {{guest_name}},</p>\n<p>In case our earlier message did not reach you, you are warmly invited to {{event_name}}, hosted by {{organizer}}.</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Time:</strong> {{event_time}}</p>\n<p><strong>Venue:</strong> {{venue_name}}, {{venue_address}}</p>",
+     "button_label": "View invitation & RSVP",
+     "button_url": "{{invitation_link}}",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "Your invitation, once more",
+     "content": "Dear {{guest_name}}, In case our earlier message did not reach you, you are warmly invited to {{event_name}}, hosted by {{organizer}}."
+    },
+    "whatsapp": {
+     "template_name": "event_invitation_reminder",
+     "category": "utility",
+     "header_type": "none",
+     "header_text": "",
+     "body": "Dear {{guest_name}},\n\nA gentle reminder of your invitation to *{{event_name}}* on {{event_date}}, hosted by {{organizer}}.\n\nWe would love to know if you can make it - please tap below to view the invitation.",
+     "footer": "Sent via EventInvit",
+     "buttons": [
+      {
+       "type": "url",
+       "text": "View invitation",
+       "url": "{{invitation_link}}"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "event_link_share",
+   "label": "Event link / QR sent to one guest",
+   "section": "B1",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "whatsapp"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "couple_names",
+    "groom_name",
+    "bride_name",
+    "event_date",
+    "event_time",
+    "venue_name",
+    "venue_address",
+    "map_link",
+    "invitation_link",
+    "qr_link",
+    "organizer",
+    "contact_phone"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "{{organizer}} shared {{event_name}} with you",
+     "preheader": "Open the event page for all the details.",
+     "heading": "{{event_name}}",
+     "body": "<p>Hi {{guest_name}}, {{organizer}} has shared the event page for {{event_name}} with you. Scan the QR at the venue or open the link for the schedule, venue and updates.</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Venue:</strong> {{venue_name}}</p>",
+     "button_label": "Open event",
+     "button_url": "{{invitation_link}}",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "{{event_name}}",
+     "content": "Hi {{guest_name}}, {{organizer}} has shared the event page for {{event_name}} with you. Scan the QR at the venue or open the link for the schedule, venue and updates."
+    },
+    "whatsapp": {
+     "template_name": "event_link_share",
+     "category": "utility",
+     "header_type": "none",
+     "header_text": "",
+     "body": "Hi {{guest_name}}, here is the event page for *{{event_name}}* on {{event_date}}.\n\nOpen it for the schedule, venue and live updates.",
+     "footer": "Sent via EventInvit",
+     "buttons": [
+      {
+       "type": "url",
+       "text": "Open event",
+       "url": "{{invitation_link}}"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "event_join_otp",
+   "label": "Guest joins with event code (OTP)",
+   "section": "B2",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "whatsapp"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "event_date",
+    "venue_name",
+    "otp",
+    "otp_minutes",
+    "queue_position",
+    "app_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "{{otp}} is your code to join {{event_name}}",
+     "preheader": "This code expires in {{otp_minutes}} minutes.",
+     "heading": "Your joining code",
+     "body": "<p>Hi {{guest_name}}, enter this code in the EventInvit app to join {{event_name}}:</p>\n<p><strong>Code:</strong> {{otp}}</p>",
+     "button_label": "",
+     "button_url": "",
+     "footer": "The code expires in {{otp_minutes}} minutes. Never share it. If you did not try to join, ignore this email."
+    },
+    "in_app": {
+     "title": "Your joining code",
+     "content": "Hi {{guest_name}}, enter this code in the EventInvit app to join {{event_name}}:"
+    },
+    "whatsapp": {
+     "template_name": "eventinvit_login_otp",
+     "category": "authentication",
+     "header_type": "none",
+     "header_text": "",
+     "body": "*{{otp}}* is your verification code. For your security, do not share this code.",
+     "footer": "This code expires in 10 minutes.",
+     "buttons": [
+      {
+       "type": "copy_code",
+       "text": "Copy code",
+       "url": ""
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "welcome_invitation",
+   "label": "Guest joined the event in the app",
+   "section": "B2",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": true,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "event_date",
+    "venue_name",
+    "otp",
+    "otp_minutes",
+    "queue_position",
+    "app_link",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Welcome to {{event_name}}",
+     "preheader": "You are in. Everything about the event is now in your app.",
+     "heading": "Welcome, {{guest_name}}!",
+     "body": "<p>You have joined {{event_name}}. In the EventInvit app you will find the schedule, venue map, photos and live updates.</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Venue:</strong> {{venue_name}}</p>",
+     "button_label": "Open in the app",
+     "button_url": "{{app_link}}",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "Welcome, {{guest_name}}!",
+     "content": "You have joined {{event_name}}. In the EventInvit app you will find the schedule, venue map, photos and live updates."
+    }
+   }
+  },
+  {
+   "key": "registration_approved",
+   "label": "Self-registration approved",
+   "section": "B2",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "event_date",
+    "venue_name",
+    "otp",
+    "otp_minutes",
+    "queue_position",
+    "app_link",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "You're confirmed for {{event_name}}",
+     "preheader": "Your registration has been approved.",
+     "heading": "Registration approved",
+     "body": "<p>Hi {{guest_name}}, good news - your registration for {{event_name}} has been approved. We look forward to seeing you.</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Venue:</strong> {{venue_name}}</p>",
+     "button_label": "Open in the app",
+     "button_url": "{{app_link}}",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "Registration approved",
+     "content": "Hi {{guest_name}}, good news - your registration for {{event_name}} has been approved. We look forward to seeing you."
+    }
+   }
+  },
+  {
+   "key": "waitlist_joined",
+   "label": "Guest put on the waiting list (event full)",
+   "section": "B2",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "event_date",
+    "venue_name",
+    "otp",
+    "otp_minutes",
+    "queue_position",
+    "app_link",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "You're on the waiting list for {{event_name}}",
+     "preheader": "Your place in the queue: {{queue_position}}.",
+     "heading": "You're on the waiting list",
+     "body": "<p>Hi {{guest_name}}, {{event_name}} is full at the moment, so we have added you to the waiting list. We will let you know as soon as a place opens up.</p>\n<p><strong>Your position:</strong> {{queue_position}}</p>",
+     "button_label": "",
+     "button_url": "",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "You're on the waiting list",
+     "content": "Hi {{guest_name}}, {{event_name}} is full at the moment, so we have added you to the waiting list. We will let you know as soon as a place opens up."
+    }
+   }
+  },
+  {
+   "key": "waitlist_admitted",
+   "label": "Guest let in from the waiting list",
+   "section": "B2",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "event_date",
+    "venue_name",
+    "otp",
+    "otp_minutes",
+    "queue_position",
+    "app_link",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "A place opened up - you're in!",
+     "preheader": "You have been moved from the waiting list to {{event_name}}.",
+     "heading": "Good news - you're in",
+     "body": "<p>Hi {{guest_name}}, a place has opened up and you are now a guest of {{event_name}}.</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Venue:</strong> {{venue_name}}</p>",
+     "button_label": "Open in the app",
+     "button_url": "{{app_link}}",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "Good news - you're in",
+     "content": "Hi {{guest_name}}, a place has opened up and you are now a guest of {{event_name}}."
+    }
+   }
+  },
+  {
+   "key": "event_updated",
+   "label": "Time or venue changed",
+   "section": "B3",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "event_date",
+    "event_time",
+    "venue_name",
+    "map_link",
+    "changes",
+    "rsvp_status",
+    "guest_count",
+    "rsvp_link",
+    "rsvp_deadline",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Update: {{event_name}} has changed",
+     "preheader": "Please note the new details.",
+     "heading": "The event details have changed",
+     "body": "<p>Dear {{guest_name}}, please note an update to {{event_name}}:</p>\n<p><strong>What changed:</strong> {{changes}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Time:</strong> {{event_time}}</p>\n<p><strong>Venue:</strong> {{venue_name}}</p>",
+     "button_label": "See the new details",
+     "button_url": "{{rsvp_link}}",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "The event details have changed",
+     "content": "Dear {{guest_name}}, please note an update to {{event_name}}:"
+    }
+   }
+  },
+  {
+   "key": "event_cancelled",
+   "label": "Event cancelled / deleted",
+   "section": "B3",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "event_date",
+    "event_time",
+    "venue_name",
+    "map_link",
+    "changes",
+    "rsvp_status",
+    "guest_count",
+    "rsvp_link",
+    "rsvp_deadline",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "{{event_name}} has been cancelled",
+     "preheader": "We are sorry to share this news.",
+     "heading": "Event cancelled",
+     "body": "<p>Dear {{guest_name}}, we are sorry to let you know that {{event_name}}, planned for {{event_date}}, has been cancelled by the organizer.</p>\n<p>Thank you for your understanding.</p>",
+     "button_label": "",
+     "button_url": "",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "Event cancelled",
+     "content": "Dear {{guest_name}}, we are sorry to let you know that {{event_name}}, planned for {{event_date}}, has been cancelled by the organizer. Thank you for your understanding."
+    }
+   }
+  },
+  {
+   "key": "rsvp_confirmation",
+   "label": "RSVP attending / maybe – confirmation",
+   "section": "B3",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "event_date",
+    "event_time",
+    "venue_name",
+    "map_link",
+    "changes",
+    "rsvp_status",
+    "guest_count",
+    "rsvp_link",
+    "rsvp_deadline",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "RSVP confirmed: see you at {{event_name}}",
+     "preheader": "Your reply: {{rsvp_status}} · {{guest_count}} attending.",
+     "heading": "Thank you for your RSVP",
+     "body": "<p>Dear {{guest_name}}, thank you for your reply. Here is what we have noted:</p>\n<p><strong>Your answer:</strong> {{rsvp_status}}</p>\n<p><strong>Attending:</strong> {{guest_count}}</p>\n<p><strong>Date:</strong> {{event_date}}, {{event_time}}</p>\n<p><strong>Venue:</strong> {{venue_name}}</p>\n<p><strong>Map:</strong> {{map_link}}</p>",
+     "button_label": "Change my RSVP",
+     "button_url": "{{rsvp_link}}",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "Thank you for your RSVP",
+     "content": "Dear {{guest_name}}, thank you for your reply. Here is what we have noted:"
+    }
+   }
+  },
+  {
+   "key": "rsvp_declined",
+   "label": "RSVP declined – thank you",
+   "section": "B3",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "event_date",
+    "event_time",
+    "venue_name",
+    "map_link",
+    "changes",
+    "rsvp_status",
+    "guest_count",
+    "rsvp_link",
+    "rsvp_deadline",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Thank you for letting us know",
+     "preheader": "You will be missed at {{event_name}}.",
+     "heading": "You will be missed",
+     "body": "<p>Dear {{guest_name}}, thank you for letting us know you cannot attend {{event_name}}. If your plans change, you can update your reply any time before {{rsvp_deadline}}.</p>",
+     "button_label": "Change my RSVP",
+     "button_url": "{{rsvp_link}}",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "You will be missed",
+     "content": "Dear {{guest_name}}, thank you for letting us know you cannot attend {{event_name}}. If your plans change, you can update your reply any time before {{rsvp_deadline}}."
+    }
+   }
+  },
+  {
+   "key": "rsvp_reminder",
+   "label": "No RSVP yet – automatic reminder",
+   "section": "B3",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "event_date",
+    "event_time",
+    "venue_name",
+    "map_link",
+    "changes",
+    "rsvp_status",
+    "guest_count",
+    "rsvp_link",
+    "rsvp_deadline",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Will you join {{event_name}}?",
+     "preheader": "Please reply by {{rsvp_deadline}} so the hosts can plan.",
+     "heading": "We are waiting for your reply",
+     "body": "<p>Dear {{guest_name}}, the hosts of {{event_name}} would love to know if you can make it. Please reply by {{rsvp_deadline}}.</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Venue:</strong> {{venue_name}}</p>",
+     "button_label": "Reply now",
+     "button_url": "{{rsvp_link}}",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "We are waiting for your reply",
+     "content": "Dear {{guest_name}}, the hosts of {{event_name}} would love to know if you can make it. Please reply by {{rsvp_deadline}}."
+    }
+   }
+  },
+  {
+   "key": "event_reminder",
+   "label": "Reminder before event (1 w / 2 d / 24 h / 1 h)",
+   "section": "B3",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "event_date",
+    "event_time",
+    "venue_name",
+    "map_link",
+    "changes",
+    "rsvp_status",
+    "guest_count",
+    "rsvp_link",
+    "rsvp_deadline",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Reminder: {{event_name}} on {{event_date}}",
+     "preheader": "Here is everything you need for the day.",
+     "heading": "See you soon!",
+     "body": "<p>Dear {{guest_name}}, this is a friendly reminder that {{event_name}} is coming up.</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Time:</strong> {{event_time}}</p>\n<p><strong>Venue:</strong> {{venue_name}}</p>\n<p><strong>Map:</strong> {{map_link}}</p>",
+     "button_label": "Get directions",
+     "button_url": "{{map_link}}",
+     "footer": "Sent 1 week, 2 days, 24 hours or 1 hour before - one template, the timing is a setting. You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "See you soon!",
+     "content": "Dear {{guest_name}}, this is a friendly reminder that {{event_name}} is coming up."
+    }
+   }
+  },
+  {
+   "key": "contact_person_assigned",
+   "label": "Contact person assigned",
+   "section": "B4",
+   "audience": "contact_person",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "contact_person_name",
+    "contact_phone",
+    "contact_whatsapp",
+    "otp",
+    "responsibilities",
+    "message_preview",
+    "resolution_note",
+    "app_link",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "You're the contact person for {{event_name}}",
+     "preheader": "{{organizer}} has asked you to help guests.",
+     "heading": "You have a new role",
+     "body": "<p>Hi {{contact_person_name}}, {{organizer}} has named you contact person for {{event_name}}. Guests can reach you for help with the event.</p>\n<p><strong>Your responsibilities:</strong> {{responsibilities}}</p>",
+     "button_label": "Open the EventInvit app",
+     "button_url": "{{app_link}}",
+     "footer": "Sign in to the app with this mobile number: {{contact_phone}}. You are receiving this because {{organizer}} named you contact person for {{event_name}}."
+    },
+    "in_app": {
+     "title": "You have a new role",
+     "content": "Hi {{contact_person_name}}, {{organizer}} has named you contact person for {{event_name}}. Guests can reach you for help with the event."
+    }
+   }
+  },
+  {
+   "key": "contact_person_login_otp",
+   "label": "Contact person login OTP",
+   "section": "B4",
+   "audience": "contact_person",
+   "also": [],
+   "channels": [
+    "email",
+    "whatsapp"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "contact_person_name",
+    "contact_phone",
+    "contact_whatsapp",
+    "otp",
+    "responsibilities",
+    "message_preview",
+    "resolution_note",
+    "app_link",
+    "otp_minutes"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "{{otp}} is your EventInvit login code",
+     "preheader": "This code expires in {{otp_minutes}} minutes.",
+     "heading": "Your login code",
+     "body": "<p>Hi {{contact_person_name}}, use this code to sign in as contact person for {{event_name}}:</p>\n<p><strong>Code:</strong> {{otp}}</p>",
+     "button_label": "",
+     "button_url": "",
+     "footer": "The code expires in {{otp_minutes}} minutes. Never share it. If you did not try to sign in, ignore this email."
+    },
+    "in_app": {
+     "title": "Your login code",
+     "content": "Hi {{contact_person_name}}, use this code to sign in as contact person for {{event_name}}:"
+    },
+    "whatsapp": {
+     "template_name": "eventinvit_login_otp",
+     "category": "authentication",
+     "header_type": "none",
+     "header_text": "",
+     "body": "*{{otp}}* is your verification code. For your security, do not share this code.",
+     "footer": "This code expires in 10 minutes.",
+     "buttons": [
+      {
+       "type": "copy_code",
+       "text": "Copy code",
+       "url": ""
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "contact_person_updated",
+   "label": "Contact responsibilities changed",
+   "section": "B4",
+   "audience": "contact_person",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "contact_person_name",
+    "contact_phone",
+    "contact_whatsapp",
+    "otp",
+    "responsibilities",
+    "message_preview",
+    "resolution_note",
+    "app_link",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your responsibilities for {{event_name}} changed",
+     "preheader": "Here is your updated role.",
+     "heading": "Your role was updated",
+     "body": "<p>Hi {{contact_person_name}}, {{organizer}} has updated what you look after for {{event_name}}.</p>\n<p><strong>Your responsibilities:</strong> {{responsibilities}}</p>",
+     "button_label": "Open the app",
+     "button_url": "{{app_link}}",
+     "footer": "You are receiving this because {{organizer}} named you contact person for {{event_name}}."
+    },
+    "in_app": {
+     "title": "Your role was updated",
+     "content": "Hi {{contact_person_name}}, {{organizer}} has updated what you look after for {{event_name}}."
+    }
+   }
+  },
+  {
+   "key": "contact_person_share",
+   "label": "Contact person details sent to a guest",
+   "section": "B4",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "whatsapp",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "contact_person_name",
+    "contact_phone",
+    "contact_whatsapp",
+    "otp",
+    "responsibilities",
+    "message_preview",
+    "resolution_note",
+    "app_link",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your contact for {{event_name}}: {{contact_person_name}}",
+     "preheader": "Reach out any time you need help.",
+     "heading": "Here is who to contact",
+     "body": "<p>Hi {{guest_name}}, for any help with {{event_name}}, please contact:</p>\n<p><strong>Name:</strong> {{contact_person_name}}</p>\n<p><strong>Phone:</strong> {{contact_phone}}</p>\n<p><strong>WhatsApp:</strong> {{contact_whatsapp}}</p>",
+     "button_label": "Message in the app",
+     "button_url": "{{app_link}}",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "Here is who to contact",
+     "content": "Hi {{guest_name}}, for any help with {{event_name}}, please contact:"
+    },
+    "whatsapp": {
+     "template_name": "event_contact_person",
+     "category": "utility",
+     "header_type": "none",
+     "header_text": "",
+     "body": "Hi {{guest_name}}, for any help with *{{event_name}}* please contact {{contact_person_name}} on {{contact_phone}}.\n\nYou can also message them in the EventInvit app.",
+     "footer": "Sent via EventInvit",
+     "buttons": [
+      {
+       "type": "url",
+       "text": "Message in the app",
+       "url": "{{app_link}}"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "contact_chat_reply",
+   "label": "Event team replied to guest",
+   "section": "B4",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "contact_person_name",
+    "contact_phone",
+    "contact_whatsapp",
+    "otp",
+    "responsibilities",
+    "message_preview",
+    "resolution_note",
+    "app_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "contact_chat_resolved",
+   "label": "Guest inquiry resolved / closed",
+   "section": "B4",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "contact_person_name",
+    "contact_phone",
+    "contact_whatsapp",
+    "otp",
+    "responsibilities",
+    "message_preview",
+    "resolution_note",
+    "app_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "participant_removed",
+   "label": "Participant blocked / removed",
+   "section": "B4",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "contact_person_name",
+    "contact_phone",
+    "contact_whatsapp",
+    "otp",
+    "responsibilities",
+    "message_preview",
+    "resolution_note",
+    "app_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "An update about {{event_name}}",
+     "preheader": "Your access to this event has changed.",
+     "heading": "Your access has changed",
+     "body": "<p>Hi {{guest_name}}, the organizer has removed you from {{event_name}}, so it no longer appears in your app.</p>\n<p>If you think this is a mistake, please contact the organizer directly.</p>",
+     "button_label": "",
+     "button_url": "",
+     "footer": "EventInvit does not share the reason for this decision."
+    },
+    "in_app": {
+     "title": "Your access has changed",
+     "content": "Hi {{guest_name}}, the organizer has removed you from {{event_name}}, so it no longer appears in your app. If you think this is a mistake, please contact the organizer directly."
+    }
+   }
+  },
+  {
+   "key": "live_stream_scheduled",
+   "label": "Live stream scheduled",
+   "section": "B5",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "stream_title",
+    "stream_link",
+    "stream_time",
+    "checkin_time",
+    "agenda_item",
+    "agenda_time"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "live_stream_live",
+   "label": "Live stream started",
+   "section": "B5",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "stream_title",
+    "stream_link",
+    "stream_time",
+    "checkin_time",
+    "agenda_item",
+    "agenda_time"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "live_stream_share",
+   "label": "Live stream link sent to a guest",
+   "section": "B5",
+   "audience": "guest",
+   "also": [],
+   "channels": [],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "stream_title",
+    "stream_link",
+    "stream_time",
+    "checkin_time",
+    "agenda_item",
+    "agenda_time"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "attendance_checked_in",
+   "label": "Guest checked in at the venue",
+   "section": "B5",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "stream_title",
+    "stream_link",
+    "stream_time",
+    "checkin_time",
+    "agenda_item",
+    "agenda_time"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "agenda_updated",
+   "label": "Agenda changed",
+   "section": "B5",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "stream_title",
+    "stream_link",
+    "stream_time",
+    "checkin_time",
+    "agenda_item",
+    "agenda_time",
+    "app_link",
+    "organizer"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Schedule update for {{event_name}}",
+     "preheader": "{{agenda_item}} is now at {{agenda_time}}.",
+     "heading": "The schedule has changed",
+     "body": "<p>Hi {{guest_name}}, there is a change in the schedule of {{event_name}}:</p>\n<p><strong>Item:</strong> {{agenda_item}}</p>\n<p><strong>New time:</strong> {{agenda_time}}</p>",
+     "button_label": "See the full agenda",
+     "button_url": "{{app_link}}",
+     "footer": "You are receiving this because {{organizer}} added you to {{event_name}} on EventInvit."
+    },
+    "in_app": {
+     "title": "The schedule has changed",
+     "content": "Hi {{guest_name}}, there is a change in the schedule of {{event_name}}:"
+    }
+   }
+  },
+  {
+   "key": "media_ready",
+   "label": "Photos / album published",
+   "section": "B6",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "couple_names",
+    "gallery_link",
+    "downloads_link",
+    "file_name",
+    "recording_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "downloads_ready",
+   "label": "New file in Downloads",
+   "section": "B6",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "couple_names",
+    "gallery_link",
+    "downloads_link",
+    "file_name",
+    "recording_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "live_recording_ready",
+   "label": "Live recording available",
+   "section": "B6",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "couple_names",
+    "gallery_link",
+    "downloads_link",
+    "file_name",
+    "recording_link"
+   ],
+   "suggested": null
+  },
+  {
+   "key": "event_thank_you",
+   "label": "Thank-you (once, day after; organizer can switch off)",
+   "section": "B6",
+   "audience": "guest",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "guest_name",
+    "event_name",
+    "couple_names",
+    "gallery_link",
+    "downloads_link",
+    "file_name",
+    "recording_link"
+   ],
+   "suggested": null
+  }
+ ]
+}
