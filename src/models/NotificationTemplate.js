@@ -30,9 +30,16 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING(50),
             allowNull: true,
         },
+        /** Category shown in the admin: transactional | campaign | custom. */
+        template_type: {
+            type: DataTypes.STRING(20),
+            allowNull: false,
+            defaultValue: 'transactional',
+        },
+        /** Old notification category (kept for existing rows; no longer picked in the admin). */
         notification_category_id: {
             type: DataTypes.INTEGER.UNSIGNED,
-            allowNull: false,
+            allowNull: true,
         },
         event_category_id: {
             type: DataTypes.INTEGER.UNSIGNED,

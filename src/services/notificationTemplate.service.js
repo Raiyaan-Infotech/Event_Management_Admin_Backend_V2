@@ -42,6 +42,7 @@ const AVAILABLE_VARIABLES = Array.from(AVAILABLE_VARIABLE_KEYS).map((key) => ({ 
 
 const CHANNELS = ['email', 'whatsapp', 'in_app', 'push'];
 const AUDIENCES = ['organizer', 'guest', 'participant', 'contact_person'];
+const TEMPLATE_TYPES = ['transactional', 'campaign', 'custom'];
 const WA_CATEGORIES = ['utility', 'authentication', 'marketing'];
 const WA_HEADER_TYPES = ['none', 'text'];
 
@@ -55,7 +56,7 @@ const IN_APP_TITLE_MAX = 100;
 const IN_APP_CONTENT_MAX = 500;
 
 const WRITABLE_FIELDS = [
-    'name', 'description', 'trigger_key', 'audience', 'notification_category_id', 'event_category_id',
+    'name', 'template_type', 'description', 'trigger_key', 'audience', 'notification_category_id', 'event_category_id',
     'title', 'content', 'image_url', 'action_url', 'channels', 'is_active', 'sort_order',
     'email_subject', 'email_preheader', 'email_heading', 'email_body',
     'email_button_label', 'email_button_url', 'email_footer',
@@ -243,10 +244,15 @@ const normalizePayload = async (payload) => {
         if (!String(payload.name || '').trim()) throw ApiError.badRequest('A template name is required.');
         payload.name = String(payload.name).trim().slice(0, 150);
     }
+    if (payload.template_type !== undefined) {
+        payload.template_type = String(payload.template_type || '').toLowerCase();
+        if (!TEMPLATE_TYPES.includes(payload.template_type)) {
+            throw ApiError.badRequest('Pick a category: Transactional, Campaign or Custom.');
+        }
+    }
     if (payload.notification_category_id !== undefined) {
         payload.notification_category_id = toNullableId(payload.notification_category_id);
-        if (!payload.notification_category_id) throw ApiError.badRequest('A notification category is required.');
-        await assertNotificationCategoryExists(payload.notification_category_id);
+        if (payload.notification_category_id) await assertNotificationCategoryExists(payload.notification_category_id);
     }
     if (payload.event_category_id !== undefined) payload.event_category_id = toNullableId(payload.event_category_id);
     if (payload.channels !== undefined) payload.channels = normalizeChannels(payload.channels);
@@ -284,6 +290,7 @@ const getAll = async (query = {}, companyId = undefined) => {
     if (eventCategoryId !== undefined) where.event_category_id = eventCategoryId;
 
     if (query.audience && AUDIENCES.includes(query.audience)) where.audience = query.audience;
+    if (query.template_type && TEMPLATE_TYPES.includes(query.template_type)) where.template_type = query.template_type;
 
     const and = [];
     const byChannel = channelFilter(query.channel);
@@ -302,15 +309,16 @@ const getAll = async (query = {}, companyId = undefined) => {
     });
 };
 
-/** Tab counts for the list: all / email / whatsapp / in_app. */
+/** Tab counts for the list: all / email / whatsapp / in_app / transactional / campaign / custom. */
 const getCounts = async (companyId = undefined) => {
     const base = companyId !== undefined && companyId !== null ? { company_id: companyId } : {};
-    const [all, email, whatsapp, inApp] = await Promise.all([
+    const [all, email, whatsapp, inApp, transactional, campaign, custom] = await Promise.all([
         NotificationTemplate.count({ where: base }),
         ...['email', 'whatsapp', 'in_app'].map((c) =>
             NotificationTemplate.count({ where: { ...base, [Op.and]: [channelFilter(c)] } })),
+        ...TEMPLATE_TYPES.map((type) => NotificationTemplate.count({ where: { ...base, template_type: type } })),
     ]);
-    return { all, email, whatsapp, in_app: inApp };
+    return { all, email, whatsapp, in_app: inApp, transactional, campaign, custom };
 };
 
 const getById = async (id, companyId = undefined) =>
@@ -320,7 +328,7 @@ const create = async (data, userId = null, companyId = undefined) => {
     const payload = await normalizePayload(pickWritable(data));
 
     if (!payload.name) throw ApiError.badRequest('A template name is required.');
-    if (!payload.notification_category_id) throw ApiError.badRequest('A notification category is required.');
+    if (!payload.template_type) throw ApiError.badRequest('Pick a category: Transactional, Campaign or Custom.');
 
     payload.channels = payload.channels ?? ['in_app'];
     payload.event_category_id = payload.event_category_id ?? null;

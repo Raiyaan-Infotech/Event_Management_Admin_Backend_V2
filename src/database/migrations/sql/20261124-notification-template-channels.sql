@@ -25,3 +25,7 @@ ALTER TABLE `notification_templates` ADD COLUMN `whatsapp_buttons` json DEFAULT 
 ALTER TABLE `notification_templates` ADD COLUMN `sample_values` json DEFAULT NULL COMMENT '{var: sample} for previews and test sends';
 ALTER TABLE `notification_templates` MODIFY COLUMN `title` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
 ALTER TABLE `notification_templates` MODIFY COLUMN `content` text COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+-- Follow-up (Jamal, same day): Category = Transactional | Campaign | Custom, as in the mockup.
+-- The old notification category stays for existing rows but is no longer required.
+ALTER TABLE `notification_templates` ADD COLUMN `template_type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'transactional' COMMENT 'transactional | campaign | custom' AFTER `name`;
+ALTER TABLE `notification_templates` MODIFY COLUMN `notification_category_id` int unsigned DEFAULT NULL;
