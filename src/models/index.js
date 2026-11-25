@@ -59,6 +59,9 @@ db.EmailTemplate = require('./EmailTemplate')(sequelize, Sequelize);
 // Push Notification (Firebase)
 db.PushNotificationConfig = require('./PushNotificationConfig')(sequelize, Sequelize);
 
+// MSG91 provider configuration (one row)
+db.Msg91Config = require('./Msg91Config')(sequelize, Sequelize);
+
 // Vendor
 db.Vendor = require('./Vendor')(sequelize, Sequelize);
 db.VendorClient = require('./VendorClient')(sequelize, Sequelize);
