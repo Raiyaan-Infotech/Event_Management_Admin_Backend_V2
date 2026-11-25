@@ -8,6 +8,7 @@ router.use(isAuthenticated);
 
 router.get('/', hasPermission('settings.view'), controller.get);
 router.post('/test', hasPermission('settings.edit'), controller.testConnection);
+router.post('/test-send', hasPermission('settings.edit'), controller.testSend);
 router.post('/webhook-token', hasPermission('settings.edit'), controller.regenerateWebhookToken);
 router.put('/:section', hasPermission('settings.edit'), controller.updateSection);
 

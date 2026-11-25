@@ -18,4 +18,7 @@ const testConnection = asyncHandler(async (req, res) => ApiResponse.success(res,
 const regenerateWebhookToken = asyncHandler(async (req, res) =>
     ApiResponse.success(res, { config: await service.regenerateWebhookToken(req.user?.id) }, 'New webhook token created'));
 
-module.exports = { get, updateSection, testConnection, regenerateWebhookToken };
+/** POST /api/v1/msg91-config/test-send { channel: sms | whatsapp, dial_code, mobile } — ONE real test OTP with the saved settings */
+const testSend = asyncHandler(async (req, res) => ApiResponse.success(res, { result: await service.testSend(req.body) }));
+
+module.exports = { get, updateSection, testConnection, regenerateWebhookToken, testSend };

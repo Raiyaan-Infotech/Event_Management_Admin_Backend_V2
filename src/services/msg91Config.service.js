@@ -20,6 +20,8 @@ const { encrypt, decrypt } = require('../utils/secretBox');
 const VALIDATE_URL = 'https://control.msg91.com/api/validate.php';
 const BALANCE_URL = 'https://control.msg91.com/api/balance.php';
 const API_BASE_URL = 'https://control.msg91.com/api/v5/';
+const SMS_FLOW_URL = 'https://control.msg91.com/api/v5/flow/';
+const WA_SEND_URL = 'https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/';
 
 /* ── Field rules ─────────────────────────────────────────────────────────── */
 
@@ -77,6 +79,12 @@ const SECTIONS = {
         rate_limit_per_hour: int('Max OTPs per mobile per hour', 1, 50),
         lockout_enabled: bool(),
         lockout_minutes: int('Lockout duration', 1, 1440),
+        // WhatsApp OTP through MSG91 (not in the design; needed to send the "WhatsApp OTP fallback")
+        wa_number: str('MSG91 WhatsApp number', 15, { pattern: /^\d{10,15}$/, patternMsg: 'MSG91 WhatsApp number: country code + number, digits only (e.g. 15559914712)' }),
+        wa_template: str('WhatsApp OTP template name', 512, { pattern: /^[a-z0-9_]+$/, patternMsg: 'WhatsApp template name: small letters, numbers and _ only (as in MSG91)' }),
+        wa_language: oneOf('WhatsApp template language', ['en', 'en_US', 'en_GB', 'ta', 'hi', 'ml', 'te', 'kn']),
+        wa_namespace: str('WhatsApp template namespace', 64, { pattern: /^[A-Za-z0-9_-]+$/, patternMsg: 'Namespace: letters, numbers, _ and - only' }),
+        wa_copy_button: bool(),
     },
     dlt: {
         entity_id: digits('DLT entity ID'),
@@ -165,6 +173,7 @@ const DEFAULTS = {
         validity_minutes: 5, resend_seconds: 30, max_attempts: 5,
         msg91_template_id: '', dlt_template_id: '', otp_variable: 'OTP', app_hash: '',
         rate_limit_enabled: true, rate_limit_per_hour: 10, lockout_enabled: true, lockout_minutes: 15,
+        wa_number: '', wa_template: '', wa_language: 'en', wa_namespace: '', wa_copy_button: true,
     },
     dlt: { entity_id: '', entity_name: '', registration_status: 'not_registered', registration_date: '', approval_date: '', senders: [] },
     sms_templates: { items: [] },
@@ -327,4 +336,77 @@ const testConnection = async () => {
     return present(row);
 };
 
-module.exports = { get, updateSection, regenerateWebhookToken, testConnection, SECTION_NAMES, DEFAULTS };
+/**
+ * Send ONE real test OTP with the SAVED settings (not .env): SMS through the MSG91 SMS template,
+ * or WhatsApp through the MSG91 WhatsApp number + OTP template. Uses 1 credit. The on/off
+ * switches are ignored on purpose (a test must work before a channel is switched on).
+ * The code is random, returned to the admin so they can match the message, and never logged.
+ */
+let lastTestSendAt = 0;
+const testSend = async ({ channel, dial_code: dialCode, mobile } = {}) => {
+    if (!['sms', 'whatsapp'].includes(channel)) fail('Channel must be sms or whatsapp');
+    const local = String(mobile || '').replace(/\D/g, '');
+    const cc = String(dialCode || '91').replace(/\D/g, '') || '91';
+    if (local.length < 6 || local.length > 12) fail('Enter the recipient mobile number');
+    const to = local.length > 10 ? local : `${cc}${local}`;
+    if (Date.now() - lastTestSendAt < 10000) fail('Wait a few seconds before sending another test');
+
+    const row = await getRow();
+    const cfg = present(row);
+    const authKey = decrypt(row.auth_key_enc);
+    if (!authKey) fail('No auth key saved. Add it on the API Configuration tab.');
+    const o = cfg.otp;
+    const code = String(crypto.randomInt(100000, 1000000));
+    let url;
+    let body;
+    if (channel === 'sms') {
+        if (!o.msg91_template_id) fail('Add the MSG91 SMS template ID on the OTP Configuration tab first.');
+        url = SMS_FLOW_URL;
+        body = {
+            template_id: o.msg91_template_id,
+            short_url: '0',
+            recipients: [{ mobiles: to, [o.otp_variable || 'OTP']: code }],
+        };
+    } else {
+        if (!o.wa_number || !o.wa_template) fail('Add the MSG91 WhatsApp number and OTP template on the OTP Configuration tab first.');
+        url = WA_SEND_URL;
+        body = {
+            integrated_number: o.wa_number,
+            content_type: 'template',
+            payload: {
+                messaging_product: 'whatsapp',
+                type: 'template',
+                template: {
+                    name: o.wa_template,
+                    language: { code: o.wa_language || 'en', policy: 'deterministic' },
+                    ...(o.wa_namespace ? { namespace: o.wa_namespace } : {}),
+                    to_and_components: [{
+                        to: [to],
+                        components: {
+                            body_1: { type: 'text', value: code },
+                            ...(o.wa_copy_button ? { button_1: { subtype: 'url', type: 'text', value: code } } : {}),
+                        },
+                    }],
+                },
+            },
+        };
+    }
+    lastTestSendAt = Date.now();
+    const masked = `+${to.slice(0, to.length - 10)} ${'•'.repeat(6)}${to.slice(-4)}`;
+    try {
+        const res = await axios.post(url, body, {
+            headers: { 'Content-Type': 'application/json', authkey: authKey },
+            timeout: ((cfg.api && cfg.api.timeout_seconds) || 10) * 1000,
+            validateStatus: () => true,
+        });
+        const d = res.data || {};
+        const ok = res.status >= 200 && res.status < 300 && d.type !== 'error' && !d.hasError;
+        const reply = typeof d.message === 'string' ? d.message : (d.data && (d.data.message || d.data.request_id)) || d.request_id || '';
+        logger.info(`[MSG91 config] test ${channel} to ${masked}: ${ok ? 'accepted' : 'refused'} (http ${res.status})`);
+        return { channel, to: masked, ok, code: ok ? code : null, http_status: res.status, reply: String(reply || (ok ? 'Accepted' : 'Refused')).slice(0, 300), sent_at: new Date().toISOString() };
+    } catch (err) {
+        return { channel, to: masked, ok: false, code: null, http_status: null, reply: `Could not reach MSG91: ${err.message}`, sent_at: new Date().toISOString() };
+    }
+};
+
+module.exports = { get, updateSection, regenerateWebhookToken, testConnection, testSend, SECTION_NAMES, DEFAULTS };
