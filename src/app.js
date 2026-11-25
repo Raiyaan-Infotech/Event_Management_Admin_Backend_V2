@@ -96,6 +96,7 @@ app.use('/api/v1/translation-keys', require('./routes/translationKey.routes'));
 app.use('/api/v1/email-configs', require('./routes/emailConfig.routes'));
 app.use('/api/v1/push-notification-configs', require('./routes/pushNotificationConfig.routes'));
 app.use('/api/v1/msg91-config', require('./routes/msg91Config.routes'));
+app.use('/api/v1/whatsapp-config', require('./routes/whatsappConfig.routes'));
 app.use('/api/v1/email-templates', require('./routes/emailTemplate.routes'));
 app.use('/api/v1/activity-logs', require('./routes/activityLog.routes'));
 app.use('/api/v1/approvals', require('./routes/approval.routes'));

@@ -62,6 +62,9 @@ db.PushNotificationConfig = require('./PushNotificationConfig')(sequelize, Seque
 // MSG91 provider configuration (one row)
 db.Msg91Config = require('./Msg91Config')(sequelize, Sequelize);
 
+// Meta WhatsApp Cloud API provider configuration (one row)
+db.WhatsAppConfig = require('./WhatsAppConfig')(sequelize, Sequelize);
+
 // Vendor
 db.Vendor = require('./Vendor')(sequelize, Sequelize);
 db.VendorClient = require('./VendorClient')(sequelize, Sequelize);
