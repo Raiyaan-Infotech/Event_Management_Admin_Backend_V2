@@ -720,6 +720,42 @@
    }
   },
   {
+   "key": "booking_cancelled",
+   "label": "Booking cancelled (BKG-013)",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "create_event_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Event Booking Cancelled",
+     "preheader": "Your booking is no longer active.",
+     "heading": "Event Booking Cancelled",
+     "body": "<p>Dear {{client_name}}, your booking {{booking_id}} for {{event_date}} has been cancelled. Please review your booking details for any applicable refund.</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Plan:</strong> {{plan_name}}</p>",
+     "button_label": "View your bookings",
+     "button_url": "{{create_event_link}}",
+     "footer": "Questions about a refund? Write to {{support_email}}."
+    },
+    "in_app": {
+     "title": "Booking Cancelled",
+     "content": "Your event booking {{booking_id}} is no longer active."
+    }
+   }
+  },
+  {
    "key": "payment_method_changed",
    "label": "Payment method added / removed",
    "section": "A3",
@@ -1852,6 +1888,42 @@
    }
   },
   {
+   "key": "event_approaching",
+   "label": "Your event is approaching (LFC-001)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "days_remaining",
+    "event_link",
+    "total_guests",
+    "confirmed"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your Event Is Approaching!",
+     "preheader": "Only {{days_remaining}} days to go.",
+     "heading": "Your Event Is Approaching!",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}} is scheduled in {{days_remaining}} days. Please review your preparations.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Confirmed guests:</strong> {{confirmed}} of {{total_guests}}</p>",
+     "button_label": "Review your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Event Approaching",
+     "content": "Only {{days_remaining}} days remaining."
+    }
+   }
+  },
+  {
    "key": "event_reminder_organizer",
    "label": "Your event is tomorrow",
    "section": "A5",
@@ -1960,6 +2032,40 @@
     "in_app": {
      "title": "Event Ended",
      "content": "Manage your after-event activities."
+    }
+   }
+  },
+  {
+   "key": "event_cancelled_organizer",
+   "label": "Your event was cancelled (EVT-009)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Event Cancelled Successfully",
+     "preheader": "Your event is no longer active.",
+     "heading": "Event Cancelled Successfully",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}}, scheduled for {{event_date}}, has been cancelled. Please review your event and refund details, where applicable.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>",
+     "button_label": "Review your event",
+     "button_url": "{{event_link}}",
+     "footer": "Questions? Write to {{support_email}}."
+    },
+    "in_app": {
+     "title": "Event Cancelled",
+     "content": "Your event {{event_name}} is no longer active."
     }
    }
   },
@@ -2307,6 +2413,42 @@
     "in_app": {
      "title": "New RSVP Received",
      "content": "{{guest_name}} has submitted an RSVP for {{event_name}}."
+    }
+   }
+  },
+  {
+   "key": "rsvp_daily_summary",
+   "label": "Daily RSVP summary (INV-005)",
+   "section": "A7",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_link",
+    "confirmed",
+    "declined",
+    "pending",
+    "total_guests"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Daily RSVP Summary - {{event_name}}",
+     "preheader": "Confirmed {{confirmed}}, declined {{declined}}, pending {{pending}}.",
+     "heading": "Daily RSVP Summary - {{event_name}}",
+     "body": "<p>Dear {{client_name}}, here is today's guest response summary for {{event_name}}.</p>\n<p><strong>Confirmed:</strong> {{confirmed}}</p>\n<p><strong>Declined:</strong> {{declined}}</p>\n<p><strong>Pending:</strong> {{pending}}</p>",
+     "button_label": "View guest responses",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Daily RSVP Summary",
+     "content": "Confirmed: {{confirmed}}, Declined: {{declined}}, Pending: {{pending}}."
     }
    }
   },

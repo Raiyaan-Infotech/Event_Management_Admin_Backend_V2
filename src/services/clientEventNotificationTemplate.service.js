@@ -17,11 +17,19 @@ const findOwnedEvent = async (clientId, eventId) =>
         attributes: ['id', 'website_client_id', 'event_category_id', 'name', 'status', 'updated_at'],
     });
 
+/**
+ * Only messages that go to the event's people (guest / participant / contact person) can be
+ * switched per event. Organizer-audience templates (account, security, billing, usage alerts)
+ * go to the organizer themself and are not per-event, so they are left out (2026-11-26).
+ */
+const PER_EVENT_AUDIENCE = { [Op.or]: [{ audience: null }, { audience: { [Op.ne]: 'organizer' } }] };
+
 /** Templates admin has scoped to apply to this event's category (or globally). */
 const applicableTemplatesFor = (event) =>
     NotificationTemplate.findAll({
         where: {
             is_active: 1,
+            [Op.and]: [PER_EVENT_AUDIENCE],
             [Op.or]: [{ event_category_id: null }, { event_category_id: event.event_category_id }],
         },
         include: [
@@ -111,7 +119,7 @@ const summaryForClient = async (clientId) => {
             order: [['updated_at', 'DESC']],
         }),
         NotificationTemplate.findAll({
-            where: { is_active: 1 },
+            where: { is_active: 1, ...PER_EVENT_AUDIENCE },
             attributes: ['id', 'event_category_id'],
         }),
         EventNotificationTemplatePref.findAll({
