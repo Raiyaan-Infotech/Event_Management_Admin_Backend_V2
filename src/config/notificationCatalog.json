@@ -562,6 +562,111 @@
    }
   },
   {
+   "key": "failed_login_attempts",
+   "label": "Multiple failed login attempts (AUTH-008)",
+   "section": "A2",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "login_time",
+    "ip_location",
+    "lock_minutes",
+    "login_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Unusual Login Activity Detected",
+     "preheader": "Please review your account security.",
+     "heading": "Unusual Login Activity Detected",
+     "body": "<p>Dear {{client_name}}, we detected multiple unsuccessful login attempts on your account on {{login_time}}. Please review your account security.</p>\n<p><strong>When:</strong> {{login_time}}</p>\n<p><strong>Location:</strong> {{ip_location}}</p>",
+     "button_label": "Review account security",
+     "button_url": "{{login_link}}",
+     "footer": "If this was you, you can ignore this email. If not, change your password. This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
+    },
+    "in_app": {
+     "title": "Unusual Login Activity",
+     "content": "Review your recent login attempts."
+    }
+   },
+   "waiting_for": "login_lockout"
+  },
+  {
+   "key": "account_locked",
+   "label": "Account temporarily locked (AUTH-009)",
+   "section": "A2",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "login_time",
+    "ip_location",
+    "lock_minutes",
+    "login_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Account Temporarily Locked",
+     "preheader": "Account access is temporarily restricted.",
+     "heading": "Account Temporarily Locked",
+     "body": "<p>Dear {{client_name}}, your account has been temporarily locked for security reasons. Please try again after {{lock_minutes}} minutes or contact support.</p>\n<p><strong>Try again after:</strong> {{lock_minutes}} minutes</p>",
+     "button_label": "Contact support",
+     "button_url": "mailto:{{support_email}}",
+     "footer": "This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
+    },
+    "in_app": {
+     "title": "Account Locked",
+     "content": "Account access is temporarily restricted."
+    }
+   },
+   "waiting_for": "login_lockout"
+  },
+  {
+   "key": "account_unlocked",
+   "label": "Account unlocked (AUTH-010)",
+   "section": "A2",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "login_time",
+    "ip_location",
+    "lock_minutes",
+    "login_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Account Access Restored",
+     "preheader": "You can now sign in again.",
+     "heading": "Account Access Restored",
+     "body": "<p>Dear {{client_name}}, your EventInvit account is now accessible. You may sign in again.</p>",
+     "button_label": "Sign in",
+     "button_url": "{{login_link}}",
+     "footer": "Did not expect this? Contact {{support_email}} straight away. This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
+    },
+    "in_app": {
+     "title": "Account Unlocked",
+     "content": "Your account access has been restored."
+    }
+   },
+   "waiting_for": "login_lockout"
+  },
+  {
    "key": "booking_confirmed",
    "label": "Date booked on Free plan",
    "section": "A3",
@@ -1288,6 +1393,78 @@
      "content": "Hi {{client_name}}, {{addon_name}} has been added to your account and is ready to use."
     }
    }
+  },
+  {
+   "key": "credits_low",
+   "label": "Communication credits low (PLN-007)",
+   "section": "A4",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "channel_name",
+    "credit_balance",
+    "purchased_credits",
+    "amount",
+    "credits_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Communication Credit Balance Alert",
+     "preheader": "Review your balance before sending more messages.",
+     "heading": "Communication Credit Balance Alert",
+     "body": "<p>Dear {{client_name}}, your available {{channel_name}} communication credits have reached {{credit_balance}}. Please review your balance before sending further messages.</p>\n<p><strong>Channel:</strong> {{channel_name}}</p>\n<p><strong>Balance:</strong> {{credit_balance}}</p>",
+     "button_label": "Review credits",
+     "button_url": "{{credits_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Low Communication Credits",
+     "content": "Your {{channel_name}} credit balance is {{credit_balance}}. Review your available balance."
+    }
+   },
+   "waiting_for": "communication_credits"
+  },
+  {
+   "key": "credits_purchased",
+   "label": "Credit purchase successful (PLN-008)",
+   "section": "A4",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "channel_name",
+    "credit_balance",
+    "purchased_credits",
+    "amount",
+    "credits_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Communication Credits Added",
+     "preheader": "Your communication balance has been updated.",
+     "heading": "Communication Credits Added",
+     "body": "<p>Dear {{client_name}}, your purchase of {{purchased_credits}} credits was successful. Your updated balance is {{credit_balance}}.</p>\n<p><strong>Credits added:</strong> {{purchased_credits}}</p>\n<p><strong>Amount:</strong> {{amount}}</p>\n<p><strong>New balance:</strong> {{credit_balance}}</p>",
+     "button_label": "View credits",
+     "button_url": "{{credits_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Credits Added",
+     "content": "Your updated credit balance is {{credit_balance}}."
+    }
+   },
+   "waiting_for": "communication_credits + payment_gateway"
   },
   {
    "key": "storage_half_full",
