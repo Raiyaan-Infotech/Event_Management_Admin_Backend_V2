@@ -306,6 +306,39 @@
    }
   },
   {
+   "key": "account_deletion_requested",
+   "label": "Account deletion requested (PRO-007)",
+   "section": "A1",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "request_id",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Account Deletion Request Received",
+     "preheader": "Your request is being processed.",
+     "heading": "Account Deletion Request Received",
+     "body": "<p>Dear {{client_name}}, we received your account deletion request. Reference ID: {{request_id}}.</p>\n<p><strong>Reference ID:</strong> {{request_id}}</p>",
+     "button_label": "Contact support",
+     "button_url": "mailto:{{support_email}}",
+     "footer": "Did not ask for this? Contact {{support_email}} straight away."
+    },
+    "in_app": {
+     "title": "Deletion Request Submitted",
+     "content": "Your request {{request_id}} is being processed."
+    }
+   },
+   "waiting_for": "deletion_request_step"
+  },
+  {
    "key": "account_deleted",
    "label": "Account deleted",
    "section": "A1",
@@ -678,6 +711,39 @@
      "content": "Your allotted date is {{event_date}}. Create your event now."
     }
    }
+  },
+  {
+   "key": "booking_hold_expired",
+   "label": "Booking hold expired (BKG-007)",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_date",
+    "create_event_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Booking Reservation Expired",
+     "preheader": "Your selected date is no longer reserved.",
+     "heading": "Booking Reservation Expired",
+     "body": "<p>Dear {{client_name}}, your temporary reservation for {{event_date}} has expired. Please check availability and start a new booking.</p>\n<p><strong>Date:</strong> {{event_date}}</p>",
+     "button_label": "Check availability",
+     "button_url": "{{create_event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Booking Hold Expired",
+     "content": "Your selected date {{event_date}} is no longer reserved."
+    }
+   },
+   "waiting_for": "booking_hold"
   },
   {
    "key": "booked_date_changed",
@@ -1147,6 +1213,39 @@
     "in_app": {
      "title": "Plan Expiring Soon",
      "content": "Your plan expires on {{end_date}}."
+    }
+   }
+  },
+  {
+   "key": "plan_expired",
+   "label": "Subscription expired (PLN-004)",
+   "section": "A4",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "plan_name",
+    "end_date",
+    "upgrade_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your Subscription Has Expired",
+     "preheader": "Review your renewal options and event access.",
+     "heading": "Your Subscription Has Expired",
+     "body": "<p>Dear {{client_name}}, your {{plan_name}} subscription expired on {{end_date}}. Sign in to review your renewal options and event access.</p>\n<p><strong>Plan:</strong> {{plan_name}}</p>\n<p><strong>Expired on:</strong> {{end_date}}</p>",
+     "button_label": "Review renewal options",
+     "button_url": "{{upgrade_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Subscription Expired",
+     "content": "Your {{plan_name}} plan has expired. Review available renewal options."
     }
    }
   },
@@ -1848,6 +1947,40 @@
    }
   },
   {
+   "key": "pre_event_menus_available",
+   "label": "Pre-Event menus available (LFC-002)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your Pre-Event Features Are Now Available",
+     "preheader": "Your eligible Pre-Event menus are now enabled.",
+     "heading": "Your Pre-Event Features Are Now Available",
+     "body": "<p>Dear {{client_name}}, the eligible Pre-Event menus for {{event_name}} are now available. Sign in to manage your event.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>",
+     "button_label": "Manage your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Pre-Event Menus Enabled",
+     "content": "Explore your available event features."
+    }
+   },
+   "waiting_for": "pre_event_menu_window"
+  },
+  {
    "key": "invitation_delivery_report",
    "label": "Invitation sends finished – delivered / failed",
    "section": "A5",
@@ -2107,6 +2240,110 @@
      "content": "View your event report."
     }
    }
+  },
+  {
+   "key": "participant_access_expiring",
+   "label": "Participant access expires soon (LFC-006)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "participant_access_expiry"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Participant Access Expires Soon",
+     "preheader": "Complete your pending Post-Event activities.",
+     "heading": "Participant Access Expires Soon",
+     "body": "<p>Dear {{client_name}}, participant access to {{event_name}} will end on {{participant_access_expiry}}. Please complete any remaining Post-Event activities.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Access ends:</strong> {{participant_access_expiry}}</p>",
+     "button_label": "Review Post-Event tasks",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Access Expiring Soon",
+     "content": "Participant access ends on {{participant_access_expiry}}. Complete your pending Post-Event activities."
+    }
+   },
+   "waiting_for": "participant_access_expiry"
+  },
+  {
+   "key": "participant_access_expired",
+   "label": "Participant access expired (LFC-007)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "participant_access_expiry"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Participant Access Has Ended",
+     "preheader": "Participant access is now closed.",
+     "heading": "Participant Access Has Ended",
+     "body": "<p>Dear {{client_name}}, participant access to {{event_name}} ended on {{participant_access_expiry}}. Your Organizer access remains subject to your plan and archive rules.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Access ended:</strong> {{participant_access_expiry}}</p>",
+     "button_label": "Review your event history",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Participant Access Expired",
+     "content": "Participant access is now closed."
+    }
+   },
+   "waiting_for": "participant_access_expiry"
+  },
+  {
+   "key": "event_archived",
+   "label": "Event archived (LFC-008)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your Event Has Been Archived",
+     "preheader": "Your event is available under Past Events.",
+     "heading": "Your Event Has Been Archived",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}} has been moved to Past Events. You can review retained event information from your dashboard.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>",
+     "button_label": "Open Past Events",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Event Archived",
+     "content": "Your event is available under Past Events."
+    }
+   },
+   "waiting_for": "archive_step"
   },
   {
    "key": "date_request_received",
