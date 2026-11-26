@@ -90,17 +90,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Welcome to EventInvit, {{client_name}}",
+     "subject": "Welcome to EventInvit!",
      "preheader": "Your account is ready. Book your first event date in a few minutes.",
-     "heading": "Welcome aboard, {{client_name}}",
-     "body": "<p>Your EventInvit organizer account is ready. From one place you can book your event date, design the invitation, invite guests and follow every RSVP.</p>\n<p>Most organizers start like this:</p>\n<p><strong>1:</strong> Check availability and book your date</p>\n<p><strong>2:</strong> Create the event and pick a home screen</p>\n<p><strong>3:</strong> Add guests and send the invitation</p>",
+     "heading": "Welcome to EventInvit!",
+     "body": "<p>Dear {{client_name}}, your account has been created successfully. You can now book and manage your events.</p>\n<p><strong>1:</strong> Check availability and book your date</p>\n<p><strong>2:</strong> Create the event and pick a home screen</p>\n<p><strong>3:</strong> Add guests and send the invitation</p>",
      "button_label": "Book your event date",
      "button_url": "{{login_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Welcome aboard, {{client_name}}",
-     "content": "Your EventInvit organizer account is ready. From one place you can book your event date, design the invitation, invite guests and follow every RSVP. Most organizers start like this:"
+     "title": "Welcome to EventInvit",
+     "content": "Your Organizer account is ready. Start planning your first event."
     }
    }
   },
@@ -165,10 +165,10 @@
    ],
    "suggested": {
     "email": {
-     "subject": "{{otp}} is your EventInvit login code",
+     "subject": "Your Login Verification Code",
      "preheader": "This code expires in {{otp_minutes}} minutes. Never share it with anyone.",
-     "heading": "Your login code",
-     "body": "<p>Hi {{client_name}}, use this code to sign in to EventInvit:</p>\n<p><strong>Code:</strong> {{otp}}</p>",
+     "heading": "Your Login Verification Code",
+     "body": "<p>Your EventInvit login code is {{otp}}. It expires in {{otp_minutes}} minutes.</p>\n<p><strong>Code:</strong> {{otp}}</p>",
      "button_label": "",
      "button_url": "",
      "footer": "The code expires in {{otp_minutes}} minutes. EventInvit will never ask you for this code. If you did not try to sign in, you can ignore this email - your account stays safe."
@@ -217,10 +217,10 @@
    ],
    "suggested": {
     "email": {
-     "subject": "{{otp}} is your verification code",
+     "subject": "Verify Your Mobile Number",
      "preheader": "Enter this code to confirm your mobile number.",
-     "heading": "Confirm your mobile number",
-     "body": "<p>Hi {{client_name}}, enter this code in EventInvit to confirm your mobile number:</p>\n<p><strong>Code:</strong> {{otp}}</p>",
+     "heading": "Verify Your Mobile Number",
+     "body": "<p>Your EventInvit verification code is {{otp}}. It expires in {{otp_minutes}} minutes. Do not share this code.</p>\n<p><strong>Code:</strong> {{otp}}</p>",
      "button_label": "",
      "button_url": "",
      "footer": "The code expires in {{otp_minutes}} minutes. Do not share it with anyone. If you did not request it, ignore this email."
@@ -254,10 +254,10 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Reset your EventInvit password",
+     "subject": "Reset Your Password",
      "preheader": "Use this code to choose a new password. It expires soon.",
-     "heading": "Reset your password",
-     "body": "<p>Hi {{client_name}}, we received a request to reset the password for {{email}}. Enter this code to choose a new one:</p>\n<p><strong>Reset code:</strong> {{reset_code}}</p>",
+     "heading": "Reset Your Password",
+     "body": "<p>Dear {{client_name}}, we received a password reset request for {{email}}. Use the code below to choose a new password.</p>\n<p><strong>Reset code:</strong> {{reset_code}}</p>",
      "button_label": "",
      "button_url": "",
      "footer": "The code expires in {{otp_minutes}} minutes. If you did not ask for a reset, ignore this email - your password will not change."
@@ -291,17 +291,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Your EventInvit account has been {{account_status}}",
+     "subject": "Account Status Update",
      "preheader": "A change was made to your account by our team.",
-     "heading": "Your account is now {{account_status}}",
-     "body": "<p>Hi {{client_name}}, our team has {{account_status}} your EventInvit account.</p>\n<p>If your account was activated, you can sign in as usual. If it was deactivated, your events and guests are kept safe, but you cannot sign in until it is active again.</p>",
+     "heading": "Account Status Update",
+     "body": "<p>Dear {{client_name}}, your EventInvit account has been {{account_status}}. If you have any questions, please contact our Support Team.</p>",
      "button_label": "Go to EventInvit",
      "button_url": "{{login_link}}",
      "footer": "Think this is a mistake? Reply to this email or write to {{support_email}}."
     },
     "in_app": {
-     "title": "Your account is now {{account_status}}",
-     "content": "Hi {{client_name}}, our team has {{account_status}} your EventInvit account. If your account was activated, you can sign in as usual. If it was deactivated, your events and guests are kept safe, but you cannot sign in until it is active again."
+     "title": "Account Status Update",
+     "content": "Your account has been {{account_status}}."
     }
    }
   },
@@ -328,10 +328,10 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Your EventInvit account has been deleted",
+     "subject": "Account Deletion Completed",
      "preheader": "We are sorry to see you go.",
-     "heading": "Your account has been deleted",
-     "body": "<p>Hi {{client_name}}, your EventInvit account ({{email}}) and its data have been deleted as requested.</p>\n<p>Thank you for planning your events with us. You are always welcome back.</p>",
+     "heading": "Account Deletion Completed",
+     "body": "<p>Dear {{client_name}}, your EventInvit account ({{email}}) has been deleted. Thank you for using EventInvit.</p>",
      "button_label": "",
      "button_url": "",
      "footer": "Did not ask for this? Contact {{support_email}} straight away."
@@ -365,17 +365,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Your EventInvit password was changed",
+     "subject": "Password Changed Successfully",
      "preheader": "If this was you, no action is needed.",
-     "heading": "Your password was changed",
-     "body": "<p>Hi {{client_name}}, the password for your EventInvit account was changed on {{login_time}}.</p>\n<p>If you made this change, you are all set.</p>\n<p><strong>Device:</strong> {{device}} · {{browser}}</p>\n<p><strong>Location:</strong> {{ip_location}}</p>",
+     "heading": "Password Changed Successfully",
+     "body": "<p>Dear {{client_name}}, your account password was changed on {{login_time}}. If this wasn't you, contact support.</p>\n<p><strong>Device:</strong> {{device}} · {{browser}}</p>\n<p><strong>Location:</strong> {{ip_location}}</p>",
      "button_label": "This wasn't me - secure my account",
      "button_url": "{{login_link}}",
      "footer": "This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
     },
     "in_app": {
-     "title": "Your password was changed",
-     "content": "Hi {{client_name}}, the password for your EventInvit account was changed on {{login_time}}. If you made this change, you are all set."
+     "title": "Password Updated",
+     "content": "Your password was changed successfully."
     }
    }
   },
@@ -402,17 +402,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Your account email or mobile was changed",
+     "subject": "Contact Details Changed",
      "preheader": "Your sign-in details were updated.",
-     "heading": "Your contact details were changed",
-     "body": "<p>Hi {{client_name}}, the email or mobile number on your EventInvit account was changed.</p>\n<p><strong>Old:</strong> {{old_email}}</p>\n<p><strong>New:</strong> {{new_email}}</p>\n<p><strong>When:</strong> {{login_time}}</p>",
+     "heading": "Contact Details Changed",
+     "body": "<p>Dear {{client_name}}, your registered email address or mobile number was changed on {{login_time}}. If this wasn't you, contact support.</p>\n<p><strong>Old:</strong> {{old_email}}</p>\n<p><strong>New:</strong> {{new_email}}</p>\n<p><strong>When:</strong> {{login_time}}</p>",
      "button_label": "This wasn't me",
      "button_url": "{{login_link}}",
      "footer": "We send this notice to both the old and the new address. This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
     },
     "in_app": {
-     "title": "Your contact details were changed",
-     "content": "Hi {{client_name}}, the email or mobile number on your EventInvit account was changed."
+     "title": "Contact Details Updated",
+     "content": "Your new email address or mobile number has been verified and saved."
     }
    }
   },
@@ -439,17 +439,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "New sign-in to your EventInvit account",
+     "subject": "New Login Detected",
      "preheader": "We noticed a sign-in from a new device.",
-     "heading": "New sign-in detected",
-     "body": "<p>Hi {{client_name}}, your account was just used to sign in on a device we have not seen before.</p>\n<p><strong>Device:</strong> {{device}} · {{browser}}</p>\n<p><strong>Location:</strong> {{ip_location}}</p>\n<p><strong>When:</strong> {{login_time}}</p>",
+     "heading": "New Login Detected",
+     "body": "<p>Dear {{client_name}}, your account was accessed from {{device}} on {{login_time}}. If this wasn't you, secure your account immediately.</p>\n<p><strong>Device:</strong> {{device}} · {{browser}}</p>\n<p><strong>Location:</strong> {{ip_location}}</p>\n<p><strong>When:</strong> {{login_time}}</p>",
      "button_label": "Review my devices",
      "button_url": "{{login_link}}",
      "footer": "If this was you, you can ignore this email. If not, change your password and sign out of all devices. This is a security notice for your EventInvit account. It is sent even if you turned off other emails."
     },
     "in_app": {
-     "title": "New sign-in detected",
-     "content": "Hi {{client_name}}, your account was just used to sign in on a device we have not seen before."
+     "title": "New Device Login",
+     "content": "A login was detected from {{device}}."
     }
    }
   },
@@ -553,17 +553,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Date booked: {{event_date}}",
+     "subject": "Your Event Booking Is Confirmed!",
      "preheader": "Your slot is reserved on the Free plan. Create your event next.",
-     "heading": "Your date is booked",
-     "body": "<p>Hi {{client_name}}, {{event_date}} is now reserved for you on the {{plan_name}} plan.</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Plan:</strong> {{plan_name}}</p>",
+     "heading": "Your Event Booking Is Confirmed!",
+     "body": "<p>Dear {{client_name}}, your event date {{event_date}} has been successfully allotted. Booking ID: {{booking_id}}. You can now create your event.</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Plan:</strong> {{plan_name}}</p>",
      "button_label": "Create your event",
      "button_url": "{{create_event_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Your date is booked",
-     "content": "Hi {{client_name}}, {{event_date}} is now reserved for you on the {{plan_name}} plan."
+     "title": "Event Booked Successfully",
+     "content": "Your event date {{event_date}} is confirmed. Create your event now."
     }
    }
   },
@@ -591,17 +591,52 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Payment received - receipt {{txn_id}}",
+     "subject": "Payment Successful – Receipt",
      "preheader": "Thank you. Your date is booked and your invoice is attached.",
-     "heading": "Payment successful",
-     "body": "<p>Hi {{client_name}}, thank you for your payment. Your date is booked on the {{plan_name}} plan.</p>\n<p><strong>Amount:</strong> {{amount}}</p>\n<p><strong>Plan:</strong> {{plan_name}}</p>\n<p><strong>Event date:</strong> {{event_date}}</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Transaction:</strong> {{txn_id}}</p>\n<p><strong>Card:</strong> •••• {{card_last4}}</p>",
+     "heading": "Payment Successful – Receipt",
+     "body": "<p>Dear {{client_name}}, we have received your payment of {{amount}} for {{plan_name}}. Transaction ID: {{txn_id}}.</p>\n<p><strong>Amount:</strong> {{amount}}</p>\n<p><strong>Plan:</strong> {{plan_name}}</p>\n<p><strong>Event date:</strong> {{event_date}}</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Transaction:</strong> {{txn_id}}</p>\n<p><strong>Card:</strong> •••• {{card_last4}}</p>",
      "button_label": "Download invoice",
      "button_url": "{{invoice_link}}",
      "footer": "Keep this email for your records. You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Payment successful",
-     "content": "Hi {{client_name}}, thank you for your payment. Your date is booked on the {{plan_name}} plan."
+     "title": "Payment Successful",
+     "content": "Your payment of {{amount}} has been confirmed."
+    }
+   }
+  },
+  {
+   "key": "invoice_generated",
+   "label": "Invoice generated (PAY-005)",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "plan_name",
+    "invoice_number",
+    "amount",
+    "invoice_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your EventInvit Invoice Is Ready",
+     "preheader": "Your invoice is ready to download.",
+     "heading": "Your EventInvit Invoice Is Ready",
+     "body": "<p>Dear {{client_name}}, your invoice {{invoice_number}} for {{amount}} is available.</p>\n<p><strong>Invoice:</strong> {{invoice_number}}</p>\n<p><strong>Amount:</strong> {{amount}}</p>\n<p><strong>Plan:</strong> {{plan_name}}</p>",
+     "button_label": "Download invoice",
+     "button_url": "{{invoice_link}}",
+     "footer": "Keep this email for your records. You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Invoice Generated",
+     "content": "Your invoice {{invoice_number}} is ready to download."
     }
    }
   },
@@ -630,17 +665,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Your booked date {{event_date}} is waiting",
+     "subject": "Your Event Is Ready to Be Created",
      "preheader": "Your slot is reserved - create your event so guests can be invited.",
-     "heading": "Finish setting up your event",
-     "body": "<p>Hi {{client_name}}, you booked {{event_date}} but have not created the event yet. Your slot stays reserved; it only takes a few minutes to finish.</p>\n<p>If you started already, we saved your progress.</p>",
+     "heading": "Your Event Is Ready to Be Created",
+     "body": "<p>Dear {{client_name}}, your booked event date {{event_date}} is approaching. Please create your event now.</p>",
      "button_label": "Continue setup",
      "button_url": "{{create_event_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Finish setting up your event",
-     "content": "Hi {{client_name}}, you booked {{event_date}} but have not created the event yet. Your slot stays reserved; it only takes a few minutes to finish. If you started already, we saved your progress."
+     "title": "Event Creation Pending",
+     "content": "Your allotted date is {{event_date}}. Create your event now."
     }
    }
   },
@@ -670,17 +705,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Important: a change to your booking {{booking_id}}",
+     "subject": "Event Booking Rescheduled",
      "preheader": "Our team had to change your booked date. Please read.",
-     "heading": "Your booked date has changed",
-     "body": "<p>Hi {{client_name}}, we are sorry - our team had to change your booking for {{event_date}}.</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Note from our team:</strong> {{admin_note}}</p>",
+     "heading": "Event Booking Rescheduled",
+     "body": "<p>Dear {{client_name}}, your booking {{booking_id}} has been changed. Your event date is now {{event_date}}.</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>\n<p><strong>Note from our team:</strong> {{admin_note}}</p>",
      "button_label": "Choose another date",
      "button_url": "{{create_event_link}}",
      "footer": "Any amount paid for this booking is kept on your account. Questions? Write to {{support_email}}."
     },
     "in_app": {
-     "title": "Your booked date has changed",
-     "content": "Hi {{client_name}}, we are sorry - our team had to change your booking for {{event_date}}."
+     "title": "Event Date Updated",
+     "content": "Your booking {{booking_id}} has been rescheduled."
     }
    }
   },
@@ -725,6 +760,240 @@
    }
   },
   {
+   "key": "payment_failed",
+   "label": "Payment failed (PAY-002, needs payment gateway)",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "payment_gateway",
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "txn_id",
+    "payment_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Payment Unsuccessful",
+     "preheader": "Your payment could not be completed. Your card was not charged twice.",
+     "heading": "Payment Unsuccessful",
+     "body": "<p>Dear {{client_name}}, we couldn't complete your payment of {{amount}}. Reference: {{txn_id}}. Please check your payment status before trying again.</p>\n<p><strong>Amount:</strong> {{amount}}</p>\n<p><strong>Plan:</strong> {{plan_name}}</p>\n<p><strong>Event date:</strong> {{event_date}}</p>\n<p><strong>Reference:</strong> {{txn_id}}</p>",
+     "button_label": "Try again",
+     "button_url": "{{payment_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Payment Failed",
+     "content": "Your transaction of {{amount}} was unsuccessful."
+    }
+   }
+  },
+  {
+   "key": "payment_pending",
+   "label": "Payment pending confirmation (PAY-003, needs payment gateway)",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "payment_gateway",
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "txn_id",
+    "payment_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Payment Confirmation Pending",
+     "preheader": "Please do not pay again while we confirm this payment.",
+     "heading": "Payment Confirmation Pending",
+     "body": "<p>Dear {{client_name}}, your payment of {{amount}} is awaiting confirmation. Please do not make another payment until the status is updated.</p>\n<p><strong>Amount:</strong> {{amount}}</p>\n<p><strong>Plan:</strong> {{plan_name}}</p>\n<p><strong>Reference:</strong> {{txn_id}}</p>",
+     "button_label": null,
+     "button_url": null,
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Payment Under Verification",
+     "content": "Your transaction of {{amount}} is awaiting confirmation."
+    }
+   }
+  },
+  {
+   "key": "payment_received_booking_review",
+   "label": "Payment received, booking not yet confirmed (PAY-004, needs payment gateway)",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "payment_gateway",
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "txn_id",
+    "payment_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Payment Received – Booking Under Review",
+     "preheader": "We have your payment and are confirming your booking.",
+     "heading": "Payment Received – Booking Under Review",
+     "body": "<p>Dear {{client_name}}, we received your payment of {{amount}}, but your booking is not yet confirmed. Reference: {{txn_id}}. We will update you after verification.</p>\n<p><strong>Amount:</strong> {{amount}}</p>\n<p><strong>Event date:</strong> {{event_date}}</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Reference:</strong> {{txn_id}}</p>",
+     "button_label": null,
+     "button_url": null,
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Booking Verification Pending",
+     "content": "Your payment is received. Do not make another payment."
+    }
+   }
+  },
+  {
+   "key": "refund_initiated",
+   "label": "Refund initiated (PAY-006, needs payment gateway)",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "payment_gateway",
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "txn_id",
+    "refund_id",
+    "refund_days",
+    "invoice_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Refund Initiated",
+     "preheader": "Your refund is on its way.",
+     "heading": "Refund Initiated",
+     "body": "<p>Dear {{client_name}}, your refund of {{amount}} has been initiated. Refund ID: {{refund_id}}. Expected processing time: {{refund_days}} working days.</p>\n<p><strong>Amount:</strong> {{amount}}</p>\n<p><strong>Refund ID:</strong> {{refund_id}}</p>\n<p><strong>Booking ID:</strong> {{booking_id}}</p>\n<p><strong>Original payment:</strong> {{txn_id}}</p>",
+     "button_label": null,
+     "button_url": null,
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Refund Processing",
+     "content": "Your refund of {{amount}} has been initiated."
+    }
+   }
+  },
+  {
+   "key": "refund_completed",
+   "label": "Refund completed (PAY-007, needs payment gateway)",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "payment_gateway",
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "txn_id",
+    "refund_id",
+    "refund_days",
+    "invoice_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Refund Completed Successfully",
+     "preheader": "Your refund has been processed.",
+     "heading": "Refund Completed Successfully",
+     "body": "<p>Dear {{client_name}}, your refund of {{amount}} has been processed. Refund reference: {{refund_id}}. Your bank may need some extra time to show the amount.</p>\n<p><strong>Amount:</strong> {{amount}}</p>\n<p><strong>Refund ID:</strong> {{refund_id}}</p>\n<p><strong>Original payment:</strong> {{txn_id}}</p>",
+     "button_label": "View invoice",
+     "button_url": "{{invoice_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Refund Completed",
+     "content": "Your refund of {{amount}} has been processed."
+    }
+   }
+  },
+  {
+   "key": "refund_failed",
+   "label": "Refund failed (PAY-008, needs payment gateway)",
+   "section": "A3",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "payment_gateway",
+   "variables": [
+    "client_name",
+    "plan_name",
+    "event_date",
+    "booking_id",
+    "amount",
+    "txn_id",
+    "refund_id",
+    "refund_days",
+    "invoice_link",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Refund Processing Update",
+     "preheader": "Your refund needs attention.",
+     "heading": "Refund Processing Update",
+     "body": "<p>Dear {{client_name}}, we couldn't complete your refund for reference {{refund_id}}. Please contact support at {{support_email}} for assistance.</p>\n<p><strong>Amount:</strong> {{amount}}</p>\n<p><strong>Refund ID:</strong> {{refund_id}}</p>\n<p><strong>Original payment:</strong> {{txn_id}}</p>",
+     "button_label": null,
+     "button_url": null,
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Refund Requires Attention",
+     "content": "Your refund {{refund_id}} could not be completed. Please contact support."
+    }
+   }
+  },
+  {
    "key": "plan_changed",
    "label": "Plan upgraded / changed (by you or admin)",
    "section": "A4",
@@ -750,17 +1019,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Your plan is now {{new_plan}}",
+     "subject": "Plan Upgrade Successful",
      "preheader": "The change is active straight away.",
-     "heading": "Plan changed",
-     "body": "<p>Hi {{client_name}}, your plan has changed from {{old_plan}} to {{new_plan}}. The new limits and features are available now.</p>\n<p><strong>Previous plan:</strong> {{old_plan}}</p>\n<p><strong>New plan:</strong> {{new_plan}}</p>\n<p><strong>Amount:</strong> {{amount}}</p>",
+     "heading": "Plan Upgrade Successful",
+     "body": "<p>Your plan has been changed from {{old_plan}} to {{new_plan}}. Your additional features are now available.</p>\n<p><strong>Previous plan:</strong> {{old_plan}}</p>\n<p><strong>New plan:</strong> {{new_plan}}</p>\n<p><strong>Amount:</strong> {{amount}}</p>",
      "button_label": "View my plan",
      "button_url": "{{upgrade_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Plan changed",
-     "content": "Hi {{client_name}}, your plan has changed from {{old_plan}} to {{new_plan}}. The new limits and features are available now."
+     "title": "Plan Changed Successfully",
+     "content": "Your {{new_plan}} plan features are available."
     }
    }
   },
@@ -831,17 +1100,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Your {{old_plan}} plan ends on {{end_date}}",
+     "subject": "Your Plan Expires Soon",
      "preheader": "7 days left - renew to keep every feature.",
-     "heading": "Your plan ends in 7 days",
-     "body": "<p>Hi {{client_name}}, your {{old_plan}} plan ends on {{end_date}}. Renew before then so your guests keep full access to your event.</p>",
+     "heading": "Your Plan Expires Soon",
+     "body": "<p>Your {{old_plan}} plan will expire on {{end_date}}. Review the available renewal options to avoid service interruptions.</p>",
      "button_label": "Renew plan",
      "button_url": "{{upgrade_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Your plan ends in 7 days",
-     "content": "Hi {{client_name}}, your {{old_plan}} plan ends on {{end_date}}. Renew before then so your guests keep full access to your event."
+     "title": "Plan Expiring Soon",
+     "content": "Your plan expires on {{end_date}}."
     }
    }
   },
@@ -1098,17 +1367,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Guest limit reached - {{waiting_count}} waiting",
+     "subject": "Guest Limit Reached",
      "preheader": "Your plan allows {{max_guests}} guests. New guests are on the waiting list.",
-     "heading": "Your guest list is full",
-     "body": "<p>Hi {{client_name}}, your event has reached the {{max_guests}}-guest limit of your plan. {{waiting_count}} people are on the waiting list and will join automatically once space is available.</p>",
+     "heading": "Guest Limit Reached",
+     "body": "<p>You have reached your {{max_guests}}-guest limit under your plan. {{waiting_count}} people are on the waiting list. Please review the upgrade options.</p>",
      "button_label": "Increase guest limit",
      "button_url": "{{upgrade_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Your guest list is full",
-     "content": "Hi {{client_name}}, your event has reached the {{max_guests}}-guest limit of your plan. {{waiting_count}} people are on the waiting list and will join automatically once space is available."
+     "title": "Limit Reached",
+     "content": "Your guest list is full. Review your plan options to add more guests."
     }
    }
   },
@@ -1138,17 +1407,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "{{event_name}} is saved as a draft",
+     "subject": "Your Event Has Been Created!",
      "preheader": "A few steps left before you can invite guests.",
-     "heading": "Your event is created",
-     "body": "<p>Hi {{client_name}}, {{event_name}} on {{event_date}} is saved as a draft. Finish the setup and publish it to start inviting guests.</p>",
+     "heading": "Your Event Has Been Created!",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}} has been created successfully. Complete the required event details to prepare it for your guests.</p>",
      "button_label": "Continue setup",
      "button_url": "{{event_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Your event is created",
-     "content": "Hi {{client_name}}, {{event_name}} on {{event_date}} is saved as a draft. Finish the setup and publish it to start inviting guests."
+     "title": "Event Created",
+     "content": "Start completing your event menus and details."
     }
    }
   },
@@ -1178,17 +1447,367 @@
    ],
    "suggested": {
     "email": {
-     "subject": "{{event_name}} is live - share it now",
+     "subject": "Congratulations! Your Event Is Published",
      "preheader": "Your event link and QR code are ready.",
-     "heading": "Your event is live",
-     "body": "<p>Hi {{client_name}}, {{event_name}} is published. Guests can now open it with your link or QR code.</p>\n<p><strong>Event link:</strong> {{event_link}}</p>\n<p><strong>QR code:</strong> {{qr_link}}</p>",
+     "heading": "Congratulations! Your Event Is Published",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}} was published successfully. You can now use the invitation and RSVP features.</p>\n<p><strong>Event link:</strong> {{event_link}}</p>\n<p><strong>QR code:</strong> {{qr_link}}</p>",
      "button_label": "Share your event",
      "button_url": "{{event_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Your event is live",
-     "content": "Hi {{client_name}}, {{event_name}} is published. Guests can now open it with your link or QR code."
+     "title": "Event Published Successfully",
+     "content": "Your event is published. Start managing your invitations and RSVPs."
+    }
+   }
+  },
+  {
+   "key": "event_publish_ready",
+   "label": "Event eligible for publishing (PUB-001, needs publish step)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "publish_step",
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "pending_menu_count",
+    "pending_menu_list",
+    "publish_date",
+    "scheduled_publish_time",
+    "error_reference",
+    "support_email"
+   ],
+   "suggested": {
+    "in_app": {
+     "title": "Ready to Publish",
+     "content": "All publishing requirements have been satisfied."
+    },
+    "email": {
+     "subject": "Your Event Is Eligible for Publishing",
+     "preheader": "Everything needed is done. Review and publish.",
+     "heading": "Your Event Is Eligible for Publishing",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}} now meets the publishing requirements. Please review and publish your event.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Date:</strong> {{event_date}}</p>",
+     "button_label": "Open your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    }
+   }
+  },
+  {
+   "key": "event_publish_blocked_menus",
+   "label": "Publishing blocked - menus incomplete (PUB-002, needs publish step)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "publish_step",
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "pending_menu_count",
+    "pending_menu_list",
+    "publish_date",
+    "scheduled_publish_time",
+    "error_reference",
+    "support_email"
+   ],
+   "suggested": {
+    "in_app": {
+     "title": "Publishing Blocked",
+     "content": "Complete {{pending_menu_count}} mandatory requirements to publish your event."
+    },
+    "email": {
+     "subject": "Event Publishing Requires Attention",
+     "preheader": "A few required details are still missing.",
+     "heading": "Event Publishing Requires Attention",
+     "body": "<p>Your event {{event_name}} could not be published because the following requirements are incomplete: {{pending_menu_list}}.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Pending items:</strong> {{pending_menu_count}}</p>",
+     "button_label": "Open your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    }
+   }
+  },
+  {
+   "key": "event_publish_not_open",
+   "label": "Publishing period not started (PUB-003, needs publish step)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "publish_step",
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "pending_menu_count",
+    "pending_menu_list",
+    "publish_date",
+    "scheduled_publish_time",
+    "error_reference",
+    "support_email"
+   ],
+   "suggested": {
+    "in_app": {
+     "title": "Publishing Not Available Yet",
+     "content": "Your event can be published from {{publish_date}}."
+    }
+   }
+  },
+  {
+   "key": "event_publish_blocked_payment",
+   "label": "Publishing blocked - payment pending (PUB-004, needs publish step)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "publish_step + payment_gateway",
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "pending_menu_count",
+    "pending_menu_list",
+    "publish_date",
+    "scheduled_publish_time",
+    "error_reference",
+    "support_email"
+   ],
+   "suggested": {
+    "in_app": {
+     "title": "Payment Pending",
+     "content": "Your event cannot be published until payment is confirmed."
+    },
+    "email": {
+     "subject": "Payment Required to Publish Your Event",
+     "preheader": "Your payment needs to be confirmed first.",
+     "heading": "Payment Required to Publish Your Event",
+     "body": "<p>Your event {{event_name}} cannot be published because payment confirmation is pending. Please review your payment status.</p>\n<p><strong>Event:</strong> {{event_name}}</p>",
+     "button_label": "Open your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    }
+   }
+  },
+  {
+   "key": "event_publish_failed",
+   "label": "Publishing failed - system error (PUB-006, needs publish step)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "publish_step",
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "pending_menu_count",
+    "pending_menu_list",
+    "publish_date",
+    "scheduled_publish_time",
+    "error_reference",
+    "support_email"
+   ],
+   "suggested": {
+    "in_app": {
+     "title": "Publishing Failed",
+     "content": "Please try again. Reference: {{error_reference}}."
+    },
+    "email": {
+     "subject": "Event Publishing Unsuccessful",
+     "preheader": "Something went wrong on our side.",
+     "heading": "Event Publishing Unsuccessful",
+     "body": "<p>We couldn't publish your event {{event_name}} due to a technical issue. Reference ID: {{error_reference}}. Please try again or contact support.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Reference:</strong> {{error_reference}}</p>",
+     "button_label": "Open your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    }
+   }
+  },
+  {
+   "key": "event_publish_scheduled",
+   "label": "Publishing scheduled (PUB-007, needs publish step)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "publish_step",
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "pending_menu_count",
+    "pending_menu_list",
+    "publish_date",
+    "scheduled_publish_time",
+    "error_reference",
+    "support_email"
+   ],
+   "suggested": {
+    "in_app": {
+     "title": "Publishing Scheduled",
+     "content": "Your event will be published at {{scheduled_publish_time}}."
+    },
+    "email": {
+     "subject": "Event Publishing Scheduled",
+     "preheader": "Your event will go live automatically.",
+     "heading": "Event Publishing Scheduled",
+     "body": "<p>Your event {{event_name}} is scheduled to be published on {{scheduled_publish_time}}.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Goes live:</strong> {{scheduled_publish_time}}</p>",
+     "button_label": "Open your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    }
+   }
+  },
+  {
+   "key": "event_publish_schedule_failed",
+   "label": "Scheduled publishing failed (PUB-008, needs publish step)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "publish_step",
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "pending_menu_count",
+    "pending_menu_list",
+    "publish_date",
+    "scheduled_publish_time",
+    "error_reference",
+    "support_email"
+   ],
+   "suggested": {
+    "in_app": {
+     "title": "Scheduled Publishing Failed",
+     "content": "Review your event publishing status."
+    },
+    "email": {
+     "subject": "Scheduled Publishing Unsuccessful",
+     "preheader": "Your event did not go live at the scheduled time.",
+     "heading": "Scheduled Publishing Unsuccessful",
+     "body": "<p>Your event {{event_name}} could not be published at the scheduled time. Please review the publishing requirements.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Scheduled for:</strong> {{scheduled_publish_time}}</p>",
+     "button_label": "Open your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    }
+   }
+  },
+  {
+   "key": "event_unpublished",
+   "label": "Event unpublished (PUB-009, needs publish step)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "publish_step",
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "pending_menu_count",
+    "pending_menu_list",
+    "publish_date",
+    "scheduled_publish_time",
+    "error_reference",
+    "support_email"
+   ],
+   "suggested": {
+    "in_app": {
+     "title": "Event Unpublished",
+     "content": "Review your event access and sharing status."
+    },
+    "email": {
+     "subject": "Your Event Has Been Unpublished",
+     "preheader": "Guests can no longer open your event.",
+     "heading": "Your Event Has Been Unpublished",
+     "body": "<p>Your event {{event_name}} has been unpublished. Guest access and sharing are paused until you publish it again.</p>\n<p><strong>Event:</strong> {{event_name}}</p>",
+     "button_label": "Open your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    }
+   }
+  },
+  {
+   "key": "event_republished",
+   "label": "Event republished (PUB-010, needs publish step)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "waiting_for": "publish_step",
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "pending_menu_count",
+    "pending_menu_list",
+    "publish_date",
+    "scheduled_publish_time",
+    "error_reference",
+    "support_email"
+   ],
+   "suggested": {
+    "in_app": {
+     "title": "Event Republished",
+     "content": "Your event is available again."
+    },
+    "email": {
+     "subject": "Event Republished Successfully",
+     "preheader": "Your event is live again.",
+     "heading": "Event Republished Successfully",
+     "body": "<p>Your event {{event_name}} has been republished successfully.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Event link:</strong> {{event_link}}</p>",
+     "button_label": "Open your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
     }
    }
   },
@@ -1218,17 +1837,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Invitations sent for {{event_name}}: {{delivered}} delivered",
+     "subject": "Invitation Delivery Summary",
      "preheader": "{{sent}} sent · {{delivered}} delivered · {{failed}} failed.",
-     "heading": "Invitation delivery report",
-     "body": "<p>Hi {{client_name}}, your invitations for {{event_name}} have finished sending.</p>\n<p><strong>Sent:</strong> {{sent}}</p>\n<p><strong>Delivered:</strong> {{delivered}}</p>\n<p><strong>Failed:</strong> {{failed}}</p>",
+     "heading": "Invitation Delivery Summary",
+     "body": "<p>Your invitations for {{event_name}} have been processed. Sent: {{sent}}. Failed: {{failed}}.</p>\n<p><strong>Sent:</strong> {{sent}}</p>\n<p><strong>Delivered:</strong> {{delivered}}</p>\n<p><strong>Failed:</strong> {{failed}}</p>",
      "button_label": "See who did not receive it",
      "button_url": "{{event_link}}",
      "footer": "Failed sends are usually a wrong or inactive number - fix it and resend from Guests. You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Invitation delivery report",
-     "content": "Hi {{client_name}}, your invitations for {{event_name}} have finished sending."
+     "title": "Invitations Processed",
+     "content": "{{sent}} sent and {{failed}} failed."
     }
    }
   },
@@ -1258,17 +1877,89 @@
    ],
    "suggested": {
     "email": {
-     "subject": "Tomorrow: {{event_name}}",
+     "subject": "Your Event Is Tomorrow!",
      "preheader": "{{confirmed}} guests confirmed. Here is your quick checklist.",
-     "heading": "Your event is tomorrow",
-     "body": "<p>Hi {{client_name}}, {{event_name}} is on {{event_date}}. Here is where things stand:</p>\n<p><strong>Guests:</strong> {{total_guests}}</p>\n<p><strong>Confirmed:</strong> {{confirmed}}</p>",
+     "heading": "Your Event Is Tomorrow!",
+     "body": "<p>Your event {{event_name}} is scheduled for tomorrow. Please review the agenda, guest list, venue and final preparations.</p>\n<p><strong>Guests:</strong> {{total_guests}}</p>\n<p><strong>Confirmed:</strong> {{confirmed}}</p>",
      "button_label": "Open event dashboard",
      "button_url": "{{event_link}}",
      "footer": "Tip: keep the QR scanner ready for check-in at the entrance. You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Your event is tomorrow",
-     "content": "Hi {{client_name}}, {{event_name}} is on {{event_date}}. Here is where things stand:"
+     "title": "Event Tomorrow",
+     "content": "Complete your final event preparations."
+    }
+   }
+  },
+  {
+   "key": "event_started",
+   "label": "Event started (LFC-004)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "total_guests",
+    "confirmed",
+    "checked_in"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your Event Has Started!",
+     "preheader": "Today is the day. Your event-day features are ready.",
+     "heading": "Your Event Has Started!",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}} has started. Your event-day features are available.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Guests:</strong> {{total_guests}}</p>\n<p><strong>Confirmed:</strong> {{confirmed}}</p>",
+     "button_label": "Manage your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Your Event Is Live!",
+     "content": "You can now manage your live event activities."
+    }
+   }
+  },
+  {
+   "key": "event_ended",
+   "label": "Event ended (LFC-005)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "event_date",
+    "event_link",
+    "total_guests",
+    "confirmed",
+    "checked_in"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your Event Has Ended",
+     "preheader": "Your after-event features are ready.",
+     "heading": "Your Event Has Ended",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}} has ended. You can now manage the available after-event activities.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Checked in:</strong> {{checked_in}}</p>",
+     "button_label": "Open your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Event Ended",
+     "content": "Manage your after-event activities."
     }
    }
   },
@@ -1297,23 +1988,23 @@
    ],
    "suggested": {
     "email": {
-     "subject": "How {{event_name}} went",
+     "subject": "Your Event Report Is Ready",
      "preheader": "Your event in numbers.",
-     "heading": "Thank you for hosting with EventInvit",
-     "body": "<p>Hi {{client_name}}, we hope {{event_name}} was a wonderful day. Here is a summary:</p>\n<p><strong>Guests invited:</strong> {{total_guests}}</p>\n<p><strong>Confirmed:</strong> {{confirmed}}</p>\n<p><strong>Checked in:</strong> {{checked_in}}</p>",
+     "heading": "Your Event Report Is Ready",
+     "body": "<p>The final report for {{event_name}} is available. View it from your Organizer dashboard.</p>\n<p><strong>Guests invited:</strong> {{total_guests}}</p>\n<p><strong>Confirmed:</strong> {{confirmed}}</p>\n<p><strong>Checked in:</strong> {{checked_in}}</p>",
      "button_label": "See full analytics",
      "button_url": "{{event_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Thank you for hosting with EventInvit",
-     "content": "Hi {{client_name}}, we hope {{event_name}} was a wonderful day. Here is a summary:"
+     "title": "Event Report Generated",
+     "content": "View your event report."
     }
    }
   },
   {
    "key": "date_request_received",
-   "label": "Date request received (acknowledgement)",
+   "label": "Support request received - email reply (SUP-001)",
    "section": "A6",
    "audience": "organizer",
    "also": [],
@@ -1330,27 +2021,74 @@
     "guest_name",
     "event_name",
     "message_preview",
-    "chat_link"
+    "chat_link",
+    "ticket_no",
+    "contact_method",
+    "contact_mobile",
+    "preferred_call_time",
+    "approval_expiry"
    ],
    "suggested": {
     "email": {
-     "subject": "We received your date request",
-     "preheader": "Our team will reply within 1 working day.",
-     "heading": "Request received",
-     "body": "<p>Hi {{client_name}}, thank you - we have received your request for {{request_dates}}. Our team will review it and reply soon.</p>\n<p><strong>Dates requested:</strong> {{request_dates}}</p>\n<p><strong>Status:</strong> Under review</p>",
-     "button_label": "",
-     "button_url": "",
+     "subject": "Support Request Received",
+     "preheader": "We have your request. Our team will reply by email.",
+     "heading": "Support Request Received",
+     "body": "<p>Dear {{client_name}}, your support request {{ticket_no}} for the unavailable date {{request_dates}} has been received. Our team will review it and reply by email.</p>\n<p><strong>Ticket:</strong> {{ticket_no}}</p>\n<p><strong>Dates requested:</strong> {{request_dates}}</p>\n<p><strong>Status:</strong> {{request_status}}</p>",
+     "button_label": "View your request",
+     "button_url": "{{chat_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Request received",
-     "content": "Hi {{client_name}}, thank you - we have received your request for {{request_dates}}. Our team will review it and reply soon."
+     "title": "Support Request Received",
+     "content": "Your request {{ticket_no}} is awaiting Super Admin review."
+    }
+   }
+  },
+  {
+   "key": "date_request_callback",
+   "label": "Callback request received (SUP-004)",
+   "section": "A6",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "request_dates",
+    "request_status",
+    "admin_note",
+    "guest_name",
+    "event_name",
+    "message_preview",
+    "chat_link",
+    "ticket_no",
+    "contact_method",
+    "contact_mobile",
+    "preferred_call_time",
+    "approval_expiry"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Callback Request Received",
+     "preheader": "Our team will call you back.",
+     "heading": "Callback Request Received",
+     "body": "<p>Dear {{client_name}}, your callback request has been received. Reference ID: {{ticket_no}}. Our team will contact you on {{contact_mobile}} ({{preferred_call_time}}) about {{request_dates}}.</p>\n<p><strong>Ticket:</strong> {{ticket_no}}</p>\n<p><strong>Dates requested:</strong> {{request_dates}}</p>\n<p><strong>Call on:</strong> {{contact_mobile}}</p>\n<p><strong>Preferred time:</strong> {{preferred_call_time}}</p>",
+     "button_label": "View your request",
+     "button_url": "{{chat_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Callback Requested",
+     "content": "Your callback request {{ticket_no}} has been submitted."
     }
    }
   },
   {
    "key": "date_request_approved",
-   "label": "Date request approved by admin",
+   "label": "Support request resolved - date approved (SUP-003)",
    "section": "A6",
    "audience": "organizer",
    "also": [],
@@ -1367,27 +2105,32 @@
     "guest_name",
     "event_name",
     "message_preview",
-    "chat_link"
+    "chat_link",
+    "ticket_no",
+    "contact_method",
+    "contact_mobile",
+    "preferred_call_time",
+    "approval_expiry"
    ],
    "suggested": {
     "email": {
-     "subject": "Good news - your date request is approved",
-     "preheader": "{{request_dates}} is available for you. Book it now.",
-     "heading": "Your request is approved",
-     "body": "<p>Hi {{client_name}}, your request for {{request_dates}} has been approved.</p>\n<p><strong>Dates:</strong> {{request_dates}}</p>\n<p><strong>Note from our team:</strong> {{admin_note}}</p>",
-     "button_label": "Book this date",
+     "subject": "Special Booking Request Approved",
+     "preheader": "Your requested date is now available to you.",
+     "heading": "Special Booking Request Approved",
+     "body": "<p>Dear {{client_name}}, your support request {{ticket_no}} has been resolved. Your request for {{request_dates}} has been approved. Please complete your booking before {{approval_expiry}}.</p>\n<p><strong>Ticket:</strong> {{ticket_no}}</p>\n<p><strong>Approved dates:</strong> {{request_dates}}</p>\n<p><strong>Book before:</strong> {{approval_expiry}}</p>\n<p><strong>Note from our team:</strong> {{admin_note}}</p>",
+     "button_label": "View your request",
      "button_url": "{{chat_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "Your request is approved",
-     "content": "Hi {{client_name}}, your request for {{request_dates}} has been approved."
+     "title": "Request Approved",
+     "content": "Request {{ticket_no}}: your approved date is available for booking until {{approval_expiry}}."
     }
    }
   },
   {
    "key": "date_request_rejected",
-   "label": "Date request rejected by admin",
+   "label": "Support request resolved - date rejected (SUP-003)",
    "section": "A6",
    "audience": "organizer",
    "also": [],
@@ -1404,21 +2147,26 @@
     "guest_name",
     "event_name",
     "message_preview",
-    "chat_link"
+    "chat_link",
+    "ticket_no",
+    "contact_method",
+    "contact_mobile",
+    "preferred_call_time",
+    "approval_expiry"
    ],
    "suggested": {
     "email": {
-     "subject": "Update on your date request",
-     "preheader": "Unfortunately the requested dates are not available.",
-     "heading": "We could not approve your request",
-     "body": "<p>Hi {{client_name}}, we are sorry - your request for {{request_dates}} could not be approved.</p>\n<p><strong>Reason:</strong> {{admin_note}}</p>",
-     "button_label": "Check other dates",
+     "subject": "Special Booking Request Update",
+     "preheader": "We could not approve your requested date.",
+     "heading": "Special Booking Request Update",
+     "body": "<p>Dear {{client_name}}, your support request {{ticket_no}} has been resolved. Unfortunately, we couldn't approve your request for {{request_dates}}. Please select an alternative date.</p>\n<p><strong>Ticket:</strong> {{ticket_no}}</p>\n<p><strong>Dates requested:</strong> {{request_dates}}</p>\n<p><strong>Reason:</strong> {{admin_note}}</p>",
+     "button_label": "View your request",
      "button_url": "{{chat_link}}",
      "footer": "You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "We could not approve your request",
-     "content": "Hi {{client_name}}, we are sorry - your request for {{request_dates}} could not be approved."
+     "title": "Request Rejected",
+     "content": "Request {{ticket_no}} could not be approved. Please select another available date."
     }
    }
   },
@@ -1482,7 +2230,47 @@
     "message_preview",
     "chat_link"
    ],
-   "suggested": null
+   "suggested": {
+    "in_app": {
+     "title": "New Guest Message",
+     "content": "You have received a message from {{guest_name}}."
+    }
+   }
+  },
+  {
+   "key": "system_maintenance",
+   "label": "Scheduled maintenance notice (SUP-005, sent by Super Admin)",
+   "section": "A6",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "send_mode": "manual",
+   "variables": [
+    "client_name",
+    "maintenance_start",
+    "maintenance_end",
+    "affected_services",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Scheduled Maintenance Notification",
+     "preheader": "Some EventInvit services may be briefly unavailable.",
+     "heading": "Scheduled Maintenance Notification",
+     "body": "<p>Dear {{client_name}}, EventInvit maintenance is scheduled from {{maintenance_start}} to {{maintenance_end}}. Some services may be temporarily unavailable.</p>\n<p><strong>Starts:</strong> {{maintenance_start}}</p>\n<p><strong>Ends:</strong> {{maintenance_end}}</p>\n<p><strong>Affected:</strong> {{affected_services}}</p>",
+     "button_label": null,
+     "button_url": null,
+     "footer": "Your events, guests and invitations are safe. Questions? Write to {{support_email}}."
+    },
+    "in_app": {
+     "title": "Scheduled Maintenance",
+     "content": "Some services may be temporarily unavailable from {{maintenance_start}} to {{maintenance_end}}."
+    }
+   }
   },
   {
    "key": "rsvp_received",
@@ -1508,17 +2296,17 @@
    ],
    "suggested": {
     "email": {
-     "subject": "{{guest_name}} replied: {{rsvp_status}}",
+     "subject": "New RSVP Received",
      "preheader": "New RSVP for {{event_name}}.",
-     "heading": "New RSVP",
-     "body": "<p>Hi {{client_name}}, {{guest_name}} has replied to {{event_name}}.</p>\n<p><strong>Answer:</strong> {{rsvp_status}}</p>\n<p><strong>Guests coming:</strong> {{guest_count}}</p>",
+     "heading": "New RSVP Received",
+     "body": "<p>{{guest_name}} has submitted an RSVP for {{event_name}}.</p>\n<p><strong>Answer:</strong> {{rsvp_status}}</p>\n<p><strong>Guests coming:</strong> {{guest_count}}</p>",
      "button_label": "View RSVPs",
      "button_url": "{{chat_link}}",
      "footer": "You can switch RSVP emails to a daily digest in Settings → Notifications. You are receiving this because you have an organizer account on EventInvit."
     },
     "in_app": {
-     "title": "New RSVP",
-     "content": "Hi {{client_name}}, {{guest_name}} has replied to {{event_name}}."
+     "title": "New RSVP Received",
+     "content": "{{guest_name}} has submitted an RSVP for {{event_name}}."
     }
    }
   },
