@@ -35,10 +35,10 @@ const nameOf = (t) => t.label.replace(/\s*\([^)]*\)\s*$/, '').trim();
 
 /** Channels = Jamal's ticks in the catalogue (in-app always goes with push). */
 const payloadOf = (t) => {
-    const e = t.suggested.email;
+    const e = t.channels.includes('email') ? t.suggested.email : null;
     const i = t.channels.includes('in_app') ? t.suggested.in_app : null;
     const w = t.channels.includes('whatsapp') ? t.suggested.whatsapp : null;
-    const channels = ['email', ...(w ? ['whatsapp'] : []), ...(i ? ['in_app', 'push'] : [])];
+    const channels = [...(e ? ['email'] : []), ...(w ? ['whatsapp'] : []), ...(i ? ['in_app', 'push'] : [])];
     return {
         ...(w ? {
             whatsapp_template_name: w.template_name,
@@ -55,13 +55,15 @@ const payloadOf = (t) => {
         trigger_key: t.key,
         channels,
         is_active: t.waiting_for || t.send_mode ? 0 : 1,
-        email_subject: e.subject,
-        email_preheader: e.preheader,
-        email_heading: e.heading,
-        email_body: e.body,
-        email_button_label: e.button_label,
-        email_button_url: e.button_url,
-        email_footer: e.footer,
+        ...(e ? {
+            email_subject: e.subject,
+            email_preheader: e.preheader,
+            email_heading: e.heading,
+            email_body: e.body,
+            email_button_label: e.button_label,
+            email_button_url: e.button_url,
+            email_footer: e.footer,
+        } : {}),
         title: i ? i.title : null,
         content: i ? i.content : null,
     };
@@ -80,7 +82,11 @@ const payloadOf = (t) => {
         return;
     }
 
-    const wanted = catalog.triggers.filter((t) => t.section.startsWith('A') && t.suggested && t.suggested.email);
+    // Email wording, or an on-hold In-App-only trigger (setup milestone 25% / progress reduced, publish not open).
+    const inAppOnHold = (t) => t.channels.length === 1 && t.channels[0] === 'in_app' && t.suggested.in_app
+        && (t.waiting_for || t.send_mode);
+    const wanted = catalog.triggers.filter((t) => t.section.startsWith('A') && t.suggested
+        && (t.suggested.email || inAppOnHold(t)));
     const existing = await NotificationTemplate.findAll({
         where: { trigger_key: wanted.map((t) => t.key) }, attributes: ['id', 'trigger_key'], paranoid: false,
     });

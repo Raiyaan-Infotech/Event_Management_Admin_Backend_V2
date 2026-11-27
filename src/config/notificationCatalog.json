@@ -1734,6 +1734,252 @@
    }
   },
   {
+   "key": "setup_milestone_25",
+   "label": "Event setup 25% complete (MLS-001)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "completion_percentage",
+    "pending_menu_count",
+    "pending_menu_list",
+    "setup_deadline",
+    "days_remaining",
+    "event_link"
+   ],
+   "suggested": {
+    "in_app": {
+     "title": "Event Setup Started!",
+     "content": "You have completed 25% of your event setup. Keep going."
+    }
+   },
+   "waiting_for": "setup_progress"
+  },
+  {
+   "key": "setup_milestone_50",
+   "label": "Event setup 50% complete (MLS-002)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "completion_percentage",
+    "pending_menu_count",
+    "pending_menu_list",
+    "setup_deadline",
+    "days_remaining",
+    "event_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "You're Halfway There!",
+     "preheader": "Half of your event setup is done.",
+     "heading": "You're Halfway There!",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}} is 50% complete. Continue updating the required event details.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Setup complete:</strong> {{completion_percentage}}%</p>",
+     "button_label": "Continue setup",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "50% Milestone Completed",
+     "content": "Half of your event setup is complete."
+    }
+   },
+   "waiting_for": "setup_progress"
+  },
+  {
+   "key": "setup_milestone_75",
+   "label": "Event setup 75% complete (MLS-003)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "completion_percentage",
+    "pending_menu_count",
+    "pending_menu_list",
+    "setup_deadline",
+    "days_remaining",
+    "event_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your Event Is Almost Ready!",
+     "preheader": "Only a few menus left.",
+     "heading": "Your Event Is Almost Ready!",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}} is 75% complete. Please complete the remaining required menus.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Pending menus:</strong> {{pending_menu_list}}</p>",
+     "button_label": "Complete your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "75% Milestone Completed",
+     "content": "Your event is almost ready to publish."
+    }
+   },
+   "waiting_for": "setup_progress"
+  },
+  {
+   "key": "setup_milestone_100",
+   "label": "Event setup 100% complete (MLS-004)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "completion_percentage",
+    "pending_menu_count",
+    "pending_menu_list",
+    "setup_deadline",
+    "days_remaining",
+    "event_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Your Event Setup Is Complete!",
+     "preheader": "Review your event before publishing.",
+     "heading": "Your Event Setup Is Complete!",
+     "body": "<p>Congratulations, {{client_name}}! All mandatory event setup requirements for {{event_name}} are complete. Review your event before publishing.</p>\n<p><strong>Event:</strong> {{event_name}}</p>",
+     "button_label": "Review your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "100% Setup Completed",
+     "content": "Review your event and proceed to publishing."
+    }
+   },
+   "waiting_for": "setup_progress"
+  },
+  {
+   "key": "setup_menus_pending",
+   "label": "Mandatory menus incomplete (MLS-005)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "completion_percentage",
+    "pending_menu_count",
+    "pending_menu_list",
+    "setup_deadline",
+    "days_remaining",
+    "event_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Complete Your Pending Event Details",
+     "preheader": "{{pending_menu_count}} mandatory menus still pending.",
+     "heading": "Complete Your Pending Event Details",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}} has {{pending_menu_count}} pending mandatory menus: {{pending_menu_list}}. Please complete these details.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Pending menus:</strong> {{pending_menu_list}}</p>",
+     "button_label": "Complete your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Pending Event Menus",
+     "content": "Complete {{pending_menu_count}} mandatory menus."
+    }
+   },
+   "waiting_for": "setup_progress"
+  },
+  {
+   "key": "setup_deadline_approaching",
+   "label": "Event setup deadline approaching (MLS-006)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "completion_percentage",
+    "pending_menu_count",
+    "pending_menu_list",
+    "setup_deadline",
+    "days_remaining",
+    "event_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "Event Setup Deadline Approaching",
+     "preheader": "Finish your event setup before the deadline.",
+     "heading": "Event Setup Deadline Approaching",
+     "body": "<p>Dear {{client_name}}, your event {{event_name}} is approaching. Your setup is currently {{completion_percentage}}% complete. Please finish the required details before {{setup_deadline}}.</p>\n<p><strong>Event:</strong> {{event_name}}</p>\n<p><strong>Setup complete:</strong> {{completion_percentage}}%</p>\n<p><strong>Deadline:</strong> {{setup_deadline}}</p>",
+     "button_label": "Complete your event",
+     "button_url": "{{event_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "Setup Deadline Approaching",
+     "content": "Only {{days_remaining}} days remaining."
+    }
+   },
+   "waiting_for": "setup_progress"
+  },
+  {
+   "key": "setup_progress_reduced",
+   "label": "Event setup completion reduced (MLS-007)",
+   "section": "A5",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "event_name",
+    "completion_percentage",
+    "pending_menu_count",
+    "pending_menu_list",
+    "setup_deadline",
+    "days_remaining",
+    "event_link"
+   ],
+   "suggested": {
+    "in_app": {
+     "title": "Event Setup Requires Attention",
+     "content": "Recent changes reduced your setup completion to {{completion_percentage}}%. Please review the pending requirements."
+    }
+   },
+   "waiting_for": "setup_progress"
+  },
+  {
    "key": "event_published",
    "label": "Event published – share link + QR",
    "section": "A5",
@@ -2691,6 +2937,39 @@
    }
   },
   {
+   "key": "support_reply_received",
+   "label": "Support response received (SUP-002)",
+   "section": "A6",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "variables": [
+    "client_name",
+    "ticket_no",
+    "chat_link"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "New Response to Your Support Request",
+     "preheader": "Our Support Team has replied.",
+     "heading": "New Response to Your Support Request",
+     "body": "<p>Dear {{client_name}}, our Support Team has responded to your request {{ticket_no}}. Please review the response.</p>\n<p><strong>Ticket:</strong> {{ticket_no}}</p>",
+     "button_label": "View response",
+     "button_url": "{{chat_link}}",
+     "footer": "You are receiving this because you have an organizer account on EventInvit."
+    },
+    "in_app": {
+     "title": "New Support Response",
+     "content": "View your support request {{ticket_no}}."
+    }
+   },
+   "waiting_for": "support_reply_thread"
+  },
+  {
    "key": "contact_sales_received",
    "label": "Contact sales request received",
    "section": "A6",
@@ -2789,6 +3068,39 @@
     "in_app": {
      "title": "Scheduled Maintenance",
      "content": "Some services may be temporarily unavailable from {{maintenance_start}} to {{maintenance_end}}."
+    }
+   }
+  },
+  {
+   "key": "services_restored",
+   "label": "Services restored notice (SUP-006, sent by Super Admin)",
+   "section": "A6",
+   "audience": "organizer",
+   "also": [],
+   "channels": [
+    "email",
+    "in_app"
+   ],
+   "live": false,
+   "send_mode": "manual",
+   "variables": [
+    "client_name",
+    "affected_services",
+    "support_email"
+   ],
+   "suggested": {
+    "email": {
+     "subject": "EventInvit Services Restored",
+     "preheader": "EventInvit is available again.",
+     "heading": "EventInvit Services Restored",
+     "body": "<p>Dear {{client_name}}, the affected EventInvit services have been restored. You can resume your event management activities.</p>\n<p><strong>Restored:</strong> {{affected_services}}</p>",
+     "button_label": null,
+     "button_url": null,
+     "footer": "Questions? Write to {{support_email}}."
+    },
+    "in_app": {
+     "title": "Services Restored",
+     "content": "You can resume your activities."
     }
    }
   },
