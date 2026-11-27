@@ -1,4 +1,4 @@
-# Event Invit V2 â€” Session Log
+﻿# Event Invit V2 â€” Session Log
 
 Started 2026-10-30. This is the V2 log. Everything before V2 (Sessions 1â€“58 and the
 Oct 2026 app work) is in [docs/session_V1_history.md](docs/session_V1_history.md) â€” grep
@@ -1992,8 +1992,8 @@ the timeline frame strip needs CORS on the media bucket.
 - **PDF now only 14 cases** with no template: MLS-001..007, PLN-007/008 (credits), AUTH-008/009/010 (lockout), SUP-002/006. Part B removed.
 - **AUTH-008 / 009 / 010 + PLN-007 / 008 added (Jamal: "add now, remove from pdf"):** `failed_login_attempts`, `account_locked`, `account_unlocked` (A2, Email only like the other security notices, waiting_for login_lockout) and `credits_low`, `credits_purchased` (A4, Email + In-App, waiting_for communication_credits; purchase also payment_gateway). All DRAFT. Catalogue 112. Applied LOCAL (ids 110-114) + PRODUCTION (ids 97-101). PDF now 9 cases: MLS-001..007, SUP-002/006.
 
-### 2026-11-27 - Last 9 "Not in V2" cases added as templates; PDF now empty (backend, committed, NOT pushed)
+### 2026-11-27 - Last 9 "Not in V2" cases added as templates; PDF now empty (backend, pushed)
 - **MLS-001..007 + SUP-002 + SUP-006 added (Jamal: "add that, rest of template section will map later"):** A5 after event_created: `setup_milestone_25` (MLS-001, In-App only), `setup_milestone_50` / `_75` / `_100` (MLS-002/003/004), `setup_menus_pending` (MLS-005), `setup_deadline_approaching` (MLS-006), `setup_progress_reduced` (MLS-007, In-App only) - waiting_for `setup_progress`, variables completion_percentage / pending_menu_count / pending_menu_list / setup_deadline / days_remaining / event_link. A6: `support_reply_received` (SUP-002, waiting_for `support_reply_thread`, ticket_no / chat_link) and `services_restored` (SUP-006, `send_mode: "manual"`, affected_services / support_email). Email + In-App unless noted, ChatGPT wording (organizer_name -> client_name, ticket_id -> ticket_no). All DRAFT. Catalogue 121. Script: scratchpad `add_mls_sup.py`.
 - **Seeder:** organizer-message-templates.seeder.js now also creates on-hold In-App-only triggers (no email). This also picked up `event_publish_not_open` (PUB-003), skipped before because it had no email. A live In-App-only trigger (contact_chat_message) is still left out.
-- Applied **LOCAL only** (ids 115-124). **PRODUCTION NOT applied** - the prod run was blocked by the permission check; run `node src/database/seeders/organizer-message-templates.seeder.js --prod` (dry run) then `--prod --apply`.
+- Applied LOCAL (ids 115-124) + PRODUCTION (ids 102-111, Jamal: "migrate into live and push"; dry run checked first), all draft.
 - **PDF:** Transactional_Templates_Not_In_V2.pdf now says nothing is left (0 cases) and lists what was added. Mapping the drafts to real fire points comes later.
