@@ -11,6 +11,15 @@ const logger = require('./utils/logger');
 
 const app = express();
 
+/*
+ * Behind ONE reverse proxy (Nginx on EC2, Render's router on Render): take the
+ * visitor's real IP from X-Forwarded-For. Without this every request looked like
+ * 127.0.0.1, so the login / OTP rate limits were one shared bucket for all users
+ * and logs / sessions stored the proxy's IP. The number = proxy hops we trust;
+ * never `true` (that trusts any forged header). TRUST_PROXY=0 turns it off.
+ */
+app.set('trust proxy', Number(process.env.TRUST_PROXY ?? 1));
+
 // Middleware
 app.use(compression());
 app.use(helmet({ crossOriginResourcePolicy: false }));

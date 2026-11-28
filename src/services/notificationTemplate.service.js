@@ -403,16 +403,20 @@ const duplicate = async (id, userId = null, companyId = undefined) => {
 const escapeHtml = (s) => String(s ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/** {{var}} -> sample value, or "[var]" so a missing sample is obvious in the test. */
-const fill = (text, values, { html = false } = {}) =>
+/**
+ * {{var}} -> value. A missing value shows as "[var]" so it is obvious in a test;
+ * real sends pass `blank: true` so the reader never sees a placeholder.
+ */
+const fillValues = (text, values, { html = false, blank = false } = {}) =>
     String(text || '').replace(PLACEHOLDER_RE, (m, key) => {
         const v = values[key];
-        if (v === undefined || v === null || v === '') return `[${key}]`;
+        if (v === undefined || v === null || v === '') return blank ? '' : `[${key}]`;
         return html ? escapeHtml(v) : String(v);
     });
 
-const buildEmailHtml = (t, values) => {
+const buildEmailHtml = (t, values, { blank = false } = {}) => {
     const { wrapWithBaseTemplate } = require('../utils/baseEmailTemplate');
+    const fill = (text, v, o = {}) => fillValues(text, v, { ...o, blank });
     const pre = t.email_preheader
         ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(fill(t.email_preheader, values))}</div>`
         : '';
@@ -428,6 +432,8 @@ const buildEmailHtml = (t, values) => {
     const content = `${pre}${heading}${fill(t.email_body, values, { html: true })}${button}${footer}`;
     return wrapWithBaseTemplate(content, { appName: 'EventInvit', appUrl: process.env.CLIENT_URL || '', primaryColor: '#e6007e' });
 };
+
+const fill = fillValues;
 
 /** Named {{var}} in order of first use -> the values for Meta's {{1}}, {{2}}, ... */
 const orderedValues = (body, values) => {
@@ -534,6 +540,8 @@ module.exports = {
     deleteById,
     duplicate,
     testSend,
+    buildEmailHtml,
+    fillValues,
     getAvailableVariables,
     getSystemTriggers,
     getSections,

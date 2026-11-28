@@ -3,6 +3,14 @@ const { EmailConfig, EmailTemplate, Setting } = require("../models");
 const logger = require("../utils/logger");
 const ApiError = require("../utils/apiError");
 const { wrapWithBaseTemplate } = require("../utils/baseEmailTemplate");
+const sesMailer = require("./sesMailer.service");
+
+/*
+ * Amazon SES from env (2026-11-28): when the SES_* variables are set and the
+ * caller did not pick a specific saved configuration, mail goes through SES.
+ * Without them the saved Email Configuration (SMTP / Brevo) is used as before.
+ */
+const useSes = (configId) => !configId && sesMailer.isConfigured();
 
 const withCompany = (where = {}, companyId = undefined) => {
   if (companyId !== undefined && companyId !== null) {
@@ -145,7 +153,9 @@ const sendEmail = async (templateSlug, options = {}) => {
     }
 
     let config;
-    if (configId) {
+    if (useSes(configId || template.email_config_id)) {
+      config = { driver: "ses" };
+    } else if (configId) {
       config = await EmailConfig.findOne({ where: withCompany({ id: configId }, companyId) });
     } else if (template.email_config_id) {
       config = await EmailConfig.findOne({ where: withCompany({ id: template.email_config_id }, companyId) });
@@ -183,16 +193,14 @@ const sendEmail = async (templateSlug, options = {}) => {
     const subject = replaceVariables(template.subject, allVariables);
     const body = replaceVariables(fullBody, allVariables);
 
-    const transporter = createTransporter(config);
-
-    const mailOptions = {
-      from: `"${config.from_name}" <${config.from_email}>`,
-      to: Array.isArray(to) ? to.join(", ") : to,
-      subject,
-      html: body,
-    };
-
-    const result = await transporter.sendMail(mailOptions);
+    const result = config.driver === "ses"
+      ? await sesMailer.send({ to, subject, html: body })
+      : await createTransporter(config).sendMail({
+          from: `"${config.from_name}" <${config.from_email}>`,
+          to: Array.isArray(to) ? to.join(", ") : to,
+          subject,
+          html: body,
+        });
 
     logger.logActivity(
       userId,
@@ -228,6 +236,11 @@ const sendDirect = async (options = {}) => {
       throw ApiError.badRequest("to, subject, and body are required");
     }
 
+    if (useSes(configId)) {
+      const r = await sesMailer.send({ to, subject, html: body });
+      return { success: true, messageId: r.messageId, provider: "ses" };
+    }
+
     let config;
     if (configId) {
       config = await EmailConfig.findOne({ where: withCompany({ id: configId }, companyId) });
@@ -238,7 +251,7 @@ const sendDirect = async (options = {}) => {
     }
 
     if (!config) {
-      throw ApiError.badRequest("No email configuration found.");
+      throw ApiError.badRequest("No email configuration found. Set the SES_* variables or add an Email Configuration.");
     }
 
     const transporter = createTransporter(config);

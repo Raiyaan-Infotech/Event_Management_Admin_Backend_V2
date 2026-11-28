@@ -820,12 +820,36 @@ const changePlan = async (clientId, planId) => {
         actor: 'client',
     });
 
-    await invoiceService.raiseInvoiceForTerm(subscription, {
+    const invoice = await invoiceService.raiseInvoiceForTerm(subscription, {
         periodStart: subscription.current_period_start,
         periodEnd: subscription.current_period_end,
         issueDate: now,
         planName: plan.name,
     });
+
+    const { notifyEmail, money } = require('./notificationEmail.service');
+    const fromPlan = await SubscriptionPlan.findByPk(fromPlanId, { attributes: ['name'] }).catch(() => null);
+    notifyEmail('plan_changed', {
+        to: client.email,
+        values: {
+            client_name: client.name,
+            old_plan: fromPlan?.name || 'your previous plan',
+            new_plan: plan.name,
+            amount: money(plan.price, plan.currency_code || 'INR'),
+            end_date: subscription.current_period_end,
+        },
+    });
+    if (invoice) {
+        notifyEmail('invoice_generated', {
+            to: client.email,
+            values: {
+                client_name: client.name,
+                plan_name: plan.name,
+                invoice_number: invoice.invoice_number || invoice.number,
+                amount: money(invoice.total, invoice.currency_code || 'INR'),
+            },
+        });
+    }
 
     return getAvailablePlans(clientId);
 };
@@ -1021,6 +1045,17 @@ const checkout = async (clientId, body = {}) => {
     if (!(Number(plan.price) > 0)) throw ApiError.badRequest('This plan is free — no payment is needed.');
     const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.start_date || '')) ? body.start_date : null;
     const transaction = await savePayment({ clientId, client, subscription, plan, body, date });
+    const { notifyEmail, money } = require('./notificationEmail.service');
+    notifyEmail('payment_success', {
+        to: client.email,
+        values: {
+            client_name: client.name,
+            plan_name: plan.name,
+            event_date: date,
+            amount: money(transaction.amount?.total, transaction.currency_code),
+            txn_id: transaction.reference,
+        },
+    });
     return { transaction, plan: { id: plan.id, name: plan.name, billing_cycle: plan.billing_cycle } };
 };
 

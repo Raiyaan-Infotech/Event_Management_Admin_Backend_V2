@@ -210,6 +210,11 @@ const register = async (data = {}, vendorId = DEFAULT_VENDOR_ID, companyId = nul
         created_by: null,
     });
 
+    require('./notificationEmail.service').notifyEmail('account_registered', {
+        to: created.email,
+        values: { client_name: created.name, email: created.email, account_status: 'Active' },
+    });
+
     // Re-read through the default scope so the hash cannot ride along.
     return WebsiteClient.findByPk(created.id);
 };
@@ -376,6 +381,11 @@ const create = async (data, userId = null, companyId = undefined) => {
     payload.source = 'admin';
 
     const created = await baseService.create(WebsiteClient, MODEL_NAME, payload, userId, companyId);
+    // Admin-made account: the client has never seen the password, so the email carries it.
+    require('./notificationEmail.service').notifyEmail('account_created_by_admin', {
+        to: payload.email,
+        values: { client_name: payload.name, email: payload.email, temp_password: data.password, account_status: 'Active' },
+    });
     return WebsiteClient.findByPk(created.id, { include: VENDOR_INCLUDE });
 };
 

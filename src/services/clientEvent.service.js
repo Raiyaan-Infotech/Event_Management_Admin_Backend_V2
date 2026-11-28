@@ -628,6 +628,23 @@ const createEvent = async (clientId, body) => {
     // An approved allocation exception this booking used is spent now (one event per approval).
     await eventAvailability.markExceptionsUsed(availability.usedRequestIds, created.id);
 
+    // A draft is not "created" for the organizer yet.
+    if (created.status !== 'draft') {
+        const mail = require('./notificationEmail.service');
+        mail.notifyEmail('event_created', {
+            to: client.email,
+            eventId: created.id,
+            eventCategoryId: created.event_category_id,
+            values: {
+                client_name: client.name,
+                event_name: created.title || created.name,
+                event_date: created.end_date && created.end_date !== created.start_date
+                    ? `${created.start_date} to ${created.end_date}` : created.start_date,
+                event_link: `${mail.portalUrl()}/dashboard/events/${created.id}`,
+            },
+        });
+    }
+
     return getEventById(clientId, created.id);
 };
 

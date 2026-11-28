@@ -101,6 +101,19 @@ const createBooking = async (clientId, body = {}) => {
         return { row, payment };
     });
 
+    const { notifyEmail, money } = require('./notificationEmail.service');
+    const b = booking.row;
+    const values = {
+        client_name: client.name,
+        plan_name: b.plan_name,
+        event_date: b.end_date ? `${b.start_date} to ${b.end_date}` : b.start_date,
+        booking_id: `BK-${b.id}`,
+        amount: paid ? money(b.amount, b.currency_code) : 'Free',
+        txn_id: booking.payment?.reference,
+    };
+    notifyEmail('booking_confirmed', { to: client.email, values });
+    if (paid) notifyEmail('payment_success', { to: client.email, values });
+
     return { booking: present(booking.row), transaction: booking.payment };
 };
 

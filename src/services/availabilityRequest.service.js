@@ -79,6 +79,26 @@ const cancelForClient = async (clientId, id) => {
  * body: booking_type, start_date, end_date, contact_method (call | email), contact_name, message,
  *       call → contact_mobile + preferred_call_time; email → contact_email + subject (+ optional file).
  */
+/** Emails the client about their date request (received / call-back / approved / rejected). */
+const emailRequest = async (triggerKey, row, extra = {}) => {
+    const r = row.get ? row.get({ plain: true }) : row;
+    const client = await WebsiteClient.findByPk(r.website_client_id, { attributes: ['id', 'name', 'email'] }).catch(() => null);
+    const to = [...new Set([client?.email, r.contact_email].filter(Boolean).map((e) => String(e).toLowerCase()))];
+    require('./notificationEmail.service').notifyEmail(triggerKey, {
+        to,
+        values: {
+            client_name: client?.name || r.contact_name,
+            ticket_no: r.ticket_no,
+            request_dates: r.end_date && r.end_date !== r.start_date ? `${r.start_date} to ${r.end_date}` : r.start_date,
+            request_status: r.status,
+            contact_method: r.contact_method === 'call' ? 'Call back' : 'Email',
+            contact_mobile: r.contact_mobile,
+            preferred_call_time: r.preferred_call_time,
+            ...extra,
+        },
+    });
+};
+
 const createRequest = async (clientId, body = {}, file = null) => {
     const client = await WebsiteClient.findByPk(clientId, { attributes: ['id', 'company_id'] });
     if (!client) throw ApiError.notFound('Account not found.');
@@ -148,6 +168,7 @@ const createRequest = async (clientId, body = {}, file = null) => {
 
     const row = await AvailabilityRequest.create(data);
     await row.update({ ticket_no: ticketFor(row) });
+    emailRequest(method === 'call' ? 'date_request_callback' : 'date_request_received', row).catch(() => {});
     return present(row);
 };
 
@@ -278,6 +299,11 @@ const approve = async (id, body = {}, userId = null) => {
         decided_by: userId,
         decided_at: now,
     });
+    emailRequest('date_request_approved', r, {
+        admin_note: reason,
+        approval_expiry: new Date(now.getTime() + hours * 3600000)
+            .toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' }),
+    }).catch(() => {});
     return getAdmin(r.id);
 };
 
@@ -289,6 +315,7 @@ const reject = async (id, body = {}, userId = null) => {
     const reason = text(body.reason, 500);
     if (!reason) throw ApiError.badRequest('Please enter the rejection reason.');
     await r.update({ status: 'rejected', decision_reason: reason, decision: { category }, decided_by: userId, decided_at: new Date() });
+    emailRequest('date_request_rejected', r, { admin_note: reason }).catch(() => {});
     return getAdmin(r.id);
 };
 
